@@ -49,7 +49,7 @@ export const Header: React.FC = () => {
     let active = true;
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/products?q=${encodeURIComponent(q)}&limit=5`);
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=5`);
         if (res.ok) {
           const data = await res.json();
           if (active && Array.isArray(data.products)) {

@@ -126,16 +126,27 @@ export function mapDbProductToFrontend(p: any): Product {
       { label: "Care", value: p.careInstructions || "Professional care recommended" },
       ...(p.brand ? [{ label: "Brand", value: p.brand }] : []),
       ...(p.sku ? [{ label: "SKU", value: p.sku }] : []),
+      ...(p.mpn ? [{ label: "MPN", value: p.mpn }] : []),
+      ...(p.gtin ? [{ label: "GTIN", value: p.gtin }] : []),
+      ...(p.countryOfOrigin ? [{ label: "Country of Origin", value: p.countryOfOrigin }] : []),
       ...(p.dispatchEstimate ? [{ label: "Dispatch", value: p.dispatchEstimate }] : []),
       ...dynamicSpecs,
     ],
-    highlights: [
-      "Master artisan craftsmanship with verifiable provenance",
-      "Sustainably packaged in recycled, carbon-neutral parceling",
-      "Studio authenticity certification included",
-    ],
+    highlights: (() => {
+      if (p.highlightsJson) {
+        try {
+          const parsed = JSON.parse(p.highlightsJson);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch {}
+      }
+      return [
+        "Master artisan craftsmanship with verifiable provenance",
+        "Sustainably packaged in recycled, carbon-neutral parceling",
+        "Studio authenticity certification included",
+      ];
+    })(),
     materials: p.material || "Natural composition",
-    origin: p.vendor.originHub || "India",
+    origin: p.countryOfOrigin || p.vendor.originHub || "India",
     estimatedDeliveryDays: p.vendor.leadTimeDays || 3,
   };
 }

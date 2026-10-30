@@ -358,6 +358,29 @@ model Product {
   slaReminderCount         Int                   @default(0)
   rejectedFieldsJson       String?
   suggestedCorrectionsJson String?
+  
+  // Amazon-Style & Multi-Channel SEO fields
+  metaTitle                String?
+  metaDescription          String?
+  canonicalUrl             String?
+  ogImage                  String?
+  ogTitle                  String?
+  ogDescription            String?
+  highlightsJson           String?
+  mpn                      String?
+  gtin                     String?
+  manufacturer             String?
+  countryOfOrigin          String?               @default("India")
+  warranty                 String?
+  includedItems            String?
+  returnPolicy             String?               @default("7-Day Atelier Replacement")
+  googleProductCategory    String?
+  condition                String?               @default("NEW")
+  targetGender             String?               @default("unisex")
+  targetAgeGroup           String?               @default("adult")
+  seoKeywords              String?
+  seoQualityScore          Int?                  @default(0)
+  seoIssuesJson            String?
   createdAt                DateTime              @default(now())
   updatedAt                DateTime              @updatedAt
   images                   ProductImage[]
@@ -415,8 +438,24 @@ model ProductImage {
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   url       String
   alt       String
+  title     String?
+  imageType String? @default("GALLERY")
+  isPrimary Boolean @default(false)
+  width     Int?
+  height    Int?
   sortOrder Int     @default(0)
 
+  @@index([productId])
+}
+
+model ProductSlugRedirect {
+  id        String   @id @default(cuid())
+  productId String
+  oldSlug   String   @unique
+  newSlug   String
+  createdAt DateTime @default(now())
+
+  @@index([oldSlug])
   @@index([productId])
 }
 

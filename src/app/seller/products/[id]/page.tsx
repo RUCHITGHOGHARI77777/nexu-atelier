@@ -29,6 +29,7 @@ import { AutoDraftManager, AutoDraftState } from "@/lib/client/auto-draft-manage
 import { CategoryAttributeFields } from "@/components/seller/CategoryAttributeFields";
 import { SmartQualityChecker } from "@/components/seller/SmartQualityChecker";
 import { CorrectionAssistantBanner } from "@/components/seller/CorrectionAssistantBanner";
+import { ProductSeoEditorSection, ProductSeoEditorState } from "@/components/seo/ProductSeoEditorSection";
 import { formatCurrency } from "@/lib/formatters";
 
 interface CategoryOption {
@@ -78,6 +79,26 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   // Imagery & Variants
   const [images, setImages] = useState<string[]>([]);
   const [variants, setVariants] = useState<SellerProductVariantInput[]>([]);
+
+  // Amazon-Style Highlights & Advanced Multi-Channel SEO State
+  const [highlights, setHighlights] = useState<string[]>([
+    "Master artisan craftsmanship with verifiable provenance",
+    "Sustainably packaged in recycled, carbon-neutral parceling",
+    "Studio authenticity certification included",
+  ]);
+  const [seoState, setSeoState] = useState<ProductSeoEditorState>({
+    metaTitle: "",
+    metaDescription: "",
+    slug: "",
+    canonicalUrl: "",
+    seoKeywords: "",
+    googleProductCategory: "Apparel & Accessories > Clothing > Traditional & Cultural Wear",
+    condition: "NEW",
+    targetGender: "unisex",
+    targetAgeGroup: "adult",
+    mpn: "",
+    gtin: "",
+  });
 
   // Auto-Draft & Quality Checker State
   const [draftManager, setDraftManager] = useState<AutoDraftManager | null>(null);
@@ -160,6 +181,22 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
               additionalPrice: v.additionalPrice,
             }))
           );
+          if (p.highlights && Array.isArray(p.highlights) && p.highlights.length > 0) {
+            setHighlights(p.highlights);
+          }
+          setSeoState({
+            metaTitle: p.metaTitle || "",
+            metaDescription: p.metaDescription || "",
+            slug: p.slug || "",
+            canonicalUrl: p.canonicalUrl || "",
+            seoKeywords: p.searchKeywords || "",
+            googleProductCategory: p.googleProductCategory || "",
+            condition: (p.condition as any) || "NEW",
+            targetGender: (p.targetGender as any) || "unisex",
+            targetAgeGroup: (p.targetAgeGroup as any) || "adult",
+            mpn: p.mpn || "",
+            gtin: p.gtin || "",
+          });
         } else {
           const err = await prodRes.json();
           setErrorMessage(err.error || "Piece not found or you lack permission to edit it.");
@@ -377,6 +414,18 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
       variants,
       attributes,
       draftKey: `seller_edit_${productId}`,
+      // SEO & Amazon-style fields
+      highlights,
+      metaTitle: seoState.metaTitle || undefined,
+      metaDescription: seoState.metaDescription || undefined,
+      slug: seoState.slug || undefined,
+      canonicalUrl: seoState.canonicalUrl || undefined,
+      googleProductCategory: seoState.googleProductCategory || undefined,
+      condition: seoState.condition,
+      targetGender: seoState.targetGender,
+      targetAgeGroup: seoState.targetAgeGroup,
+      mpn: seoState.mpn || undefined,
+      gtin: seoState.gtin || undefined,
     };
 
     setIsSubmitting(true);
@@ -868,6 +917,22 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             </div>
           </div>
         </div>
+
+        {/* Section 7: Search Engine Optimization & Multi-Channel Discovery */}
+        <ProductSeoEditorSection
+          productTitle={title}
+          productDescription={description}
+          basePrice={basePrice}
+          stock={stock}
+          brand={brand}
+          categoryName={currentCategory?.name || "Craft"}
+          material={material}
+          images={images.map((url, i) => ({ url, alt: `${title} - View ${i + 1}` }))}
+          highlights={highlights}
+          seoState={seoState}
+          onChange={(updated) => setSeoState((prev) => ({ ...prev, ...updated }))}
+          onNavigateToField={handleNavigateToField}
+        />
 
         {/* Actions Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-zinc-200">

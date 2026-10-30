@@ -21,6 +21,7 @@ import {
   Cpu,
   BarChart3,
   Truck,
+  Globe,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 
@@ -28,6 +29,7 @@ const ADMIN_NAV_LINKS = [
   { href: "/admin", label: "Operations Overview", icon: LayoutDashboard },
   { href: "/admin/sellers", label: "Seller Management", icon: Store },
   { href: "/admin/products", label: "Catalog Moderation", icon: Sparkles },
+  { href: "/admin/seo", label: "SEO & Discovery", icon: Globe },
   { href: "/admin/categories", label: "Category Taxonomy", icon: Layers },
   { href: "/admin/reviews", label: "Reviews & Moderation", icon: Star },
   { href: "/admin/orders", label: "Order Operations", icon: ShoppingBag },

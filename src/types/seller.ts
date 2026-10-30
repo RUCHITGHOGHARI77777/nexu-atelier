@@ -75,6 +75,30 @@ export interface SellerProductInput {
   variants?: SellerProductVariantInput[];
   attributes?: Record<string, { value: any; unit?: string | null }>;
   draftKey?: string;
+  // SEO & Amazon-style fields
+  slug?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  canonicalUrl?: string;
+  ogImage?: string;
+  highlights?: string[];
+  mpn?: string;
+  gtin?: string;
+  countryOfOrigin?: string;
+  warranty?: string;
+  includedItems?: string;
+  returnPolicy?: string;
+  googleProductCategory?: string;
+  condition?: string;
+  targetGender?: string;
+  targetAgeGroup?: string;
+  imageDetails?: Array<{
+    url: string;
+    alt?: string;
+    title?: string;
+    imageType?: string;
+    isPrimary?: boolean;
+  }>;
 }
 
 export interface SellerProductDetailView {
@@ -88,6 +112,17 @@ export interface SellerProductDetailView {
   vendorId: string;
   basePrice: number;
   compareAtPrice: number | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  canonicalUrl?: string | null;
+  highlights?: string[];
+  mpn?: string | null;
+  gtin?: string | null;
+  countryOfOrigin?: string | null;
+  googleProductCategory?: string | null;
+  condition?: string | null;
+  targetGender?: string | null;
+  targetAgeGroup?: string | null;
   stock: number;
   lowStockThreshold: number;
   isPublished: boolean;

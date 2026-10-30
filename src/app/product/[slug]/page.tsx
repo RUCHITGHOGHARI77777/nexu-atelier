@@ -1,9 +1,10 @@
 import React from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight, ArrowLeft } from "lucide-react";
 import { productRepository } from "@/lib/server/product-repository";
+import { slugRedirectService } from "@/lib/server/slug-redirect-service";
 import { ProductShowcase } from "@/components/product/ProductShowcase";
 import { ProductSpecs } from "@/components/product/ProductSpecs";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
@@ -22,28 +23,82 @@ interface ProductPageProps {
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
+  // Check for 301 slug redirect
+  const redirectTarget = await slugRedirectService.getRedirectForSlug(params.slug);
+  if (redirectTarget) {
+    redirect(`/product/${redirectTarget}`);
+  }
+
   const product = await productRepository.getProductBySlug(params.slug);
   if (!product) {
     return {
       title: "Product Not Found — Nexu Atelier",
+      robots: { index: false, follow: false },
     };
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://nexu.studio";
+  const canonicalUrl = `${baseUrl}/product/${product.slug}`;
+  const pageTitle = `${product.title} — ${product.vendor.name} | Nexu Atelier`;
+  const metaDesc = product.description.slice(0, 160);
+  const primaryImage = product.images.length > 0 ? product.images[0] : `${baseUrl}/og-default.jpg`;
+
   return {
-    title: `${product.title} — ${product.vendor.name} | Nexu Atelier`,
-    description: product.description,
-    openGraph: {
-      title: `${product.title} | Nexu Atelier`,
-      description: product.description,
-      images: product.images.length > 0 ? [{ url: product.images[0] }] : [],
-    },
+    title: pageTitle,
+    description: metaDesc,
+    keywords: [
+      product.category,
+      product.vendor.name,
+      "handcrafted",
+      "artisan luxury",
+      "authentic Indian heritage",
+    ],
     alternates: {
-      canonical: `/product/${product.slug}`,
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: pageTitle,
+      description: metaDesc,
+      url: canonicalUrl,
+      siteName: "Nexu Atelier",
+      images: [
+        {
+          url: primaryImage,
+          width: 1200,
+          height: 800,
+          alt: `${product.title} by ${product.vendor.name}`,
+        },
+      ],
+      type: "website",
+      locale: "en_IN",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: pageTitle,
+      description: metaDesc,
+      images: [primaryImage],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
     },
   };
 }
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
+  // Check for 301 slug redirect
+  const redirectTarget = await slugRedirectService.getRedirectForSlug(params.slug);
+  if (redirectTarget) {
+    redirect(`/product/${redirectTarget}`);
+  }
+
   const product = await productRepository.getProductBySlug(params.slug);
 
   if (!product) {
@@ -62,31 +117,112 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     // fallback gracefully
   }
 
-  const jsonLd = {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://nexu.studio";
+  const canonicalUrl = `${baseUrl}/product/${product.slug}`;
+
+  // Structured Data (JSON-LD) - Strict Schema.org compliance without fabricated reviews
+  const productJsonLd: any = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.title,
     image: product.images,
     description: product.description,
+    sku: product.id,
+    url: canonicalUrl,
     brand: {
       "@type": "Brand",
       name: product.vendor.name,
     },
     offers: {
       "@type": "Offer",
+      url: canonicalUrl,
       priceCurrency: "INR",
       price: product.basePrice,
-      availability: product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+      availability:
+        product.stock > 0
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
       seller: {
         "@type": "Organization",
         name: product.vendor.name,
       },
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "IN",
+        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: 7,
+        returnMethod: "https://schema.org/ReturnByMail",
+      },
+      shippingDetails: {
+        "@type": "OfferShippingDetails",
+        shippingRate: {
+          "@type": "MonetaryAmount",
+          value: "0.00",
+          currency: "INR",
+        },
+        shippingDestination: {
+          "@type": "DefinedRegion",
+          addressCountry: "IN",
+        },
+        deliveryTime: {
+          "@type": "ShippingDeliveryTime",
+          handlingTime: {
+            "@type": "QuantitativeValue",
+            minValue: 1,
+            maxValue: 2,
+            unitCode: "DAY",
+          },
+          transitTime: {
+            "@type": "QuantitativeValue",
+            minValue: 2,
+            maxValue: 5,
+            unitCode: "DAY",
+          },
+        },
+      },
     },
-    aggregateRating: {
+  };
+
+  // Only attach aggregateRating if genuine reviews exist
+  if (product.reviewCount && product.reviewCount > 0 && product.rating && product.rating > 0) {
+    productJsonLd.aggregateRating = {
       "@type": "AggregateRating",
       ratingValue: product.rating,
-      reviewCount: product.reviewCount || 1,
-    },
+      reviewCount: product.reviewCount,
+    };
+  }
+
+  // Breadcrumbs JSON-LD
+  const breadcrumbsJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: baseUrl,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Catalog",
+        item: `${baseUrl}/catalog`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: product.category,
+        item: `${baseUrl}/catalog?category=${encodeURIComponent(product.category)}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 4,
+        name: product.title,
+        item: canonicalUrl,
+      },
+    ],
   };
 
   return (
@@ -94,8 +230,13 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       {/* Schema.org Structured Data */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJsonLd) }}
+      />
+
       {/* Breadcrumb Navigation */}
       <nav
         aria-label="Breadcrumbs"

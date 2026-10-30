@@ -14,6 +14,7 @@ import { Product } from "@/types/marketplace";
 import { mapDbProductToFrontend } from "./product-repository";
 import { productRevisionService } from "./product-revision-service";
 import { supplierDraftService } from "./supplier-draft-service";
+import { slugRedirectService } from "./slug-redirect-service";
 import {
   OrderStatus,
   SellerStatus,
@@ -350,6 +351,18 @@ export class SellerService {
             taxRatePercent: input.taxRatePercent !== undefined ? input.taxRatePercent : 12.0,
             attributesJson: input.attributes ? JSON.stringify(input.attributes) : null,
             submittedForReviewAt: approvalStatus === ProductApprovalStatus.PENDING_REVIEW ? new Date() : null,
+            metaTitle: input.metaTitle?.trim() || null,
+            metaDescription: input.metaDescription?.trim() || null,
+            canonicalUrl: input.canonicalUrl?.trim() || null,
+            ogImage: input.ogImage?.trim() || null,
+            highlightsJson: input.highlights ? JSON.stringify(input.highlights) : null,
+            mpn: input.mpn?.trim() || null,
+            gtin: input.gtin?.trim() || null,
+            countryOfOrigin: input.countryOfOrigin?.trim() || "India",
+            googleProductCategory: input.googleProductCategory?.trim() || null,
+            condition: input.condition || "NEW",
+            targetGender: input.targetGender || "unisex",
+            targetAgeGroup: input.targetAgeGroup || "adult",
             images: {
               create: (input.images || []).map((url, idx) => ({
                 url,
@@ -497,6 +510,17 @@ export class SellerService {
         reviewOverdueAt: product.reviewOverdueAt ? product.reviewOverdueAt.toISOString() : null,
         rejectedFields: product.rejectedFieldsJson ? JSON.parse(product.rejectedFieldsJson) : undefined,
         suggestedCorrections: product.suggestedCorrectionsJson || null,
+        metaTitle: product.metaTitle || null,
+        metaDescription: product.metaDescription || null,
+        canonicalUrl: product.canonicalUrl || null,
+        highlights: product.highlightsJson ? JSON.parse(product.highlightsJson) : undefined,
+        mpn: product.mpn || null,
+        gtin: product.gtin || null,
+        countryOfOrigin: product.countryOfOrigin || "India",
+        googleProductCategory: product.googleProductCategory || null,
+        condition: product.condition || "NEW",
+        targetGender: product.targetGender || "unisex",
+        targetAgeGroup: product.targetAgeGroup || "adult",
         createdAt: product.createdAt.toISOString(),
         updatedAt: product.updatedAt.toISOString(),
       },
@@ -554,6 +578,27 @@ export class SellerService {
         if (input.packageDimensions !== undefined) updateData.packageDimensions = input.packageDimensions ? input.packageDimensions.trim() : null;
         if (input.taxRatePercent !== undefined) updateData.taxRatePercent = input.taxRatePercent;
         if (input.attributes !== undefined) updateData.attributesJson = JSON.stringify(input.attributes);
+
+        // SEO & Amazon-style fields update
+        if (input.metaTitle !== undefined) updateData.metaTitle = input.metaTitle ? input.metaTitle.trim() : null;
+        if (input.metaDescription !== undefined) updateData.metaDescription = input.metaDescription ? input.metaDescription.trim() : null;
+        if (input.canonicalUrl !== undefined) updateData.canonicalUrl = input.canonicalUrl ? input.canonicalUrl.trim() : null;
+        if (input.ogImage !== undefined) updateData.ogImage = input.ogImage ? input.ogImage.trim() : null;
+        if (input.highlights !== undefined) updateData.highlightsJson = input.highlights ? JSON.stringify(input.highlights) : null;
+        if (input.mpn !== undefined) updateData.mpn = input.mpn ? input.mpn.trim() : null;
+        if (input.gtin !== undefined) updateData.gtin = input.gtin ? input.gtin.trim() : null;
+        if (input.countryOfOrigin !== undefined) updateData.countryOfOrigin = input.countryOfOrigin ? input.countryOfOrigin.trim() : "India";
+        if (input.googleProductCategory !== undefined) updateData.googleProductCategory = input.googleProductCategory ? input.googleProductCategory.trim() : null;
+        if (input.condition !== undefined) updateData.condition = input.condition;
+        if (input.targetGender !== undefined) updateData.targetGender = input.targetGender;
+        if (input.targetAgeGroup !== undefined) updateData.targetAgeGroup = input.targetAgeGroup;
+
+        // Slug change with 301 redirect preservation
+        if (input.slug && input.slug.trim() && input.slug.trim() !== existing.slug) {
+          const newSlug = input.slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/\s+/g, "-");
+          await slugRedirectService.recordSlugChange(existing.id, existing.slug, newSlug);
+          updateData.slug = newSlug;
+        }
 
         // Workflow Status Transitions:
         let auditAction = "PRODUCT_UPDATED";

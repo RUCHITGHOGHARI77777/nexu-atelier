@@ -77,7 +77,8 @@ function CatalogContent() {
         }
         queryParams.set("limit", "100");
 
-        const res = await fetch(`/api/products?${queryParams.toString()}`);
+        const endpoint = filters.searchQuery ? "/api/search" : "/api/products";
+        const res = await fetch(`${endpoint}?${queryParams.toString()}`);
         if (res.ok) {
           const data = await res.json();
           if (active && Array.isArray(data.products)) {

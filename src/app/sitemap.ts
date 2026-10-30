@@ -1,10 +1,12 @@
 import { MetadataRoute } from "next";
-import { SEED_PRODUCTS } from "@/data/seedCatalog";
+import { prisma } from "@/lib/server/prisma";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const dynamic = "force-dynamic";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://nexu.studio";
 
-  const staticRoutes = [
+  const staticRoutes: MetadataRoute.Sitemap = [
     "",
     "/catalog",
     "/about",
@@ -19,17 +21,33 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/policies/refunds",
   ].map((route) => ({
     url: `${baseUrl}${route}`,
-    lastModified: new Date().toISOString(),
+    lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: route === "" ? 1.0 : route.startsWith("/policies") ? 0.4 : 0.8,
   }));
 
-  const productRoutes = SEED_PRODUCTS.map((p) => ({
-    url: `${baseUrl}/product/${p.slug}`,
-    lastModified: new Date().toISOString(),
-    changeFrequency: "daily" as const,
-    priority: 0.9,
-  }));
+  try {
+    const products = await prisma.product.findMany({
+      where: {
+        isPublished: true,
+        approvalStatus: "APPROVED",
+      },
+      select: {
+        slug: true,
+        updatedAt: true,
+      },
+      take: 1000,
+    });
 
-  return [...staticRoutes, ...productRoutes];
+    const productRoutes: MetadataRoute.Sitemap = products.map((p) => ({
+      url: `${baseUrl}/product/${p.slug}`,
+      lastModified: p.updatedAt,
+      changeFrequency: "daily" as const,
+      priority: 0.9,
+    }));
+
+    return [...staticRoutes, ...productRoutes];
+  } catch {
+    return staticRoutes;
+  }
 }
