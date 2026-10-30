@@ -23,10 +23,10 @@ export function searchCatalog(products: Product[], query: string = ""): Product[
 /**
  * Filters the catalog by category, price boundaries, stock availability, and vendor ID.
  */
-export function filterCatalog(products: Product[], filters: FilterState): Product[] {
-  let result = searchCatalog(products, filters.searchQuery);
+export function filterCatalog(products: Product[], filters: Partial<FilterState>): Product[] {
+  let result = searchCatalog(products, filters.searchQuery || "");
 
-  if (filters.category !== "All") {
+  if (filters.category && filters.category !== "All") {
     result = result.filter((p) => p.category === filters.category);
   }
 
@@ -46,7 +46,7 @@ export function filterCatalog(products: Product[], filters: FilterState): Produc
     result = result.filter((p) => p.vendor.id === filters.vendorId);
   }
 
-  return sortCatalog(result, filters.sortBy);
+  return sortCatalog(result, filters.sortBy || "featured");
 }
 
 /**

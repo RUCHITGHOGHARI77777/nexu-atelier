@@ -90,7 +90,8 @@ export interface CheckoutRequestPayload {
     quantity: number;
   }[];
   shippingAddressId?: string;
-  newAddress?: Omit<Address, "id" | "customerId" | "createdAt" | "isDefault">;
+  newAddress?: Partial<Omit<Address, "id" | "customerId" | "createdAt" | "isDefault">> &
+    Pick<Address, "fullName" | "phone" | "street" | "city" | "state" | "pincode">;
   deliveryMethodId: "standard" | "express";
   idempotencyKey?: string;
   couponCode?: string;
