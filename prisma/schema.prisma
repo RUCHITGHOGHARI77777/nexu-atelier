@@ -198,17 +198,23 @@ model User {
 }
 
 model CustomerProfile {
-  id               String    @id @default(cuid())
-  userId           String    @unique
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name             String
-  phone            String?
-  isPhoneVerified  Boolean   @default(false)
-  phoneVerifiedAt  DateTime?
-  codRefusalCount  Int       @default(0)
-  rtoCount         Int       @default(0)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id                      String    @id @default(cuid())
+  userId                  String    @unique
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                    String
+  phone                   String?
+  isPhoneVerified         Boolean   @default(false)
+  phoneVerifiedAt         DateTime?
+  isEmailVerified         Boolean   @default(false)
+  emailVerifiedAt         DateTime?
+  consentMarketing        Boolean   @default(false)
+  consentWhatsapp         Boolean   @default(false)
+  consentAnalytics        Boolean   @default(true)
+  dataRetentionPreference String    @default("STANDARD")
+  codRefusalCount         Int       @default(0)
+  rtoCount                Int       @default(0)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 }
 
 model Session {
@@ -259,6 +265,9 @@ model Seller {
   businessEmail         String?
   businessPhone         String?
   taxIdentifier         String?
+  isContactVerified     Boolean        @default(true)
+  isBusinessVerified    Boolean        @default(true)
+  verifiedDocumentsJson String?
   commissionRatePercent Float          @default(10.0)
   bankAccountName       String?
   bankAccountNumber     String?
@@ -589,26 +598,32 @@ model OrderItem {
 }
 
 model PaymentRecord {
-  id                  String               @id @default(cuid())
-  orderId             String
-  order               Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  provider            PaymentProvider      @default(ESCROW_INTERNAL)
-  transactionRef      String               @unique
-  amountPaise         Int
-  currency            String               @default("INR")
-  status              PaymentStatus        @default(ESCROW_HOLD)
-  method              String?
-  maskedDetails       String?
-  isCod               Boolean              @default(false)
-  codCollectionStatus CodCollectionStatus?
-  codCollectedAt      DateTime?
-  codRemittedAt       DateTime?
+  id                   String               @id @default(cuid())
+  orderId              String
+  order                Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerId           String?
+  provider             PaymentProvider      @default(ESCROW_INTERNAL)
+  transactionRef       String               @unique
+  idempotencyKey       String?              @unique
+  amountPaise          Int
+  currency             String               @default("INR")
+  status               PaymentStatus        @default(ESCROW_HOLD)
+  method               String?
+  maskedDetails        String?
+  failureCode          String?
+  failureReason        String?
+  reconciliationStatus String               @default("UNRECONCILED")
+  isCod                Boolean              @default(false)
+  codCollectionStatus  CodCollectionStatus?
+  codCollectedAt       DateTime?
+  codRemittedAt        DateTime?
   courierRemittanceRef String?
-  rawGatewayResponse  String?
-  createdAt           DateTime             @default(now())
+  rawGatewayResponse   String?
+  createdAt            DateTime             @default(now())
 
   @@index([orderId])
   @@index([transactionRef])
+  @@index([customerId])
 }
 
 model OrderRiskAssessment {
@@ -997,4 +1012,62 @@ model ProductAnswer {
   createdAt  DateTime        @default(now())
 
   @@index([questionId])
+}
+
+model VerificationOtp {
+  id                  String    @id @default(cuid())
+  identifier          String
+  type                String    // "PHONE" | "EMAIL"
+  otpHash             String
+  attemptsCount       Int       @default(0)
+  maxAttempts         Int       @default(3)
+  resendCooldownUntil DateTime
+  expiresAt           DateTime
+  verifiedAt          DateTime?
+  createdAt           DateTime  @default(now())
+
+  @@index([identifier, type])
+}
+
+model DataSubjectRequest {
+  id          String    @id @default(cuid())
+  userId      String
+  requestType String    // "ACCESS_EXPORT", "CORRECTION", "ERASURE"
+  status      String    @default("PENDING") // "PENDING", "IN_REVIEW", "COMPLETED", "REJECTED"
+  detailsJson String?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OperationalContactLog {
+  id                String   @id @default(cuid())
+  adminId           String
+  targetType        String   // "CUSTOMER", "SUPPLIER"
+  targetId          String
+  targetPhoneMasked String
+  purpose           String   // "DELIVERY_ISSUE", "PAYMENT_DISPUTE", "ACCOUNT_VERIFICATION", "FRAUD_INVESTIGATION", "EMERGENCY_SUPPORT", "SERVICE_REQUEST"
+  notes             String
+  initiatedAt       DateTime @default(now())
+
+  @@index([adminId])
+  @@index([targetId])
+  @@index([purpose])
+}
+
+model SavedPaymentMethodToken {
+  id              String   @id @default(cuid())
+  userId          String
+  gatewayToken    String   @unique
+  paymentProvider String   @default("RAZORPAY")
+  cardBrand       String?
+  last4           String
+  expMonth        Int?
+  expYear         Int?
+  isDefault       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
 }

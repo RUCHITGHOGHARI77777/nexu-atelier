@@ -168,10 +168,10 @@ export default function AccountOverviewPage() {
       )}
 
       {/* Quick Navigation Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link
           href="/account/orders"
-          className="p-6 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 transition-all shadow-xs hover:shadow-sm space-y-3 group"
+          className="p-5 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 transition-all shadow-xs hover:shadow-sm space-y-3 group"
         >
           <div className="w-10 h-10 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 transition-colors">
             <Package className="w-5 h-5" />
@@ -182,14 +182,14 @@ export default function AccountOverviewPage() {
               <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-950 transition-transform group-hover:translate-x-1" />
             </h3>
             <p className="text-xs text-zinc-600 mt-1">
-              Inspect order history, tracking stages, and cancellation requests.
+              Inspect order history, tracking stages, and cancellations.
             </p>
           </div>
         </Link>
 
         <Link
           href="/account/addresses"
-          className="p-6 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 transition-all shadow-xs hover:shadow-sm space-y-3 group"
+          className="p-5 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 transition-all shadow-xs hover:shadow-sm space-y-3 group"
         >
           <div className="w-10 h-10 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 transition-colors">
             <MapPin className="w-5 h-5" />
@@ -200,14 +200,32 @@ export default function AccountOverviewPage() {
               <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-950 transition-transform group-hover:translate-x-1" />
             </h3>
             <p className="text-xs text-zinc-600 mt-1">
-              Maintain home, studio, and workplace addresses for 1-click checkout.
+              Maintain delivery addresses for 1-click checkout.
+            </p>
+          </div>
+        </Link>
+
+        <Link
+          href="/account/privacy"
+          className="p-5 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 transition-all shadow-xs hover:shadow-sm space-y-3 group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-800 group-hover:text-emerald-950 transition-colors">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-zinc-950 flex items-center justify-between">
+              <span>Privacy & Security</span>
+              <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-950 transition-transform group-hover:translate-x-1" />
+            </h3>
+            <p className="text-xs text-zinc-600 mt-1">
+              DPDP Act 2023 consents, OTP verification, and payment records.
             </p>
           </div>
         </Link>
 
         <Link
           href="/catalog"
-          className="p-6 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 transition-all shadow-xs hover:shadow-sm space-y-3 group"
+          className="p-5 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 transition-all shadow-xs hover:shadow-sm space-y-3 group"
         >
           <div className="w-10 h-10 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 transition-colors">
             <Clock className="w-5 h-5" />
@@ -218,7 +236,7 @@ export default function AccountOverviewPage() {
               <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-950 transition-transform group-hover:translate-x-1" />
             </h3>
             <p className="text-xs text-zinc-600 mt-1">
-              Browse newly published artisan textiles, technical audio, and living objects.
+              Browse artisan textiles, audio, and studio items.
             </p>
           </div>
         </Link>

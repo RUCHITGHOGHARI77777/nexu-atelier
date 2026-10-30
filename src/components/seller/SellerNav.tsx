@@ -35,6 +35,7 @@ export function SellerNav({ seller }: SellerNavProps) {
     { href: "/seller/inventory", label: "Stock & Inventory", icon: Boxes },
     { href: "/seller/orders", label: "Order Fulfillment", icon: Truck },
     { href: "/seller/payouts", label: "Payouts & Finance", icon: IndianRupee },
+    { href: "/seller/privacy", label: "Privacy & Banking", icon: ShieldCheck },
     { href: "/seller/reputation", label: "Reputation & Reviews", icon: Star },
   ];
 

@@ -22,6 +22,7 @@ import {
   BarChart3,
   Truck,
   Globe,
+  IndianRupee,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 
@@ -38,6 +39,7 @@ const ADMIN_NAV_LINKS = [
   { href: "/admin/disputes", label: "Disputes & Refunds", icon: Scale },
   { href: "/admin/coupons", label: "Coupons & Offers", icon: TicketPercent },
   { href: "/admin/finances", label: "Financial Ledger", icon: Landmark },
+  { href: "/admin/finance", label: "Financial Reports & Tax", icon: IndianRupee },
   { href: "/admin/reports", label: "Reports & Analytics", icon: BarChart3 },
   { href: "/admin/automations", label: "Automations & Outbox", icon: Cpu },
   { href: "/admin/users", label: "User Accounts", icon: Users },
