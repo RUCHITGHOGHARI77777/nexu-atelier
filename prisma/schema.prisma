@@ -193,6 +193,12 @@ model User {
   reports         ReviewReport[]
   sellerFeedbacks SellerFeedback[]
   riskAssessments OrderRiskAssessment[]
+  wishlistItems   WishlistItem[]
+  recentlyViewedItems RecentlyViewedItem[]
+  searchHistoryItems SearchHistoryItem[]
+  returnRequests  ReturnRequest[]
+  supportTickets  SupportTicket[]
+  customerNotifications CustomerNotification[]
 
   @@index([email])
 }
@@ -399,6 +405,8 @@ model Product {
   cartItems                CartItem[]
   reviews                  ProductReview[]
   questions                ProductQuestion[]
+  wishlistItems            WishlistItem[]
+  recentlyViewedItems      RecentlyViewedItem[]
 
   @@index([categoryId])
   @@index([vendorId])
@@ -553,6 +561,8 @@ model Order {
   shipments               Shipment[]
   refunds                 RefundRecord[]
   sellerFeedback          SellerFeedback?
+  returnRequests          ReturnRequest[]
+  supportTickets          SupportTicket[]
 
   @@index([customerId])
   @@index([status])
@@ -590,6 +600,7 @@ model OrderItem {
   review             ProductReview?
   createdAt          DateTime          @default(now())
   payouts            VendorPayout[]
+  returnRequests     ReturnRequest[]
 
   @@index([orderId])
   @@index([vendorId])
@@ -1070,4 +1081,168 @@ model SavedPaymentMethodToken {
   createdAt       DateTime @default(now())
 
   @@index([userId])
+}
+
+enum ReturnType {
+  RETURN
+  REPLACEMENT
+}
+
+enum ReturnRequestStatus {
+  REQUESTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  PICKUP_PENDING
+  PICKED_UP
+  RECEIVED
+  REFUND_PENDING
+  REFUNDED
+  REPLACEMENT_DISPATCHED
+  CLOSED
+}
+
+model ReturnRequest {
+  id                String              @id @default(cuid())
+  customerId        String
+  customer          User                @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderId           String
+  order             Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderItemId       String
+  orderItem         OrderItem           @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  type              ReturnType          @default(RETURN)
+  status            ReturnRequestStatus @default(REQUESTED)
+  quantity          Int                 @default(1)
+  reason            String
+  explanation       String?             @db.Text
+  photosJson        String?
+  rejectionReason   String?             @db.Text
+  adminNotes        String?             @db.Text
+  trackingNumber    String?
+  courierName       String?
+  refundAmountPaise Int?
+  replacementItemId String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([customerId])
+  @@index([orderId])
+  @@index([orderItemId])
+  @@index([status])
+}
+
+enum TicketCategory {
+  ORDER_QUERY
+  DELIVERY_ISSUE
+  RETURN_REFUND
+  PAYMENT_ISSUE
+  PRODUCT_INQUIRY
+  ACCOUNT_SECURITY
+  GENERAL
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+model SupportTicket {
+  id           String          @id @default(cuid())
+  customerId   String
+  customer     User            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderId      String?
+  order        Order?          @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  ticketNumber String          @unique
+  subject      String
+  category     TicketCategory  @default(GENERAL)
+  priority     TicketPriority  @default(MEDIUM)
+  status       TicketStatus    @default(OPEN)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  messages     TicketMessage[]
+
+  @@index([customerId])
+  @@index([orderId])
+  @@index([status])
+  @@index([ticketNumber])
+}
+
+model TicketMessage {
+  id              String        @id @default(cuid())
+  ticketId        String
+  ticket          SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId        String
+  senderRole      String
+  senderName      String
+  message         String        @db.Text
+  attachmentsJson String?
+  createdAt       DateTime      @default(now())
+
+  @@index([ticketId])
+  @@index([senderId])
+}
+
+model CustomerNotification {
+  id           String    @id @default(cuid())
+  customerId   String
+  customer     User      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  title        String
+  body         String    @db.Text
+  type         String    @default("INFO")
+  link         String?
+  isRead       Boolean   @default(false)
+  readAt       DateTime?
+  metadataJson String?
+  createdAt    DateTime  @default(now())
+
+  @@index([customerId])
+  @@index([customerId, isRead])
+  @@index([createdAt])
+}
+
+model WishlistItem {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, productId])
+  @@index([customerId])
+  @@index([productId])
+}
+
+model RecentlyViewedItem {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  viewedAt   DateTime @default(now())
+
+  @@unique([customerId, productId])
+  @@index([customerId])
+  @@index([viewedAt])
+}
+
+model SearchHistoryItem {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  query      String
+  searchedAt DateTime @default(now())
+
+  @@index([customerId])
+  @@index([customerId, searchedAt])
 }

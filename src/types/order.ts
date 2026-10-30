@@ -17,6 +17,7 @@ export interface DeliveryMethod {
 }
 
 export interface OrderItem {
+  id?: string;
   productId: string;
   slug: string;
   title: string;

@@ -81,6 +81,8 @@ export interface CartItem {
   selectedColor?: ColorVariant;
   selectedSize?: string;
   selectedSku?: string;
+  variantId?: string;
+  selectedVariant?: any;
   quantity: number;
   unitPrice: number;
   lineTotal: number;

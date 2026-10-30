@@ -10,9 +10,20 @@ export interface CatalogQueryOptions {
   inStockOnly?: boolean;
   featured?: boolean;
   trending?: boolean;
-  sortBy?: "price-asc" | "price-desc" | "rating" | "newest";
+  sortBy?: "price-asc" | "price-desc" | "rating" | "newest" | "popularity" | "featured" | string;
   page?: number;
   limit?: number;
+}
+
+export function normalizeSortOption(sortBy?: string): "price-asc" | "price-desc" | "rating" | "newest" | "popularity" | "featured" {
+  if (!sortBy) return "newest";
+  const s = sortBy.toLowerCase().trim().replace(/_/g, "-");
+  if (s === "price-asc" || s === "price-low-to-high" || s === "low-to-high") return "price-asc";
+  if (s === "price-desc" || s === "price-high-to-low" || s === "high-to-low") return "price-desc";
+  if (s === "rating" || s === "top-rated" || s === "highest-rated") return "rating";
+  if (s === "popularity" || s === "best-selling" || s === "bestseller") return "popularity";
+  if (s === "featured") return "featured";
+  return "newest";
 }
 
 export interface CatalogQueryResult {
@@ -208,8 +219,9 @@ export class PrismaProductRepository {
       }
     }
 
+    const normalizedSort = normalizeSortOption(options.sortBy);
     let orderBy: any = { createdAt: "desc" };
-    switch (options.sortBy) {
+    switch (normalizedSort) {
       case "price-asc":
         orderBy = { basePricePaise: "asc" };
         break;
@@ -217,9 +229,16 @@ export class PrismaProductRepository {
         orderBy = { basePricePaise: "desc" };
         break;
       case "rating":
-        orderBy = { rating: "desc" };
+        orderBy = [{ rating: "desc" }, { ratingCount: "desc" }];
+        break;
+      case "popularity":
+        orderBy = [{ isBestseller: "desc" }, { ratingCount: "desc" }, { rating: "desc" }];
+        break;
+      case "featured":
+        orderBy = [{ isFeatured: "desc" }, { createdAt: "desc" }];
         break;
       case "newest":
+      default:
         orderBy = { createdAt: "desc" };
         break;
     }

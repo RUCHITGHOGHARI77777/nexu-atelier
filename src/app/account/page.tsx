@@ -18,6 +18,10 @@ import {
   Shield,
   X,
   AlertTriangle,
+  RotateCcw,
+  LifeBuoy,
+  Bell,
+  Heart,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
@@ -168,7 +172,7 @@ export default function AccountOverviewPage() {
       )}
 
       {/* Quick Navigation Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Link
           href="/account/orders"
           className="p-5 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 transition-all shadow-xs hover:shadow-sm space-y-3 group"
@@ -183,6 +187,60 @@ export default function AccountOverviewPage() {
             </h3>
             <p className="text-xs text-zinc-600 mt-1">
               Inspect order history, tracking stages, and cancellations.
+            </p>
+          </div>
+        </Link>
+
+        <Link
+          href="/account/returns"
+          className="p-5 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 transition-all shadow-xs hover:shadow-sm space-y-3 group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-800 group-hover:text-amber-950 transition-colors">
+            <RotateCcw className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-zinc-950 flex items-center justify-between">
+              <span>Returns & Replacements</span>
+              <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-950 transition-transform group-hover:translate-x-1" />
+            </h3>
+            <p className="text-xs text-zinc-600 mt-1">
+              Reverse pickups, quality audits, refunds, and replacements.
+            </p>
+          </div>
+        </Link>
+
+        <Link
+          href="/account/tickets"
+          className="p-5 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 transition-all shadow-xs hover:shadow-sm space-y-3 group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-800 group-hover:text-blue-950 transition-colors">
+            <LifeBuoy className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-zinc-950 flex items-center justify-between">
+              <span>Support Concierge</span>
+              <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-950 transition-transform group-hover:translate-x-1" />
+            </h3>
+            <p className="text-xs text-zinc-600 mt-1">
+              Open support tickets and converse directly with our studio team.
+            </p>
+          </div>
+        </Link>
+
+        <Link
+          href="/account/notifications"
+          className="p-5 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 transition-all shadow-xs hover:shadow-sm space-y-3 group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-800 group-hover:text-purple-950 transition-colors">
+            <Bell className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-zinc-950 flex items-center justify-between">
+              <span>Notification Center</span>
+              <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-950 transition-transform group-hover:translate-x-1" />
+            </h3>
+            <p className="text-xs text-zinc-600 mt-1">
+              Delivery milestones, return approvals, and atelier alerts.
             </p>
           </div>
         </Link>
@@ -219,24 +277,6 @@ export default function AccountOverviewPage() {
             </h3>
             <p className="text-xs text-zinc-600 mt-1">
               DPDP Act 2023 consents, OTP verification, and payment records.
-            </p>
-          </div>
-        </Link>
-
-        <Link
-          href="/catalog"
-          className="p-5 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 transition-all shadow-xs hover:shadow-sm space-y-3 group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-700 group-hover:text-zinc-950 transition-colors">
-            <Clock className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-zinc-950 flex items-center justify-between">
-              <span>Explore Catalog</span>
-              <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-950 transition-transform group-hover:translate-x-1" />
-            </h3>
-            <p className="text-xs text-zinc-600 mt-1">
-              Browse artisan textiles, audio, and studio items.
             </p>
           </div>
         </Link>

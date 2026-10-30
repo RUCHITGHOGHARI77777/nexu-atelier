@@ -54,9 +54,13 @@ export default function OrderDetailPage({ params }: Props) {
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelError, setCancelError] = useState("");
 
-  // Return / Dispute State
+  // Return / Replacement State
   const [returnModalOpen, setReturnModalOpen] = useState(false);
-  const [returnReason, setReturnReason] = useState("");
+  const [returnOrderItemId, setReturnOrderItemId] = useState("");
+  const [returnType, setReturnType] = useState<"RETURN" | "REPLACEMENT">("RETURN");
+  const [returnQuantity, setReturnQuantity] = useState(1);
+  const [returnReason, setReturnReason] = useState("Damaged in transit");
+  const [returnExplanation, setReturnExplanation] = useState("");
   const [returnEvidence, setReturnEvidence] = useState("");
   const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
   const [returnError, setReturnError] = useState("");
@@ -195,13 +199,20 @@ export default function OrderDetailPage({ params }: Props) {
     setReturnError("");
     setReturnSuccess("");
 
+    const targetItemId = returnOrderItemId || (order.items[0]?.id || order.items[0]?.productId || "");
+
     try {
-      const res = await fetch(`/api/orders/${order.id}/dispute`, {
+      const res = await fetch("/api/returns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          orderId: order.id,
+          orderItemId: targetItemId,
+          type: returnType,
+          quantity: returnQuantity,
           reason: returnReason,
-          evidenceUrl: returnEvidence || undefined,
+          explanation: returnExplanation,
+          photos: returnEvidence.trim() ? [returnEvidence.trim()] : undefined,
         }),
       });
 
@@ -212,16 +223,15 @@ export default function OrderDetailPage({ params }: Props) {
         return;
       }
 
-      setReturnSuccess(data.disputeCase?.id || "LOGGED");
+      setReturnSuccess(data.returnRequest?.id || "LOGGED");
       setIsSubmittingReturn(false);
       setTimeout(() => {
         setReturnModalOpen(false);
         setReturnSuccess("");
-        setReturnReason("");
-        setReturnEvidence("");
-      }, 3000);
+        router.push("/account/returns");
+      }, 1500);
     } catch {
-      setReturnError("Network error logging return claim.");
+      setReturnError("Network error logging return request.");
       setIsSubmittingReturn(false);
     }
   };
@@ -769,22 +779,22 @@ export default function OrderDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* Return / Dispute Modal */}
+      {/* Return / Replacement Modal */}
       {returnModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white border border-zinc-200 rounded-2xl p-6 shadow-2xl space-y-4 text-zinc-900">
-            <div className="flex items-center gap-2 text-amber-700 font-bold text-sm">
+          <div className="w-full max-w-lg bg-white border border-zinc-200 rounded-2xl p-6 shadow-2xl space-y-4 text-zinc-900 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center gap-2 text-amber-700 font-bold text-base">
               <RotateCcw className="w-5 h-5" />
-              <span>Request Return for Order {order.id}</span>
+              <span>Initiate Return or Replacement</span>
             </div>
 
             <p className="text-xs text-zinc-600 leading-relaxed">
-              Returns are covered under our 14-day patron protection guarantee. Pieces must remain unworn with original archival packaging and provenance seals.
+              Covered under our 14-day patron protection guarantee. Pieces must remain unworn with original archival packaging and provenance seals.
             </p>
 
             {returnSuccess && (
               <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs">
-                Dispute Case #{returnSuccess} logged successfully. A concierge will review your claim and schedule reverse courier pickup within 24 hours.
+                Return Request #{returnSuccess.slice(0, 8)} registered successfully. Redirecting to your returns portal...
               </div>
             )}
 
@@ -796,21 +806,92 @@ export default function OrderDetailPage({ params }: Props) {
 
             <form onSubmit={handleRequestReturn} className="space-y-4">
               <div>
-                <label className="text-[11px] font-medium text-zinc-700 block mb-1">
-                  Reason for Return or Dispute *
+                <label className="text-[11px] font-semibold text-zinc-700 block mb-1">
+                  Select Item to Return *
                 </label>
-                <textarea
-                  required
-                  rows={3}
+                <select
+                  value={returnOrderItemId || (order.items[0]?.id || order.items[0]?.productId || "")}
+                  onChange={(e) => setReturnOrderItemId(e.target.value)}
+                  className="w-full bg-zinc-50 text-xs text-zinc-900 p-2.5 rounded-lg border border-zinc-200 focus:outline-none focus:bg-white focus:border-amber-600"
+                >
+                  {order.items.map((it) => {
+                    const itemId = it.id || it.productId;
+                    return (
+                      <option key={itemId} value={itemId}>
+                        {it.title} (Qty: {it.quantity}) — Studio: {it.vendorName}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-zinc-700 block mb-1">
+                    Request Type *
+                  </label>
+                  <select
+                    value={returnType}
+                    onChange={(e) => setReturnType(e.target.value as any)}
+                    className="w-full bg-zinc-50 text-xs text-zinc-900 p-2.5 rounded-lg border border-zinc-200 focus:outline-none focus:bg-white focus:border-amber-600"
+                  >
+                    <option value="RETURN">Return for Refund</option>
+                    <option value="REPLACEMENT">Atelier Replacement</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-semibold text-zinc-700 block mb-1">
+                    Quantity *
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={
+                      order.items.find(
+                        (i) => (i.id || i.productId) === (returnOrderItemId || order.items[0]?.id || order.items[0]?.productId)
+                      )?.quantity || 1
+                    }
+                    value={returnQuantity}
+                    onChange={(e) => setReturnQuantity(Math.max(1, Number(e.target.value)))}
+                    className="w-full bg-zinc-50 text-xs text-zinc-900 p-2.5 rounded-lg border border-zinc-200 focus:outline-none focus:bg-white focus:border-amber-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-zinc-700 block mb-1">
+                  Reason for Return *
+                </label>
+                <select
                   value={returnReason}
                   onChange={(e) => setReturnReason(e.target.value)}
-                  placeholder="Describe sizing discrepancies, fabric condition, or transit damages..."
+                  className="w-full bg-zinc-50 text-xs text-zinc-900 p-2.5 rounded-lg border border-zinc-200 focus:outline-none focus:bg-white focus:border-amber-600"
+                >
+                  <option value="Damaged in transit">Damaged in transit</option>
+                  <option value="Defective or craft flaw">Defective or craft flaw</option>
+                  <option value="Incorrect size or fit">Incorrect size or fit</option>
+                  <option value="Item not as described">Item not as described</option>
+                  <option value="Missing parts or accessories">Missing parts or accessories</option>
+                  <option value="Patron change of mind">Patron change of mind</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-zinc-700 block mb-1">
+                  Additional Details / Explanation
+                </label>
+                <textarea
+                  rows={3}
+                  value={returnExplanation}
+                  onChange={(e) => setReturnExplanation(e.target.value)}
+                  placeholder="Describe the issue with the material, packaging, or fit..."
                   className="w-full bg-zinc-50 text-xs text-zinc-900 p-2.5 rounded-lg border border-zinc-200 focus:outline-none focus:bg-white focus:border-amber-600 resize-none"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-medium text-zinc-700 block mb-1">
+                <label className="text-[11px] font-semibold text-zinc-700 block mb-1">
                   Evidence Photo URL (Optional)
                 </label>
                 <input

@@ -29,7 +29,7 @@ export interface SearchOptions {
   minPrice?: number;
   maxPrice?: number;
   inStockOnly?: boolean;
-  sortBy?: "featured" | "price-asc" | "price-desc" | "rating" | "newest";
+  sortBy?: "featured" | "price-asc" | "price-desc" | "rating" | "newest" | "popularity" | string;
   page?: number;
   limit?: number;
 }
@@ -149,25 +149,22 @@ export class InternalSearchService {
       ];
     }
 
-    // Determine orderBy
-    let orderBy: any = { createdAt: "desc" };
-    switch (options.sortBy) {
-      case "price-asc":
-        orderBy = { basePricePaise: "asc" };
-        break;
-      case "price-desc":
-        orderBy = { basePricePaise: "desc" };
-        break;
-      case "rating":
-        orderBy = { rating: "desc" };
-        break;
-      case "newest":
-        orderBy = { createdAt: "desc" };
-        break;
-      case "featured":
-      default:
-        orderBy = [{ isFeatured: "desc" }, { isBestseller: "desc" }, { createdAt: "desc" }];
-        break;
+    // Determine orderBy with normalized alias handling
+    const rawSort = (options.sortBy || "featured").toLowerCase().trim().replace(/_/g, "-");
+    let orderBy: any = [{ isFeatured: "desc" }, { isBestseller: "desc" }, { createdAt: "desc" }];
+    
+    if (rawSort === "price-asc" || rawSort === "price-low-to-high" || rawSort === "low-to-high") {
+      orderBy = { basePricePaise: "asc" };
+    } else if (rawSort === "price-desc" || rawSort === "price-high-to-low" || rawSort === "high-to-low") {
+      orderBy = { basePricePaise: "desc" };
+    } else if (rawSort === "rating" || rawSort === "top-rated" || rawSort === "highest-rated") {
+      orderBy = [{ rating: "desc" }, { ratingCount: "desc" }];
+    } else if (rawSort === "popularity" || rawSort === "best-selling" || rawSort === "bestseller") {
+      orderBy = [{ isBestseller: "desc" }, { ratingCount: "desc" }, { rating: "desc" }];
+    } else if (rawSort === "newest" || rawSort === "latest") {
+      orderBy = { createdAt: "desc" };
+    } else if (rawSort === "featured") {
+      orderBy = [{ isFeatured: "desc" }, { isBestseller: "desc" }, { createdAt: "desc" }];
     }
 
     // Execute queries in parallel: items count, items list, and all products for facet aggregation

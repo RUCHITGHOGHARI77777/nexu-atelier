@@ -20,6 +20,7 @@ import {
   groupItemsByVendor,
   validateQuantity,
 } from "@/lib/cart-calculations";
+import { useAuth } from "@/context/AuthContext";
 
 interface Toast {
   id: string;
@@ -64,6 +65,7 @@ const LOCAL_STORAGE_SAVED_KEY = "nexu_marketplace_saved_v1";
 export const CartProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const { isAuthenticated } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [savedForLater, setSavedForLater] = useState<CartItem[]>([]);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
@@ -149,6 +151,53 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
       // ignore storage quota errors
     }
   }, [savedForLater, isHydrated]);
+
+  // Sync with backend on authentication
+  useEffect(() => {
+    if (!isAuthenticated || !isHydrated) return;
+
+    const syncWithBackend = async () => {
+      try {
+        const rawLocal = localStorage.getItem(LOCAL_STORAGE_CART_KEY);
+        const localItems: CartItem[] = rawLocal ? JSON.parse(rawLocal) : [];
+
+        if (localItems.length > 0) {
+          // Merge local guest cart to backend
+          const payload = localItems.map((it) => ({
+            productId: it.product.id,
+            variantId: it.selectedVariant?.id,
+            quantity: it.quantity,
+          }));
+
+          const res = await fetch("/api/cart", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "merge", items: payload }),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.items) && data.items.length > 0) {
+              setItems(data.items);
+            }
+          }
+        } else {
+          // Fetch existing cart from backend
+          const res = await fetch("/api/cart");
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.items) && data.items.length > 0) {
+              setItems(data.items);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to sync cart with backend:", err);
+      }
+    };
+
+    syncWithBackend();
+  }, [isAuthenticated, isHydrated]);
 
   const addToCart = (
     product: Product,

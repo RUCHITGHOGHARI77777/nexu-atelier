@@ -6,17 +6,19 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from "react";
 import { Product } from "@/types/marketplace";
-import { SEED_PRODUCTS } from "@/data/seedCatalog";
+import { useAuth } from "@/context/AuthContext";
 
 interface WishlistContextType {
   wishlistIds: string[];
   wishlistProducts: Product[];
   wishlistCount: number;
+  isLoading: boolean;
   isWishlisted: (productId: string) => boolean;
-  toggleWishlist: (productId: string) => void;
-  removeFromWishlist: (productId: string) => void;
+  toggleWishlist: (productId: string, product?: Product) => Promise<void>;
+  removeFromWishlist: (productId: string) => Promise<void>;
   clearWishlist: () => void;
 }
 
@@ -27,9 +29,13 @@ const LOCAL_STORAGE_WISHLIST_KEY = "nexu_marketplace_wishlist_v1";
 export const WishlistProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const { user, isAuthenticated } = useAuth();
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
+  const [wishlistProducts, setWishlistProducts] = useState<Product[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Initialize from LocalStorage
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LOCAL_STORAGE_WISHLIST_KEY);
@@ -46,6 +52,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, []);
 
+  // Sync to LocalStorage
   useEffect(() => {
     if (!isHydrated) return;
     try {
@@ -55,23 +62,130 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [wishlistIds, isHydrated]);
 
+  // When user logs in, merge local storage wishlist with database
+  const syncWithBackend = useCallback(async () => {
+    if (!isAuthenticated) return;
+    setIsLoading(true);
+    try {
+      // If we have local guest wishlist IDs, merge them
+      const localRaw = localStorage.getItem(LOCAL_STORAGE_WISHLIST_KEY);
+      const localIds: string[] = localRaw ? JSON.parse(localRaw) : [];
+
+      if (localIds.length > 0) {
+        const mergeRes = await fetch("/api/wishlist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "merge", productIds: localIds }),
+        });
+        if (mergeRes.ok) {
+          const data = await mergeRes.json();
+          if (Array.isArray(data.items)) {
+            const products = data.items.map((it: any) => it.product);
+            const ids = data.items.map((it: any) => it.productId);
+            setWishlistProducts(products);
+            setWishlistIds(ids);
+            localStorage.setItem(LOCAL_STORAGE_WISHLIST_KEY, JSON.stringify(ids));
+            setIsLoading(false);
+            return;
+          }
+        }
+      }
+
+      // Fetch user's wishlist from DB
+      const res = await fetch("/api/wishlist");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.items)) {
+          const products = data.items.map((it: any) => it.product);
+          const ids = data.items.map((it: any) => it.productId);
+          setWishlistProducts(products);
+          setWishlistIds(ids);
+          localStorage.setItem(LOCAL_STORAGE_WISHLIST_KEY, JSON.stringify(ids));
+        }
+      }
+    } catch (err) {
+      console.error("Failed to sync wishlist with server:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      syncWithBackend();
+    }
+  }, [isAuthenticated, syncWithBackend]);
+
   const isWishlisted = (productId: string) => wishlistIds.includes(productId);
 
-  const toggleWishlist = (productId: string) => {
-    setWishlistIds((prev) =>
-      prev.includes(productId)
-        ? prev.filter((id) => id !== productId)
-        : [...prev, productId]
-    );
+  const toggleWishlist = async (productId: string, product?: Product) => {
+    const isCurrentlyWishlisted = wishlistIds.includes(productId);
+
+    if (isCurrentlyWishlisted) {
+      // Remove
+      setWishlistIds((prev) => prev.filter((id) => id !== productId));
+      setWishlistProducts((prev) => prev.filter((p) => p.id !== productId));
+
+      if (isAuthenticated) {
+        try {
+          await fetch("/api/wishlist", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId }),
+          });
+        } catch (e) {
+          console.error("Wishlist remove error:", e);
+        }
+      }
+    } else {
+      // Add
+      setWishlistIds((prev) => [...prev, productId]);
+      if (product) {
+        setWishlistProducts((prev) => [...prev.filter((p) => p.id !== productId), product]);
+      }
+
+      if (isAuthenticated) {
+        try {
+          const res = await fetch("/api/wishlist", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.items)) {
+              setWishlistProducts(data.items.map((it: any) => it.product));
+            }
+          }
+        } catch (e) {
+          console.error("Wishlist add error:", e);
+        }
+      }
+    }
   };
 
-  const removeFromWishlist = (productId: string) => {
+  const removeFromWishlist = async (productId: string) => {
     setWishlistIds((prev) => prev.filter((id) => id !== productId));
+    setWishlistProducts((prev) => prev.filter((p) => p.id !== productId));
+
+    if (isAuthenticated) {
+      try {
+        await fetch("/api/wishlist", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productId }),
+        });
+      } catch (e) {
+        console.error("Wishlist remove error:", e);
+      }
+    }
   };
 
-  const clearWishlist = () => setWishlistIds([]);
-
-  const wishlistProducts = SEED_PRODUCTS.filter((p) => wishlistIds.includes(p.id));
+  const clearWishlist = () => {
+    setWishlistIds([]);
+    setWishlistProducts([]);
+    localStorage.removeItem(LOCAL_STORAGE_WISHLIST_KEY);
+  };
 
   return (
     <WishlistContext.Provider
@@ -79,6 +193,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({
         wishlistIds,
         wishlistProducts,
         wishlistCount: wishlistIds.length,
+        isLoading,
         isWishlisted,
         toggleWishlist,
         removeFromWishlist,

@@ -19,6 +19,9 @@ import {
   Truck,
   Sparkles,
   Layers,
+  Bell,
+  RotateCcw,
+  LifeBuoy,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -49,6 +52,23 @@ export const Header: React.FC = () => {
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number>(-1);
   const [categories, setCategories] = useState<NavCategory[]>([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  // Fetch unread notifications count for authenticated customer
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setUnreadNotifications(0);
+      return;
+    }
+    fetch("/api/customer/notifications?unread=true")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && typeof data.unreadCount === "number") {
+          setUnreadNotifications(data.unreadCount);
+        }
+      })
+      .catch(() => {});
+  }, [isAuthenticated]);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -456,6 +476,40 @@ export const Header: React.FC = () => {
                     </Link>
 
                     <Link
+                      href="/account/returns"
+                      onClick={() => setIsAccountMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 transition-colors"
+                    >
+                      <RotateCcw className="w-4 h-4 text-zinc-500" />
+                      <span>Returns & Replacements</span>
+                    </Link>
+
+                    <Link
+                      href="/account/tickets"
+                      onClick={() => setIsAccountMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 transition-colors"
+                    >
+                      <LifeBuoy className="w-4 h-4 text-zinc-500" />
+                      <span>Support Concierge</span>
+                    </Link>
+
+                    <Link
+                      href="/account/notifications"
+                      onClick={() => setIsAccountMenuOpen(false)}
+                      className="flex items-center justify-between px-3 py-2 text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Bell className="w-4 h-4 text-zinc-500" />
+                        <span>Notifications</span>
+                      </div>
+                      {unreadNotifications > 0 && (
+                        <span className="w-4 h-4 rounded-full bg-amber-600 text-white text-[10px] font-bold flex items-center justify-center font-mono">
+                          {unreadNotifications}
+                        </span>
+                      )}
+                    </Link>
+
+                    <Link
                       href="/account/addresses"
                       onClick={() => setIsAccountMenuOpen(false)}
                       className="flex items-center gap-2.5 px-3 py-2 text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 transition-colors"
@@ -477,6 +531,22 @@ export const Header: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* Notifications Link */}
+            {isAuthenticated && (
+              <Link
+                href="/account/notifications"
+                className="relative p-2 text-zinc-700 hover:text-zinc-950 rounded-lg hover:bg-zinc-100 transition-colors"
+                aria-label={`View notifications (${unreadNotifications} unread)`}
+              >
+                <Bell className="w-5 h-5" />
+                {unreadNotifications > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-amber-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center font-mono">
+                    {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                  </span>
+                )}
+              </Link>
+            )}
 
             {/* Wishlist Link */}
             <Link
