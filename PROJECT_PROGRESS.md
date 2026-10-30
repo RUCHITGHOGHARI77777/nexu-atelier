@@ -53,12 +53,14 @@ NEXU ATELIER is a single reusable Next.js application that hosts three role-gate
 
 ### A. Completed & Verified Features
 1. **Database Schema:** 35 PostgreSQL Prisma models covering Users, Profiles, Sellers, Categories, Products, Images, Variants, Orders, Items, Payments, Payouts, Audit Events, Disputes, and Reviews.
-2. **Automated Test Suite:** 151 passed out of 151 Vitest tests across 15 test suites with 100% pass rate.
+2. **Automated Test Suite:** 165 passed out of 165 Vitest tests across 16 test suites with 100% pass rate.
 3. **Multi-Tenant Seller Isolation:** `sellerService` strictly enforces `vendorId === seller.id` on all queries, updates, and order line fulfillment.
-4. **Admin Moderation Backend:** `adminService.moderateProduct()` provides approval, rejection with mandatory editorial notes, and security audit trail logging.
-5. **Secure Media Uploads:** `/api/upload/image` validates file types via magic bytes (JPEG, PNG, WebP), enforces a 4.0 MB limit, uses cryptographically random filenames, and enforces rate limiting.
-6. **Destructive-Seed Protection:** Fail-closed circuit breaker in `prisma/seed.ts` blocking accidental execution unless `ALLOW_SEED_RESET=true` is explicitly provided.
-7. **Zero Secrets in Repository:** Strict `.gitignore` excluding all `.env*` files (preserving only `.env.example`), `.next`, `node_modules`, `dist`, and backups.
+4. **Admin Control Center Engine:** Full operations overview, seller management, central order control, dispute & refund resolution, coupons & vouchers, double-entry financial ledger, user account governance, immutable security audit trail, category & taxonomy engine (`/admin/categories`), automations & outbox health (`/admin/automations`), and financial intelligence reports with CSV export (`/admin/reports`).
+5. **Enhanced Product Moderation & Homepage Spotlight:** In-modal multi-image gallery preview, full specifications (materials, dimensions, weight, care), complete variant matrix (sizes, stock, colors, SKUs), "Request Changes", "Reject Piece" with required feedback, and instant "Homepage Featured" toggle.
+6. **Navigation, Cart & Order Flow Hardening (Part 2):** Eliminated all 27 invalid interactive HTML nesting points (`<button>` inside `<Link>`, `<Link>` inside `<Button>`), removed artificial 700ms cart drawer delay, guarded against duplicate rapid clicks, and enabled instant Next.js router synchronization on order placement.
+7. **Secure Media Uploads:** `/api/upload/image` validates file types via magic bytes (JPEG, PNG, WebP), enforces a 4.0 MB limit, uses cryptographically random filenames, and enforces rate limiting.
+8. **Destructive-Seed Protection:** Fail-closed circuit breaker in `prisma/seed.ts` blocking accidental execution unless `ALLOW_SEED_RESET=true` is explicitly provided.
+9. **Zero Secrets in Repository:** Strict `.gitignore` excluding all `.env*` files (preserving only `.env.example`), `.next`, `node_modules`, `dist`, and backups.
 
 ### B. Incomplete Features (Queued for Resolution)
 1. **Storefront Database Disconnect (Part 5):**
@@ -68,19 +70,9 @@ NEXU ATELIER is a single reusable Next.js application that hosts three role-gate
    - Form currently auto-approves new products; needs default `PENDING_REVIEW` / `DRAFT`.
    - Edit page `/seller/products/[id]` and `GET /api/seller/products/[id]` are missing.
    - Seller table lacks status badges (`Draft`, `Under Review`, `Approved`, `Rejected`).
-3. **Admin In-Modal Preview & Featured Toggle (Part 4):**
-   - Moderation queue needs full in-modal product preview (all images, full specs, variant matrix).
-   - Homepage `isFeatured` toggle needs to be exposed in the Admin table.
-   - Controlled appearance customization (logo, favicon, site title, banners) persisted via `PlatformSetting`.
-4. **Variant-Specific Inventory Enforcement (Part 6):**
+3. **Variant-Specific Inventory Enforcement (Part 6):**
    - `ProductInfo.tsx` must enforce stock per selected size/color variant.
    - `order-service.ts` must atomically decrement `ProductVariant.stock` alongside root `Product.stock`.
-
-### C. Known Bugs Identified for Immediate Fix (Part 2)
-1. **Invalid HTML Nesting in `ProductCard.tsx`:** Quick Add `<button>` is nested inside `<Link>` (`<a>`), causing click conflicts and accidental page navigations.
-2. **Invalid HTML Nesting in Order Confirmation:** `<Link>` is nested inside `<Button>` (`<button><a href="...">...</a></button>`), causing dead clicks on "Track Order Timeline".
-3. **Artificial 700ms Delay on Add to Bag:** `ProductInfo.tsx` has a hardcoded `setTimeout(..., 700)` delaying drawer open.
-4. **Stale Client-Side Router Cache on Order Placement:** `checkout/page.tsx` does not call `router.refresh()`, and `fetch('/api/orders')` lacks `{ cache: 'no-store' }`, requiring a manual browser reload (F5) to see new orders.
 
 ---
 
@@ -97,9 +89,9 @@ NEXU ATELIER is a single reusable Next.js application that hosts three role-gate
 ## 4. Ten-Part Development Roadmap
 
 1. **PART 1: Protect Project & Establish Baseline** *(COMPLETED)*
-2. **PART 2: Fix Navigation, Cart & Live Order Refresh** *(QUEUED)*
+2. **PART 2: Fix Navigation, Cart & Live Order Refresh** *(COMPLETED)*
 3. **PART 3: Complete Supplier Product Creation, Drafts, Upload & Editing** *(QUEUED)*
-4. **PART 4: Admin Moderation & Controlled Website Settings** *(QUEUED)*
+4. **PART 4: Admin Moderation & Controlled Website Settings** *(COMPLETED)*
 5. **PART 5: Connect Public Storefront to PostgreSQL Products** *(QUEUED)*
 6. **PART 6: Correct Variant Inventory, Cart & Checkout** *(QUEUED)*
 7. **PART 7: Complete Shopping & Supplier Fulfillment Journey** *(QUEUED)*
