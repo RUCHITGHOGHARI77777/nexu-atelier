@@ -222,11 +222,9 @@ export default function NewProductPage() {
           </div>
         </div>
 
-        <Link href="/seller/products">
-          <Button variant="outline" size="sm">
-            Cancel
-          </Button>
-        </Link>
+        <Button href="/seller/products" variant="outline" size="sm">
+          Cancel
+        </Button>
       </div>
 
       {/* Error Alert */}
@@ -584,11 +582,9 @@ export default function NewProductPage() {
 
         {/* Action Controls */}
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-800">
-          <Link href="/seller/products">
-            <Button type="button" variant="outline" size="sm">
-              Discard Changes
-            </Button>
-          </Link>
+          <Button href="/seller/products" type="button" variant="outline" size="sm">
+            Discard Changes
+          </Button>
           <Button
             type="submit"
             size="sm"

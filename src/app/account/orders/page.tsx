@@ -30,7 +30,13 @@ export default function CustomerOrdersPage() {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const res = await fetch("/api/orders");
+      const res = await fetch("/api/orders", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      });
       if (res.ok) {
         const data = await res.json();
         setOrders(data.orders || []);
@@ -95,11 +101,14 @@ export default function CustomerOrdersPage() {
               Explore the studio catalog to discover artisan handloomed pieces and precision acoustics.
             </p>
           </div>
-          <Button variant="primary" size="sm">
-            <Link href="/catalog" className="flex items-center gap-1.5">
-              <span>Browse Catalog</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+          <Button
+            variant="primary"
+            size="sm"
+            href="/catalog"
+            className="flex items-center gap-1.5"
+          >
+            <span>Browse Catalog</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </Button>
         </div>
       ) : (

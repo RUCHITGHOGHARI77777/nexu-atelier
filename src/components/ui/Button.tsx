@@ -1,10 +1,13 @@
 import React, { ButtonHTMLAttributes, forwardRef } from "react";
+import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive" | "accent";
   size?: "sm" | "md" | "lg" | "icon";
   isLoading?: boolean;
+  href?: string;
+  target?: string;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -16,6 +19,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       isLoading = false,
       disabled,
       children,
+      href,
+      target,
       ...props
     },
     ref
@@ -45,11 +50,27 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       icon: "w-10 h-10 p-0 flex items-center justify-center",
     };
 
+    const combinedClassName = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
+
+    if (href) {
+      return (
+        <Link
+          href={href}
+          target={target}
+          className={combinedClassName}
+          onClick={props.onClick as any}
+        >
+          {isLoading && <Loader2 className="w-4 h-4 animate-spin text-current" />}
+          {children}
+        </Link>
+      );
+    }
+
     return (
       <button
         ref={ref}
         disabled={disabled || isLoading}
-        className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+        className={combinedClassName}
         {...props}
       >
         {isLoading && <Loader2 className="w-4 h-4 animate-spin text-current" />}

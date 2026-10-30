@@ -102,12 +102,10 @@ export default function SellerDashboardPage() {
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
             <span>Refresh</span>
           </Button>
-          <Link href="/seller/products/new">
-            <Button size="sm" className="flex items-center gap-1.5">
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>Create Piece</span>
-            </Button>
-          </Link>
+          <Button href="/seller/products/new" size="sm" className="flex items-center gap-1.5">
+            <PlusCircle className="w-3.5 h-3.5" />
+            <span>Create Piece</span>
+          </Button>
         </div>
       </div>
 

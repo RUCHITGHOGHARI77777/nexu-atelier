@@ -101,19 +101,19 @@ function ConfirmationContent() {
 
         <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
           {order && (
-            <Button variant="primary" size="md">
-              <Link
-                href={`/account/orders/${order.id}`}
-                className="flex items-center gap-2"
-              >
-                <span>Track Order Timeline</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+            <Button
+              variant="primary"
+              size="md"
+              href={`/account/orders/${order.id}`}
+              className="flex items-center gap-2"
+            >
+              <span>Track Order Timeline</span>
+              <ArrowRight className="w-4 h-4" />
             </Button>
           )}
 
-          <Button variant="outline" size="md">
-            <Link href="/catalog">Continue Browsing</Link>
+          <Button variant="outline" size="md" href="/catalog">
+            Continue Browsing
           </Button>
         </div>
       </div>

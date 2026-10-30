@@ -54,14 +54,14 @@ export const ArtisanSpotlight: React.FC = () => {
             </div>
 
             <div>
-              <Button variant="primary" size="md">
-                <Link
-                  href="/catalog?category=Apparel"
-                  className="flex items-center gap-2"
-                >
-                  <span>Explore Solstice Studio Pieces</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+              <Button
+                variant="primary"
+                size="md"
+                href="/catalog?category=Apparel"
+                className="flex items-center gap-2"
+              >
+                <span>Explore Solstice Studio Pieces</span>
+                <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
           </div>

@@ -64,17 +64,22 @@ export default function AdminLayout({
             </p>
           </div>
           <div className="pt-2 flex flex-col gap-2">
-            <Link href="/login">
-              <Button size="sm" className="w-full bg-zinc-100 text-zinc-900 hover:bg-white flex items-center justify-center gap-1.5">
-                <LogIn className="w-3.5 h-3.5" />
-                Sign In as Administrator
-              </Button>
-            </Link>
-            <Link href="/">
-              <Button variant="outline" size="sm" className="w-full">
-                Return to Storefront
-              </Button>
-            </Link>
+            <Button
+              href="/login"
+              size="sm"
+              className="w-full bg-zinc-100 text-zinc-900 hover:bg-white flex items-center justify-center gap-1.5"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              Sign In as Administrator
+            </Button>
+            <Button
+              href="/"
+              variant="outline"
+              size="sm"
+              className="w-full"
+            >
+              Return to Storefront
+            </Button>
           </div>
           <p className="text-[10px] text-zinc-500 font-mono pt-2 border-t border-zinc-800/60">
             Pre-seeded admin: <strong className="text-zinc-300">admin@nexu.studio</strong> / <strong className="text-zinc-300">AdminPass123!</strong>

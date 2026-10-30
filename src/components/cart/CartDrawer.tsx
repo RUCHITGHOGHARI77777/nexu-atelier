@@ -142,10 +142,11 @@ export const CartDrawer: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
+                  href="/catalog"
                   onClick={closeCartDrawer}
                   className="mt-2 border-zinc-300 text-zinc-800 hover:bg-zinc-100"
                 >
-                  <Link href="/catalog">Explore Catalog</Link>
+                  Explore Catalog
                 </Button>
               </div>
             ) : (

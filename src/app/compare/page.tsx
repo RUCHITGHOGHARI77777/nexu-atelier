@@ -26,11 +26,9 @@ export default function ComparePage() {
             You have not selected any artisan pieces to compare. Select up to 4 pieces from the studio catalog to inspect materials, dimensions, and craft specifications side-by-side.
           </p>
         </div>
-        <Link href="/catalog">
-          <Button variant="primary" size="md">
-            <span>Browse Studio Catalog</span>
-          </Button>
-        </Link>
+        <Button variant="primary" size="md" href="/catalog">
+          <span>Browse Studio Catalog</span>
+        </Button>
       </div>
     );
   }
@@ -61,11 +59,9 @@ export default function ComparePage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="/catalog">
-            <Button variant="outline" size="sm" className="text-xs">
-              + Add Another Piece
-            </Button>
-          </Link>
+          <Button variant="outline" size="sm" className="text-xs" href="/catalog">
+            + Add Another Piece
+          </Button>
           <Button
             variant="ghost"
             size="sm"

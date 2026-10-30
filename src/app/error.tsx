@@ -47,11 +47,9 @@ export default function ErrorBoundary({
             <span>Try Again</span>
           </Button>
 
-          <Button variant="outline" size="md">
-            <Link href="/" className="flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Home</span>
-            </Link>
+          <Button variant="outline" size="md" href="/" className="flex items-center gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Home</span>
           </Button>
         </div>
       </div>

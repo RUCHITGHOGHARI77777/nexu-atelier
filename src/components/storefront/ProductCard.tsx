@@ -30,6 +30,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isAdded || product.stock === 0) return;
     const success = addToCart(product, { color: selectedColor });
     if (success) {
       setIsAdded(true);
@@ -49,20 +50,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <div className="group relative flex flex-col justify-between rounded-2xl bg-white border border-zinc-200 hover:border-zinc-300 hover:shadow-lg transition-all duration-300 overflow-hidden text-zinc-900">
       {/* Visual Image Showcase */}
-      <Link
-        href={`/product/${product.slug}`}
-        className="relative block w-full aspect-[4/5] bg-zinc-50 overflow-hidden"
-      >
-        <ImageWithFallback
-          src={selectedColor?.image || product.images[0]}
-          alt={product.title}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-          className="object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
-        />
+      <div className="relative block w-full aspect-[4/5] bg-zinc-50 overflow-hidden">
+        <Link
+          href={`/product/${product.slug}`}
+          className="absolute inset-0 z-0"
+          aria-label={`View ${product.title}`}
+        >
+          <ImageWithFallback
+            src={selectedColor?.image || product.images[0]}
+            alt={product.title}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
+          />
+        </Link>
 
         {/* Top Badges */}
-        <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2 pointer-events-none">
+        <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2 pointer-events-none z-10">
           <div className="flex flex-wrap gap-1.5">
             {product.isNewArrival && (
               <Badge variant="neutral" size="sm">
@@ -122,10 +126,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
 
         {/* Quick Add Overlay on Desktop Hover */}
-        <div className="absolute inset-x-3 bottom-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden sm:block">
+        <div className="absolute inset-x-3 bottom-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden sm:block z-10">
           <button
             onClick={handleQuickAdd}
-            disabled={product.stock === 0}
+            disabled={product.stock === 0 || isAdded}
             className="w-full py-2.5 px-4 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] cursor-pointer"
           >
             {isAdded ? (
@@ -143,7 +147,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             )}
           </button>
         </div>
-      </Link>
+      </div>
 
       {/* Product Details Section */}
       <div className="p-4 flex-1 flex flex-col justify-between space-y-3 bg-white">
@@ -218,8 +222,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="sm:hidden pt-2">
           <button
             onClick={handleQuickAdd}
-            disabled={product.stock === 0}
-            className="w-full py-2 px-3 rounded-lg bg-zinc-900 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+            disabled={product.stock === 0 || isAdded}
+            className="w-full py-2 px-3 rounded-lg bg-zinc-900 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isAdded ? "Added to Bag" : "Add to Bag"}
           </button>

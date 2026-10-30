@@ -282,11 +282,9 @@ export default function OrderDetailPage({ params }: Props) {
           <h2 className="text-xl font-bold text-zinc-950">Order Retrieval Error</h2>
           <p className="text-xs text-zinc-600">{error || "Unable to display this order."}</p>
         </div>
-        <Link href="/account/orders">
-          <Button variant="outline" size="sm">
-            ← Return to Orders Ledger
-          </Button>
-        </Link>
+        <Button variant="outline" size="sm" href="/account/orders">
+          ← Return to Orders Ledger
+        </Button>
       </div>
     );
   }

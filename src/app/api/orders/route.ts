@@ -3,6 +3,9 @@ import { getSessionUser } from "@/lib/server/session-helper";
 import { orderService } from "@/lib/server/order-service";
 import { checkRateLimit, getClientIp, SECURITY_RATE_LIMITS } from "@/lib/server/rate-limiter";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   const user = await getSessionUser();
   if (!user) {
@@ -10,7 +13,16 @@ export async function GET() {
   }
 
   const orders = await orderService.getOrders(user.id);
-  return NextResponse.json({ orders });
+  return NextResponse.json(
+    { orders },
+    {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    }
+  );
 }
 
 export async function POST(request: NextRequest) {

@@ -354,12 +354,10 @@ SLS-INDIGO-L,10,5`;
               You haven&apos;t added any products or variants yet. Publish a piece to begin managing inventory.
             </p>
           </div>
-          <Link href="/seller/products/new">
-            <Button size="sm" className="mt-2 bg-zinc-100 text-zinc-900 hover:bg-white">
-              <Plus className="w-4 h-4 mr-1.5" />
-              Publish First Piece
-            </Button>
-          </Link>
+          <Button href="/seller/products/new" size="sm" className="mt-2 bg-zinc-100 text-zinc-900 hover:bg-white">
+            <Plus className="w-4 h-4 mr-1.5" />
+            Publish First Piece
+          </Button>
         </div>
       ) : (
         <div className="border border-zinc-800 rounded overflow-hidden">

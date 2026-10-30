@@ -81,6 +81,7 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
   };
 
   const handleAddToCart = () => {
+    if (isAdded) return;
     if (product.availableSizes && !selectedSize) {
       setValidationError("Please select a size before adding to bag");
       return;
@@ -95,10 +96,10 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
 
     if (success) {
       setIsAdded(true);
+      openCartDrawer();
       setTimeout(() => {
         setIsAdded(false);
-        openCartDrawer();
-      }, 700);
+      }, 1500);
     }
   };
 
@@ -360,7 +361,7 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
             variant="outline"
             size="lg"
             onClick={handleAddToCart}
-            disabled={product.stock === 0}
+            disabled={product.stock === 0 || isAdded}
             className="w-full flex items-center justify-center gap-2 font-semibold bg-white hover:bg-zinc-50 text-zinc-900 border border-zinc-300 shadow-sm py-3 rounded-xl cursor-pointer"
           >
             {isAdded ? (

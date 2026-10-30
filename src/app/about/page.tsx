@@ -99,11 +99,12 @@ export default function AboutPage() {
         </div>
 
         <div className="pt-4 flex justify-start">
-          <Link href="/catalog">
-            <Button className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold text-xs px-6 py-2.5">
-              Explore All Curated Pieces <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-            </Button>
-          </Link>
+          <Button
+            href="/catalog"
+            className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold text-xs px-6 py-2.5"
+          >
+            Explore All Curated Pieces <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+          </Button>
         </div>
       </div>
     </div>

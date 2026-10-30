@@ -247,6 +247,7 @@ export default function CheckoutPage() {
 
       // Success: clear cart and route to confirmation
       clearCart();
+      router.refresh();
       router.push(`/checkout/confirmation?orderId=${data.order.id}`);
     } catch {
       setErrorMessage("Network error placing order. Please try again.");

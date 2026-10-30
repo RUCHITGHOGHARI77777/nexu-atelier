@@ -137,12 +137,10 @@ export default function SellerProductsPage() {
             Refresh
           </Button>
 
-          <Link href="/seller/products/new">
-            <Button size="sm" className="flex items-center gap-1.5 bg-zinc-100 text-zinc-900 hover:bg-white">
-              <Plus className="w-4 h-4" />
-              New Piece
-            </Button>
-          </Link>
+          <Button href="/seller/products/new" size="sm" className="flex items-center gap-1.5 bg-zinc-100 text-zinc-900 hover:bg-white">
+            <Plus className="w-4 h-4" />
+            New Piece
+          </Button>
         </div>
       </div>
 
@@ -298,12 +296,10 @@ export default function SellerProductsPage() {
                 : "You haven't listed any creations in your atelier yet. Start by crafting your first catalog entry."}
             </p>
           </div>
-          <Link href="/seller/products/new">
-            <Button size="sm" className="mt-2 bg-zinc-100 text-zinc-900 hover:bg-white">
-              <Plus className="w-4 h-4 mr-1.5" />
-              Craft New Piece
-            </Button>
-          </Link>
+          <Button href="/seller/products/new" size="sm" className="mt-2 bg-zinc-100 text-zinc-900 hover:bg-white">
+            <Plus className="w-4 h-4 mr-1.5" />
+            Craft New Piece
+          </Button>
         </div>
       ) : (
         <div className="border border-zinc-800 rounded overflow-hidden">

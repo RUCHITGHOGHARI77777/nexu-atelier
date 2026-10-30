@@ -28,11 +28,14 @@ export default function WishlistPage() {
           </p>
         </div>
         <div>
-          <Button variant="primary" size="md">
-            <Link href="/catalog" className="flex items-center gap-2">
-              <span>Explore Studio Catalog</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+          <Button
+            variant="primary"
+            size="md"
+            href="/catalog"
+            className="flex items-center gap-2"
+          >
+            <span>Explore Studio Catalog</span>
+            <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
       </div>

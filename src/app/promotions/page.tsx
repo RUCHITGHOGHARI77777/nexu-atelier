@@ -186,11 +186,12 @@ export default function PromotionsPage() {
           <h3 className="text-lg font-serif text-white">Ready to commission your first piece?</h3>
           <p className="text-xs text-zinc-400 mt-1">Apply your copied voucher code in the checkout review drawer.</p>
         </div>
-        <Link href="/catalog">
-          <Button className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold text-xs px-6 py-2.5">
-            Browse Curated Catalog <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-          </Button>
-        </Link>
+        <Button
+          href="/catalog"
+          className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold text-xs px-6 py-2.5"
+        >
+          Browse Curated Catalog <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+        </Button>
       </div>
     </div>
   );

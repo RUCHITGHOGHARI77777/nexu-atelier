@@ -24,15 +24,18 @@ export default function NotFound() {
         </div>
 
         <div className="flex items-center justify-center gap-3">
-          <Button variant="primary" size="md">
-            <Link href="/catalog" className="flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              <span>Return to Catalog</span>
-            </Link>
+          <Button
+            variant="primary"
+            size="md"
+            href="/catalog"
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Return to Catalog</span>
           </Button>
 
-          <Button variant="outline" size="md">
-            <Link href="/">Storefront Home</Link>
+          <Button variant="outline" size="md" href="/">
+            Storefront Home
           </Button>
         </div>
       </div>
