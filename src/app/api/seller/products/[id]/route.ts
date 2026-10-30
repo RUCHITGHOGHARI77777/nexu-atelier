@@ -8,6 +8,34 @@ interface Params {
   };
 }
 
+export async function GET(_request: Request, { params }: Params) {
+  const auth = await getAuthenticatedSeller();
+  if (!auth) {
+    return NextResponse.json({ error: "Unauthorized access." }, { status: 401 });
+  }
+
+  if (!auth.seller) {
+    return NextResponse.json({ error: "Seller profile not found." }, { status: 403 });
+  }
+
+  try {
+    const result = await sellerService.getProductById(auth.seller.id, params.id);
+    if (!result.success || !result.product) {
+      return NextResponse.json(
+        { error: result.error || "Product not found or access denied." },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ product: result.product });
+  } catch {
+    return NextResponse.json(
+      { error: "Server error retrieving product details." },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(request: Request, { params }: Params) {
   const auth = await getAuthenticatedSeller();
   if (!auth) {

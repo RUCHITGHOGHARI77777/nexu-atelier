@@ -19,12 +19,14 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("q") || undefined;
     const category = searchParams.get("category") || undefined;
+    const status = searchParams.get("status") || undefined;
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "20", 10);
 
     const result = await sellerService.getSellerProducts(auth.seller.id, {
       search,
       category,
+      status,
       page,
       limit,
     });

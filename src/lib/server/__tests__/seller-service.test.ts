@@ -141,6 +141,14 @@ describe("sellerService - Onboarding & Studio Approval Enforcement", () => {
     expect(res.product?.title).toBe(uniqueTitle);
     expect(res.product?.basePrice).toBe(3800);
     expect(res.product?.availableSizes).toEqual(["S", "M"]);
+
+    // Clean up created product to keep test environment hermetic
+    if (res.product?.id) {
+      await prisma.productVariant.deleteMany({ where: { productId: res.product.id } });
+      await prisma.productImage.deleteMany({ where: { productId: res.product.id } });
+      await prisma.auditEvent.deleteMany({ where: { entityId: res.product.id } });
+      await prisma.product.delete({ where: { id: res.product.id } });
+    }
   });
 });
 

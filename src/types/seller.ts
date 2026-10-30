@@ -58,12 +58,71 @@ export interface SellerProductInput {
   stock: number;
   lowStockThreshold?: number;
   isPublished?: boolean;
+  action?: "DRAFT" | "SUBMIT";
+  brand?: string;
+  dispatchEstimate?: string;
   material?: string;
   dimensions?: string;
   weight?: string;
   careInstructions?: string;
   images: string[];
   variants?: SellerProductVariantInput[];
+}
+
+export interface SellerProductDetailView {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  categoryId: string;
+  categoryName: string;
+  vendorId: string;
+  basePrice: number;
+  compareAtPrice: number | null;
+  stock: number;
+  lowStockThreshold: number;
+  isPublished: boolean;
+  approvalStatus: ProductApprovalStatus;
+  moderationNotes: string | null;
+  material: string | null;
+  dimensions: string | null;
+  weight: string | null;
+  careInstructions: string | null;
+  images: string[];
+  variants: {
+    id: string;
+    sku: string;
+    variantType: "COLOR" | "SIZE";
+    name: string;
+    value: string;
+    hexCode?: string | null;
+    imageUrl?: string | null;
+    stock: number;
+    additionalPrice: number;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SellerProductListItem {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle: string;
+  category: string;
+  categoryId: string;
+  basePrice: number;
+  compareAtPrice?: number | null;
+  stock: number;
+  images: string[];
+  variantsCount: number;
+  availableColors?: { name: string; hex: string; image?: string }[];
+  availableSizes?: string[];
+  approvalStatus: ProductApprovalStatus;
+  isPublished: boolean;
+  moderationNotes: string | null;
+  createdAt: string;
 }
 
 export interface SellerOrderLine {

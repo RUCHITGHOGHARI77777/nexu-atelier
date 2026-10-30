@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -8,34 +8,39 @@ import {
   Package,
   Plus,
   Trash2,
-  Image as ImageIcon,
   AlertCircle,
   CheckCircle2,
   Sparkles,
   Info,
+  Clock,
+  ShieldCheck,
+  Save,
 } from "lucide-react";
 import { SellerProductInput, SellerProductVariantInput } from "@/types/seller";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ProductImageUploader } from "@/components/seller/ProductImageUploader";
+import { formatCurrency } from "@/lib/formatters";
 
-const CATEGORY_OPTIONS = [
-  { id: "cat_apparel", name: "Apparel & Heritage Textiles" },
-  { id: "cat_audio", name: "Audio & High Fidelity Electronics" },
-  { id: "cat_home", name: "Home Objects & Living" },
-  { id: "cat_footwear", name: "Footwear & Fine Leathercraft" },
-  { id: "cat_essentials", name: "Modern Essentials & Accessories" },
-];
+interface CategoryOption {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 export default function NewProductPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
 
   // Form State
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
   const [description, setDescription] = useState("");
-  const [categoryId, setCategoryId] = useState("cat_apparel");
+  const [categoryId, setCategoryId] = useState("");
+  const [brand, setBrand] = useState("");
+  const [sku, setSku] = useState("");
   const [basePrice, setBasePrice] = useState<number>(4500);
   const [compareAtPrice, setCompareAtPrice] = useState<number | undefined>(6000);
   const [stock, setStock] = useState<number>(20);
@@ -46,13 +51,12 @@ export default function NewProductPage() {
   const [dimensions, setDimensions] = useState("180cm x 70cm");
   const [weight, setWeight] = useState("240g");
   const [careInstructions, setCareInstructions] = useState("Dry clean only or delicate cold hand wash");
+  const [dispatchEstimate, setDispatchEstimate] = useState("Ships in 2-3 business days");
 
-  // Imagery
+  // Imagery (default to empty or demo image)
   const [images, setImages] = useState<string[]>([
     "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1200&q=80",
   ]);
-  const [newImageUrl, setNewImageUrl] = useState("");
 
   // Variants
   const [variants, setVariants] = useState<SellerProductVariantInput[]>([
@@ -82,23 +86,42 @@ export default function NewProductPage() {
     },
   ]);
 
-  const handleAddImage = () => {
-    if (!newImageUrl.trim()) return;
-    try {
-      new URL(newImageUrl.trim());
-      setImages([...images, newImageUrl.trim()]);
-      setNewImageUrl("");
-    } catch {
-      setErrorMessage("Please enter a valid HTTP/HTTPS image URL.");
+  // Load categories from database
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const res = await fetch("/api/categories");
+        if (res.ok) {
+          const data = await res.json();
+          const list: CategoryOption[] = data.categories || [];
+          setCategories(list);
+          if (list.length > 0 && !categoryId) {
+            setCategoryId(list[0].id);
+          }
+        }
+      } catch {
+        // Fallback to static category IDs if network fails
+        setCategories([
+          { id: "cat_apparel", name: "Apparel & Heritage Textiles", slug: "apparel" },
+          { id: "cat_audio", name: "Audio & High Fidelity Electronics", slug: "audio-tech" },
+          { id: "cat_home", name: "Home Objects & Living", slug: "objects-living" },
+          { id: "cat_footwear", name: "Footwear & Fine Leathercraft", slug: "footwear" },
+          { id: "cat_essentials", name: "Modern Essentials & Accessories", slug: "accessories" },
+        ]);
+        setCategoryId("cat_apparel");
+      }
     }
-  };
+    loadCategories();
+  }, []);
 
-  const handleRemoveImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index));
-  };
+  // Compute discount percentage preview
+  const discountPercent =
+    compareAtPrice && compareAtPrice > basePrice
+      ? Math.round(((compareAtPrice - basePrice) / compareAtPrice) * 100)
+      : 0;
 
   const handleAddVariant = () => {
-    const defaultSku = `SKU-${Date.now().toString().slice(-4)}`;
+    const defaultSku = `${sku || "SKU"}-${Date.now().toString().slice(-4)}`;
     setVariants([
       ...variants,
       {
@@ -117,14 +140,17 @@ export default function NewProductPage() {
     setVariants(variants.filter((_, i) => i !== index));
   };
 
-  const handleUpdateVariant = (index: number, field: keyof SellerProductVariantInput, val: any) => {
+  const handleUpdateVariant = (
+    index: number,
+    field: keyof SellerProductVariantInput,
+    val: any
+  ) => {
     const updated = [...variants];
     updated[index] = { ...updated[index], [field]: val };
     setVariants(updated);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (action: "DRAFT" | "SUBMIT") => {
     setErrorMessage(null);
 
     // Validation
@@ -133,11 +159,11 @@ export default function NewProductPage() {
       return;
     }
     if (!description.trim() || description.trim().length < 10) {
-      setErrorMessage("Description must be at least 10 characters.");
+      setErrorMessage("Description must be at least 10 characters long.");
       return;
     }
     if (basePrice <= 0) {
-      setErrorMessage("Base price must be greater than zero.");
+      setErrorMessage("Selling base price must be greater than zero.");
       return;
     }
     if (stock < 0) {
@@ -145,7 +171,11 @@ export default function NewProductPage() {
       return;
     }
     if (images.length === 0) {
-      setErrorMessage("Please provide at least one product imagery URL.");
+      setErrorMessage("Please upload or add at least one product showcase photograph.");
+      return;
+    }
+    if (!categoryId) {
+      setErrorMessage("Please select a valid marketplace category.");
       return;
     }
 
@@ -153,7 +183,7 @@ export default function NewProductPage() {
     const skuSet = new Set<string>();
     for (const v of variants) {
       if (!v.sku || !v.sku.trim()) {
-        setErrorMessage("All variants must have a defined SKU.");
+        setErrorMessage("All configured variants must have a defined SKU.");
         return;
       }
       if (skuSet.has(v.sku.trim().toUpperCase())) {
@@ -165,13 +195,16 @@ export default function NewProductPage() {
 
     const payload: SellerProductInput = {
       title: title.trim(),
-      subtitle: subtitle.trim(),
+      subtitle: subtitle.trim() || (brand ? `Crafted by ${brand}` : "Handcrafted studio piece"),
       description: description.trim(),
       categoryId,
       basePrice: Number(basePrice),
       compareAtPrice: compareAtPrice ? Number(compareAtPrice) : undefined,
       stock: Number(stock),
       lowStockThreshold: Number(lowStockThreshold),
+      action,
+      brand: brand.trim() || undefined,
+      dispatchEstimate: dispatchEstimate.trim() || undefined,
       material: material.trim(),
       dimensions: dimensions.trim(),
       weight: weight.trim(),
@@ -217,7 +250,7 @@ export default function NewProductPage() {
               New Creation
             </span>
             <h1 className="text-xl font-semibold tracking-tight text-zinc-100">
-              Publish Atelier Piece
+              Publish Atelier Creation
             </h1>
           </div>
         </div>
@@ -225,6 +258,19 @@ export default function NewProductPage() {
         <Button href="/seller/products" variant="outline" size="sm">
           Cancel
         </Button>
+      </div>
+
+      {/* Moderation Workflow Notice */}
+      <div className="p-4 bg-zinc-900/60 border border-zinc-800 rounded-xl flex items-start gap-3 text-xs text-zinc-400">
+        <ShieldCheck className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+        <div>
+          <span className="font-semibold text-zinc-200 block font-mono text-[11px] uppercase">
+            Platform Quality & Moderation Governance
+          </span>
+          <p className="mt-0.5 leading-relaxed">
+            All submitted products enter <strong className="text-zinc-300">Pending Review</strong> and remain completely hidden from the public storefront until verified by the platform Admin. You can save your work as a <strong className="text-zinc-300">Draft</strong> at any point before submitting.
+          </p>
+        </div>
       </div>
 
       {/* Error Alert */}
@@ -235,9 +281,9 @@ export default function NewProductPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="space-y-8">
         {/* Section 1: Basic Information */}
-        <div className="p-6 bg-zinc-900/30 border border-zinc-800 rounded space-y-4">
+        <div className="p-6 bg-zinc-900/30 border border-zinc-800 rounded-2xl space-y-4">
           <h2 className="text-sm font-medium text-zinc-200 uppercase tracking-wider font-mono flex items-center gap-2">
             <Package className="w-4 h-4 text-zinc-400" />
             1. Essential Narrative & Identification
@@ -251,104 +297,132 @@ export default function NewProductPage() {
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Hand-Spun Eri Silk Kimono Jacket"
+                placeholder="e.g. Indigo Dyed Handloom Stole"
                 required
               />
             </div>
 
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Subtitle / Collection Tag
+                Subtitle / Maker Tagline
               </label>
               <Input
                 value={subtitle}
                 onChange={(e) => setSubtitle(e.target.value)}
-                placeholder="e.g. Autumn Equinox 2026 Archive"
+                placeholder="e.g. Master-woven botanical dyed organic wool"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Curated Category <span className="text-rose-400">*</span>
+                Marketplace Category <span className="text-rose-400">*</span>
               </label>
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 font-sans"
+                className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
               >
-                {CATEGORY_OPTIONS.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Brand / Maker Workshop
+              </label>
+              <Input
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+                placeholder="e.g. Solstice Loom Studio"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Primary Master SKU
+              </label>
+              <Input
+                value={sku}
+                onChange={(e) => setSku(e.target.value.toUpperCase())}
+                placeholder="e.g. SLS-IND-01"
+              />
             </div>
           </div>
 
           <div>
             <label className="block text-xs font-mono text-zinc-400 mb-1">
-              Craft Story & Editorial Description <span className="text-rose-400">*</span>
+              Curatorial Narrative & Details <span className="text-rose-400">*</span>
             </label>
             <textarea
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the provenance, weave technique, artisan mastery, and tactile experience..."
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500 font-sans resize-y"
+              placeholder="Detail the craft heritage, fiber provenance, weaving technique, and tactile feel..."
+              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
               required
             />
           </div>
         </div>
 
-        {/* Section 2: Pricing & Inventory */}
-        <div className="p-6 bg-zinc-900/30 border border-zinc-800 rounded space-y-4">
-          <h2 className="text-sm font-medium text-zinc-200 uppercase tracking-wider font-mono">
-            2. Valuation & Inventory Controls
+        {/* Section 2: Direct Device Imagery Upload */}
+        <div className="p-6 bg-zinc-900/30 border border-zinc-800 rounded-2xl">
+          <ProductImageUploader images={images} onChange={setImages} maxImages={8} />
+        </div>
+
+        {/* Section 3: Commercial Valuation & Stock */}
+        <div className="p-6 bg-zinc-900/30 border border-zinc-800 rounded-2xl space-y-4">
+          <h2 className="text-sm font-medium text-zinc-200 uppercase tracking-wider font-mono flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-zinc-400" />
+            3. Commercial Valuation & Inventory Balance
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Base Price (₹) <span className="text-rose-400">*</span>
+                Selling Price (INR) <span className="text-rose-400">*</span>
               </label>
               <Input
                 type="number"
-                min={1}
+                min="1"
+                step="1"
                 value={basePrice}
                 onChange={(e) => setBasePrice(Number(e.target.value))}
                 required
               />
-              <span className="text-[10px] text-zinc-500 mt-1 block">Patron retail value</span>
             </div>
 
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Compare-at MRP (₹)
+                Maximum Retail Price / MRP (INR)
               </label>
               <Input
                 type="number"
-                min={1}
+                min="0"
+                step="1"
                 value={compareAtPrice || ""}
                 onChange={(e) => setCompareAtPrice(e.target.value ? Number(e.target.value) : undefined)}
-                placeholder="Optional"
+                placeholder="Optional benchmark MRP"
               />
-              <span className="text-[10px] text-zinc-500 mt-1 block">Strike-through benchmark</span>
             </div>
 
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Total Stock <span className="text-rose-400">*</span>
+                Total Units Ready to Ship <span className="text-rose-400">*</span>
               </label>
               <Input
                 type="number"
-                min={0}
+                min="0"
+                step="1"
                 value={stock}
                 onChange={(e) => setStock(Number(e.target.value))}
                 required
               />
-              <span className="text-[10px] text-zinc-500 mt-1 block">Available ready units</span>
             </div>
 
             <div>
@@ -357,221 +431,212 @@ export default function NewProductPage() {
               </label>
               <Input
                 type="number"
-                min={1}
+                min="1"
+                step="1"
                 value={lowStockThreshold}
                 onChange={(e) => setLowStockThreshold(Number(e.target.value))}
               />
-              <span className="text-[10px] text-zinc-500 mt-1 block">Alert trigger point</span>
             </div>
+          </div>
+
+          {/* Real-time Discount Percentage Preview */}
+          <div className="p-3.5 bg-zinc-950/80 border border-zinc-800/80 rounded-xl flex items-center justify-between text-xs">
+            <div className="flex items-center gap-3">
+              <span className="text-zinc-400 font-mono">Storefront Pricing Display:</span>
+              <span className="font-bold text-zinc-100 font-mono text-sm">
+                {formatCurrency(basePrice)}
+              </span>
+              {compareAtPrice && compareAtPrice > basePrice && (
+                <span className="text-zinc-500 font-mono line-through text-xs">
+                  {formatCurrency(compareAtPrice)}
+                </span>
+              )}
+            </div>
+
+            {discountPercent > 0 ? (
+              <span className="text-[11px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                {discountPercent}% Patron Savings
+              </span>
+            ) : (
+              <span className="text-[11px] font-mono text-zinc-500">
+                Standard Valuation
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Section 3: Material Specifications */}
-        <div className="p-6 bg-zinc-900/30 border border-zinc-800 rounded space-y-4">
-          <h2 className="text-sm font-medium text-zinc-200 uppercase tracking-wider font-mono">
-            3. Materiality & Provenance Specifications
+        {/* Section 4: Specifications & Dispatch */}
+        <div className="p-6 bg-zinc-900/30 border border-zinc-800 rounded-2xl space-y-4">
+          <h2 className="text-sm font-medium text-zinc-200 uppercase tracking-wider font-mono flex items-center gap-2">
+            <Info className="w-4 h-4 text-zinc-400" />
+            4. Material Provenance & Dispatch Parameters
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">Material Composition</label>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Fiber Composition & Material
+              </label>
               <Input
                 value={material}
                 onChange={(e) => setMaterial(e.target.value)}
-                placeholder="e.g. 100% Ahimsa Silk, Hand-Dyed Indigo"
+                placeholder="e.g. 100% Handspun Mulberry Silk"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">Dimensions / Fit</label>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Dimensions / Form Factor
+              </label>
               <Input
                 value={dimensions}
                 onChange={(e) => setDimensions(e.target.value)}
-                placeholder="e.g. 110cm Length x 58cm Chest"
+                placeholder="e.g. 200cm x 110cm"
               />
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">Weight</label>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Weight (g / kg)
+              </label>
               <Input
                 value={weight}
                 onChange={(e) => setWeight(e.target.value)}
-                placeholder="e.g. 380 grams"
+                placeholder="e.g. 350g"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">Care & Longevity</label>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Dispatch / Delivery Estimate
+              </label>
+              <Input
+                value={dispatchEstimate}
+                onChange={(e) => setDispatchEstimate(e.target.value)}
+                placeholder="e.g. Ships in 2-3 business days"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Care Instructions
+              </label>
               <Input
                 value={careInstructions}
                 onChange={(e) => setCareInstructions(e.target.value)}
-                placeholder="e.g. Professional dry clean recommended"
+                placeholder="e.g. Dry clean only"
               />
             </div>
           </div>
         </div>
 
-        {/* Section 4: Imagery */}
-        <div className="p-6 bg-zinc-900/30 border border-zinc-800 rounded space-y-4">
+        {/* Section 5: Configurable Product Variants */}
+        <div className="p-6 bg-zinc-900/30 border border-zinc-800 rounded-2xl space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-medium text-zinc-200 uppercase tracking-wider font-mono flex items-center gap-2">
-              <ImageIcon className="w-4 h-4 text-zinc-400" />
-              4. Visual Gallery (High-Res Photographs)
+              <Sparkles className="w-4 h-4 text-zinc-400" />
+              5. Sizes, Colors & Variant Matrix
             </h2>
-            <span className="text-[11px] text-zinc-500 font-mono">
-              {images.length} image{images.length !== 1 ? "s" : ""} added
-            </span>
-          </div>
-
-          <div className="flex gap-2">
-            <input
-              type="url"
-              placeholder="Paste HTTPS image URL (e.g. Unsplash or Cloudinary)..."
-              value={newImageUrl}
-              onChange={(e) => setNewImageUrl(e.target.value)}
-              className="flex-1 px-3 py-2 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 font-sans"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAddImage}
-              className="shrink-0"
-            >
-              Add Image
-            </Button>
-          </div>
-
-          {/* Image Previews */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-            {images.map((url, idx) => (
-              <div
-                key={idx}
-                className="group relative aspect-[3/4] bg-zinc-950 border border-zinc-800 rounded overflow-hidden"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={url}
-                  alt={`Preview ${idx + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveImage(idx)}
-                  className="absolute top-2 right-2 p-1 bg-zinc-950/80 hover:bg-rose-500/90 text-zinc-400 hover:text-white rounded transition-colors"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-                {idx === 0 && (
-                  <span className="absolute bottom-2 left-2 bg-zinc-900/90 text-zinc-300 text-[9px] font-mono px-1.5 py-0.5 rounded border border-zinc-700">
-                    Primary Cover
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Section 5: Variants */}
-        <div className="p-6 bg-zinc-900/30 border border-zinc-800 rounded space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-medium text-zinc-200 uppercase tracking-wider font-mono">
-                5. Atelier Variants & SKUs
-              </h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                Configure color and size distinctions with discrete SKU tracking.
-              </p>
-            </div>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleAddVariant}
-              className="flex items-center gap-1.5"
+              className="text-xs flex items-center gap-1.5"
             >
               <Plus className="w-3.5 h-3.5" />
-              Add Variant
+              Add Variant Line
             </Button>
           </div>
 
           {variants.length === 0 ? (
-            <div className="p-6 border border-dashed border-zinc-800 rounded text-center text-xs text-zinc-500">
-              No variants defined. This product will be managed as a single unified SKU.
-            </div>
+            <p className="text-xs text-zinc-500 font-mono py-2">
+              No variant lines configured. The product will be sold as a single standard unit.
+            </p>
           ) : (
             <div className="space-y-3">
               {variants.map((v, idx) => (
                 <div
                   key={idx}
-                  className="p-3 bg-zinc-950/60 border border-zinc-800/80 rounded grid grid-cols-1 sm:grid-cols-6 gap-3 items-center"
+                  className="p-4 bg-zinc-950/80 border border-zinc-800 rounded-xl grid grid-cols-1 sm:grid-cols-12 gap-3 items-end"
                 >
-                  <div>
-                    <label className="block text-[10px] font-mono text-zinc-500 mb-1">SKU</label>
-                    <input
-                      type="text"
+                  <div className="sm:col-span-3">
+                    <label className="block text-[10px] font-mono text-zinc-400 mb-1">
+                      Variant SKU *
+                    </label>
+                    <Input
                       value={v.sku}
-                      onChange={(e) => handleUpdateVariant(idx, "sku", e.target.value)}
-                      className="w-full px-2 py-1 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 font-mono"
+                      onChange={(e) => handleUpdateVariant(idx, "sku", e.target.value.toUpperCase())}
+                      placeholder="SKU-XXXX"
                       required
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-[10px] font-mono text-zinc-500 mb-1">Type</label>
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-mono text-zinc-400 mb-1">
+                      Type
+                    </label>
                     <select
                       value={v.variantType}
-                      onChange={(e) => handleUpdateVariant(idx, "variantType", e.target.value)}
-                      className="w-full px-2 py-1 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200"
+                      onChange={(e) => handleUpdateVariant(idx, "variantType", e.target.value as "COLOR" | "SIZE")}
+                      className="w-full px-2.5 py-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none"
                     >
-                      <option value="COLOR">Color</option>
                       <option value="SIZE">Size</option>
+                      <option value="COLOR">Color</option>
                     </select>
                   </div>
 
-                  <div>
-                    <label className="block text-[10px] font-mono text-zinc-500 mb-1">Name</label>
-                    <input
-                      type="text"
-                      value={v.name}
-                      onChange={(e) => handleUpdateVariant(idx, "name", e.target.value)}
-                      placeholder="e.g. Ochre"
-                      className="w-full px-2 py-1 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-mono text-zinc-500 mb-1">Value / Tag</label>
-                    <input
-                      type="text"
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-mono text-zinc-400 mb-1">
+                      Label / Value *
+                    </label>
+                    <Input
                       value={v.value}
-                      onChange={(e) => handleUpdateVariant(idx, "value", e.target.value)}
-                      placeholder={v.variantType === "COLOR" ? "#b45309" : "XL"}
-                      className="w-full px-2 py-1 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 font-mono"
+                      onChange={(e) => {
+                        handleUpdateVariant(idx, "value", e.target.value);
+                        if (!v.name || v.name === v.value) {
+                          handleUpdateVariant(idx, "name", e.target.value);
+                        }
+                      }}
+                      placeholder="e.g. M or Indigo"
                       required
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-[10px] font-mono text-zinc-500 mb-1">Stock</label>
-                    <input
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-mono text-zinc-400 mb-1">
+                      Stock Units
+                    </label>
+                    <Input
                       type="number"
-                      min={0}
+                      min="0"
                       value={v.stock}
                       onChange={(e) => handleUpdateVariant(idx, "stock", Number(e.target.value))}
-                      className="w-full px-2 py-1 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 font-mono"
-                      required
                     />
                   </div>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-2 pt-4 sm:pt-0">
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-mono text-zinc-400 mb-1">
+                      Price Delta (INR)
+                    </label>
+                    <Input
+                      type="number"
+                      step="1"
+                      value={v.additionalPrice || 0}
+                      onChange={(e) => handleUpdateVariant(idx, "additionalPrice", Number(e.target.value))}
+                    />
+                  </div>
+
+                  <div className="sm:col-span-1 flex justify-end">
                     <button
                       type="button"
                       onClick={() => handleRemoveVariant(idx)}
-                      className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
+                      className="p-2 text-zinc-500 hover:text-rose-400 rounded transition-colors"
+                      title="Remove variant"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -580,28 +645,43 @@ export default function NewProductPage() {
           )}
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-800">
-          <Button href="/seller/products" type="button" variant="outline" size="sm">
-            Discard Changes
-          </Button>
+        {/* Dual Actions: Save as Draft vs Submit for Review */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-zinc-800">
           <Button
-            type="submit"
+            type="button"
+            href="/seller/products"
+            variant="outline"
             size="sm"
-            disabled={isSubmitting}
-            className="bg-zinc-100 text-zinc-900 hover:bg-white flex items-center gap-1.5"
           >
-            {isSubmitting ? (
-              <span>Saving Creation...</span>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                Publish Piece
-              </>
-            )}
+            Discard
           </Button>
+
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="md"
+              disabled={isSubmitting}
+              onClick={() => handleSave("DRAFT")}
+              className="flex items-center gap-1.5"
+            >
+              <Save className="w-4 h-4" />
+              <span>{isSubmitting ? "Saving..." : "Save as Draft"}</span>
+            </Button>
+
+            <Button
+              type="button"
+              size="md"
+              disabled={isSubmitting}
+              onClick={() => handleSave("SUBMIT")}
+              className="bg-zinc-100 text-zinc-900 hover:bg-white flex items-center gap-1.5 font-semibold"
+            >
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <span>{isSubmitting ? "Submitting..." : "Submit for Admin Review"}</span>
+            </Button>
+          </div>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

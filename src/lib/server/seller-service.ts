@@ -3,6 +3,8 @@ import {
   SellerProfile,
   SellerMetrics,
   SellerProductInput,
+  SellerProductDetailView,
+  SellerProductListItem,
   SellerOrderLine,
   SellerPayoutRecord,
   InventoryBatchUpdateItem,
@@ -185,12 +187,13 @@ export class SellerService {
     options: {
       search?: string;
       category?: string;
+      status?: string;
       page?: number;
       limit?: number;
     } = {}
   ): Promise<{ products: Product[]; total: number; page: number; totalPages: number }> {
     const page = Math.max(1, options.page || 1);
-    const limit = Math.min(50, Math.max(1, options.limit || 20));
+    const limit = Math.min(100, Math.max(1, options.limit || 20));
     const skip = (page - 1) * limit;
 
     const where: any = {
@@ -207,6 +210,10 @@ export class SellerService {
 
     if (options.category && options.category !== "All") {
       where.category = { name: { equals: options.category, mode: "insensitive" } };
+    }
+
+    if (options.status && options.status !== "ALL") {
+      where.approvalStatus = options.status;
     }
 
     const [total, dbProducts] = await prisma.$transaction([
@@ -226,7 +233,16 @@ export class SellerService {
     ]);
 
     return {
-      products: dbProducts.map(mapDbProductToFrontend),
+      products: dbProducts.map((p) => {
+        const base = mapDbProductToFrontend(p);
+        return {
+          ...base,
+          approvalStatus: p.approvalStatus,
+          isPublished: p.isPublished,
+          moderationNotes: p.moderationNotes,
+          createdAt: p.createdAt.toISOString(),
+        };
+      }) as any,
       total,
       page,
       totalPages: Math.ceil(total / limit) || 1,
@@ -235,6 +251,7 @@ export class SellerService {
 
   /**
    * Creates a new product for an approved seller.
+   * New products default to PENDING_REVIEW (or DRAFT if action is DRAFT) and are NEVER automatically published.
    */
   public async createProduct(
     sellerId: string,
@@ -295,6 +312,12 @@ export class SellerService {
     const basePricePaise = Math.round(input.basePrice * 100);
     const compareAtPricePaise = input.compareAtPrice ? Math.round(input.compareAtPrice * 100) : null;
 
+    const isDraft = input.action === "DRAFT";
+    const approvalStatus = isDraft
+      ? ProductApprovalStatus.DRAFT
+      : ProductApprovalStatus.PENDING_REVIEW;
+    const isPublished = false; // Submissions require explicit Admin approval before becoming live
+
     try {
       const created = await prisma.$transaction(async (tx) => {
         const prod = await tx.product.create({
@@ -309,8 +332,8 @@ export class SellerService {
             compareAtPricePaise,
             stock: input.stock,
             lowStockThreshold: input.lowStockThreshold || 5,
-            isPublished: input.isPublished !== undefined ? input.isPublished : true,
-            approvalStatus: ProductApprovalStatus.APPROVED,
+            isPublished,
+            approvalStatus,
             material: input.material,
             dimensions: input.dimensions,
             weight: input.weight,
@@ -350,6 +373,16 @@ export class SellerService {
           }
         }
 
+        await tx.auditEvent.create({
+          data: {
+            entityType: "PRODUCT",
+            entityId: prod.id,
+            action: isDraft ? "PRODUCT_CREATED_AS_DRAFT" : "PRODUCT_SUBMITTED_FOR_REVIEW",
+            note: `Product "${prod.title}" created by seller "${seller.name}" (${isDraft ? "Saved as Draft" : "Submitted for Review"}). Initial status: ${approvalStatus}.`,
+            performedBy: seller.businessEmail || seller.name,
+          },
+        });
+
         return tx.product.findUnique({
           where: { id: prod.id },
           include: {
@@ -374,6 +407,74 @@ export class SellerService {
   /**
    * Updates an existing product with strict seller ownership verification.
    */
+  /**
+   * Retrieves full details for a product belonging strictly to the requesting seller.
+   */
+  public async getProductById(
+    sellerId: string,
+    productId: string
+  ): Promise<{ success: boolean; product?: SellerProductDetailView; error?: string }> {
+    const product = await prisma.product.findFirst({
+      where: {
+        id: productId,
+        vendorId: sellerId,
+      },
+      include: {
+        category: true,
+        vendor: true,
+        images: { orderBy: { sortOrder: "asc" } },
+        variants: true,
+      },
+    });
+
+    if (!product) {
+      return { success: false, error: "Product not found or access denied." };
+    }
+
+    return {
+      success: true,
+      product: {
+        id: product.id,
+        slug: product.slug,
+        title: product.title,
+        subtitle: product.subtitle,
+        description: product.description,
+        categoryId: product.categoryId,
+        categoryName: product.category.name,
+        vendorId: product.vendorId,
+        basePrice: Math.round(product.basePricePaise / 100),
+        compareAtPrice: product.compareAtPricePaise ? Math.round(product.compareAtPricePaise / 100) : null,
+        stock: product.stock,
+        lowStockThreshold: product.lowStockThreshold,
+        isPublished: product.isPublished,
+        approvalStatus: product.approvalStatus,
+        moderationNotes: product.moderationNotes,
+        material: product.material,
+        dimensions: product.dimensions,
+        weight: product.weight,
+        careInstructions: product.careInstructions,
+        images: product.images.map((img) => img.url),
+        variants: product.variants.map((v) => ({
+          id: v.id,
+          sku: v.sku,
+          variantType: v.variantType as "COLOR" | "SIZE",
+          name: v.name,
+          value: v.value,
+          hexCode: v.hexCode,
+          imageUrl: v.imageUrl,
+          stock: v.stock,
+          additionalPrice: Math.round(v.additionalPricePaise / 100),
+        })),
+        createdAt: product.createdAt.toISOString(),
+        updatedAt: product.updatedAt.toISOString(),
+      },
+    };
+  }
+
+  /**
+   * Updates an existing product with strict seller ownership verification.
+   * Material changes on approved pieces automatically re-enter the moderation queue and unpublish.
+   */
   public async updateProduct(
     sellerId: string,
     productId: string,
@@ -381,6 +482,7 @@ export class SellerService {
   ): Promise<{ success: boolean; product?: Product; error?: string }> {
     const existing = await prisma.product.findFirst({
       where: { id: productId, vendorId: sellerId },
+      include: { vendor: true },
     });
 
     if (!existing) {
@@ -397,17 +499,42 @@ export class SellerService {
         if (input.title) updateData.title = input.title.trim();
         if (input.subtitle) updateData.subtitle = input.subtitle.trim();
         if (input.description) updateData.description = input.description.trim();
+        if (input.categoryId) {
+          const cat = await tx.category.findUnique({ where: { id: input.categoryId } });
+          if (cat) updateData.categoryId = cat.id;
+        }
         if (input.basePrice) updateData.basePricePaise = Math.round(input.basePrice * 100);
         if (input.compareAtPrice !== undefined) {
           updateData.compareAtPricePaise = input.compareAtPrice ? Math.round(input.compareAtPrice * 100) : null;
         }
         if (input.stock !== undefined) updateData.stock = input.stock;
         if (input.lowStockThreshold !== undefined) updateData.lowStockThreshold = input.lowStockThreshold;
-        if (input.isPublished !== undefined) updateData.isPublished = input.isPublished;
         if (input.material !== undefined) updateData.material = input.material;
         if (input.dimensions !== undefined) updateData.dimensions = input.dimensions;
         if (input.weight !== undefined) updateData.weight = input.weight;
         if (input.careInstructions !== undefined) updateData.careInstructions = input.careInstructions;
+
+        // Workflow Status Transitions:
+        let auditAction = "PRODUCT_UPDATED";
+        let auditNote = `Product "${existing.title}" updated by seller.`;
+
+        if (existing.approvalStatus === ProductApprovalStatus.APPROVED) {
+          // Material change on approved product automatically unpublishes and requires admin re-review
+          updateData.approvalStatus = ProductApprovalStatus.PENDING_REVIEW;
+          updateData.isPublished = false;
+          auditAction = "PRODUCT_EDITED_REMODERATION_TRIGGERED";
+          auditNote = `Approved piece "${existing.title}" edited by seller; automatically queued for Admin review and unpublished (Re-moderation triggered).`;
+        } else if (input.action === "SUBMIT") {
+          updateData.approvalStatus = ProductApprovalStatus.PENDING_REVIEW;
+          updateData.isPublished = false;
+          auditAction = "PRODUCT_RESUBMITTED_FOR_REVIEW";
+          auditNote = `Product "${existing.title}" submitted for Admin review.`;
+        } else if (input.action === "DRAFT") {
+          updateData.approvalStatus = ProductApprovalStatus.DRAFT;
+          updateData.isPublished = false;
+          auditAction = "PRODUCT_SAVED_AS_DRAFT";
+          auditNote = `Product "${existing.title}" saved as draft.`;
+        }
 
         if (input.images && input.images.length > 0) {
           await tx.productImage.deleteMany({ where: { productId } });
@@ -420,6 +547,48 @@ export class SellerService {
             })),
           });
         }
+
+        if (input.variants !== undefined) {
+          // Validate SKUs
+          const seenSkus = new Set<string>();
+          for (const v of input.variants) {
+            if (!v.sku || !v.sku.trim()) {
+              throw new Error("Variant SKU is required.");
+            }
+            const normalizedSku = v.sku.trim().toUpperCase();
+            if (seenSkus.has(normalizedSku)) {
+              throw new Error(`Duplicate variant SKU detected: ${v.sku}`);
+            }
+            seenSkus.add(normalizedSku);
+          }
+
+          await tx.productVariant.deleteMany({ where: { productId } });
+          for (const v of input.variants) {
+            await tx.productVariant.create({
+              data: {
+                productId,
+                sku: v.sku.trim(),
+                variantType: v.variantType,
+                name: v.name,
+                value: v.value,
+                hexCode: v.hexCode,
+                imageUrl: v.imageUrl,
+                stock: Math.max(0, v.stock || 0),
+                additionalPricePaise: v.additionalPrice ? Math.round(v.additionalPrice * 100) : 0,
+              },
+            });
+          }
+        }
+
+        await tx.auditEvent.create({
+          data: {
+            entityType: "PRODUCT",
+            entityId: productId,
+            action: auditAction,
+            note: auditNote,
+            performedBy: existing.vendor.businessEmail || existing.vendor.name,
+          },
+        });
 
         return tx.product.update({
           where: { id: productId },
@@ -434,8 +603,11 @@ export class SellerService {
       });
 
       return { success: true, product: mapDbProductToFrontend(updated) };
-    } catch {
-      return { success: false, error: "Failed to update product." };
+    } catch (err: any) {
+      if (err.code === "P2002") {
+        return { success: false, error: "A variant with this SKU already exists. SKUs must be unique." };
+      }
+      return { success: false, error: err.message || "Failed to update product." };
     }
   }
 

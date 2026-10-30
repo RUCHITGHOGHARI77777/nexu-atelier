@@ -144,7 +144,10 @@ describe("adminService - Seller Management & Onboarding Verification", () => {
     );
     expect(reactivateRes.success).toBe(true);
 
-    const restoredProducts = await prisma.product.findMany({ where: { vendorId: approvedSellerId } });
+    const restoredProducts = await prisma.product.findMany({
+      where: { vendorId: approvedSellerId, approvalStatus: ProductApprovalStatus.APPROVED },
+    });
+    expect(restoredProducts.length).toBeGreaterThan(0);
     for (const p of restoredProducts) {
       expect(p.isPublished).toBe(true);
     }
