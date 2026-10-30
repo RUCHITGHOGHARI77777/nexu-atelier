@@ -77,6 +77,17 @@ export function mapDbProductToFrontend(p: any): Product {
     images,
     availableColors: availableColors.length > 0 ? availableColors : undefined,
     availableSizes: availableSizes.length > 0 ? availableSizes : undefined,
+    variants: (p.variants || []).map((v: any) => ({
+      id: v.id,
+      name: v.name,
+      variantType: v.variantType,
+      value: v.value,
+      stock: v.stock,
+      sku: v.sku,
+      hexCode: v.hexCode,
+      imageUrl: v.imageUrl,
+      priceDeltaPaise: v.priceDeltaPaise,
+    })),
     specifications: [
       { label: "Material", value: p.material || "Master-grade natural formulation" },
       { label: "Dimensions", value: p.dimensions || "Custom studio proportion" },

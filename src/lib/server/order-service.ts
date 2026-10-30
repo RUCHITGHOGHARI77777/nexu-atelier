@@ -16,6 +16,7 @@ import {
 import { addressRepository } from "./address-repository";
 import { authService } from "./auth-service";
 import { adminService } from "./admin-service";
+import { notificationService } from "./notification-service";
 
 export const DELIVERY_METHODS: Record<string, DeliveryMethod> = {
   standard: {
@@ -481,6 +482,23 @@ export class PrismaOrderService implements IOrderService {
         return createdOrder;
       });
 
+      // Queue transactional order confirmation outbox notification
+      notificationService
+        .queueNotification({
+          channel: "EMAIL",
+          recipient: resultOrder.customerEmail,
+          template: "ORDER_CONFIRMED",
+          orderId: resultOrder.id,
+          payload: {
+            orderId: resultOrder.id,
+            customerName: resultOrder.customerName,
+            totalINR: (resultOrder.totalPaise / 100).toLocaleString("en-IN"),
+            itemCount: resultOrder.items.length,
+            estimatedDeliveryDate: `${resultOrder.deliveryEstimatedDays} business days`,
+          },
+        })
+        .catch(() => {});
+
       return { success: true, order: mapDbOrderToFrontend(resultOrder) };
     } catch (err: any) {
       return {
@@ -602,6 +620,21 @@ export class PrismaOrderService implements IOrderService {
 
         return cancelledOrder;
       });
+
+      // Queue transactional cancellation notification
+      notificationService
+        .queueNotification({
+          channel: "EMAIL",
+          recipient: updated.customerEmail,
+          template: "ORDER_CANCELLED",
+          orderId: updated.id,
+          payload: {
+            orderId: updated.id,
+            customerName: updated.customerName,
+            reason: reason || "Cancelled by patron prior to studio dispatch.",
+          },
+        })
+        .catch(() => {});
 
       return { success: true, order: mapDbOrderToFrontend(updated) };
     } catch {

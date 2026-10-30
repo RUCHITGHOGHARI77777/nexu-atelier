@@ -1,6 +1,6 @@
 # NEXU ATELIER — Master Project Architecture, Safety & Progress Tracker
 
-**Document Version:** 1.2.0  
+**Document Version:** 1.3.0  
 **Date Updated:** October 30, 2026  
 **Repository Identity:** NEXU ATELIER Reusable E-Commerce Marketplace  
 **Architecture:** Next.js 14.2.18 (App Router), TypeScript, Prisma ORM, PostgreSQL 17.10  
@@ -53,8 +53,17 @@ NEXU ATELIER is a single reusable Next.js application that hosts three role-gate
 
 ### A. Completed & Verified Features
 1. **Database Schema:** 35 PostgreSQL Prisma models covering Users, Profiles, Sellers, Categories, Products, Images, Variants, Orders, Items, Payments, Payouts, Audit Events, Disputes, and Reviews. Additive fields (`brand`, `sku`, `productType`, `subcategory`, `searchKeywords`, `dispatchEstimate`, `packageDimensions`, `taxRatePercent`, `isSuspended`, `suspensionReason`), `CHANGES_REQUESTED` enum status, `PENDING_PAYMENT`/`RETURNED` OrderStatus, and `RETURNED` FulfillmentStatus added safely without data loss.
-2. **Automated Test Suite:** 190 passed out of 190 Vitest tests across 18 test suites with 100% pass rate.
-3. **Multi-Tenant Seller Isolation:** `sellerService` strictly enforces `vendorId === seller.id` on all queries, updates, and order line fulfillment.
+2. **Automated Test Suite:** 201 passed out of 201 Vitest tests across 19 test suites with 100% pass rate.
+3. **Complete Customer Commerce & Account System:**
+    - Stateless cryptographic HMAC SHA-256 password recovery tokens with 1-hour expiry, honeypot protection, rate limiting, and dedicated gallery white UI at `/reset-password`.
+    - 100% database-isolated product discovery on public storefront: dynamic debounced search suggestion API (`/api/products?q=...`), dynamic category loading (`/api/categories`), and complete removal of static `SEED_PRODUCTS`.
+    - Variant selection matrix with active price calculation, price deltas, SKU mapping, out-of-stock disabling, and cart/checkout integration.
+    - Multi-supplier customer orders: single order checkout supporting discrete seller line items, independent fulfillment tracking, and isolated vendor payouts.
+    - Server-authoritative checkout totals, coupon verification, and cryptographic payment verification (HMAC SHA-256) with tamper rejection.
+    - Pre-dispatch order cancellation with atomic database inventory restoration across products and variants.
+    - Event-driven transactional notification outbox queuing welcome, order confirmed, order cancelled, dispute submitted, and refund notices.
+    - Gallery white design aesthetic consistency across all customer account, cart, checkout, and order confirmation surfaces.
+4. **Multi-Tenant Seller Isolation:** `sellerService` strictly enforces `vendorId === seller.id` on all queries, updates, and order line fulfillment.
 4. **Central Admin Control Engine (Part 4):**
     - Live real-time dashboard (`/admin`) aggregating real PostgreSQL metrics: GMV, net revenue, total orders, pending orders, delivered orders, cancelled orders, pending payments, active sellers, total customers, low-stock inventory count, and pending payouts.
     - Server-side date filtering (`today`, `7d`, `30d`, `all`).

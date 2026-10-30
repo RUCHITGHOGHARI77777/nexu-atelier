@@ -42,6 +42,7 @@ interface CartContextType {
       color?: ColorVariant;
       size?: string;
       quantity?: number;
+      sku?: string;
     }
   ) => boolean;
   removeFromCart: (cartItemId: string) => void;
@@ -154,6 +155,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
       color?: ColorVariant;
       size?: string;
       quantity?: number;
+      sku?: string;
     }
   ): boolean => {
     if (product.stock <= 0) {
@@ -163,20 +165,47 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
 
     const selectedColor = options?.color || product.availableColors?.[0];
     const selectedSize = options?.size || product.availableSizes?.[0];
-    const requestedQty = options?.quantity !== undefined ? options.quantity : 1;
-    const validatedQty = validateQuantity(requestedQty, product.stock);
+    const selectedSku = options?.sku;
 
-    const itemId = `${product.id}_${selectedColor?.name || "def"}_${selectedSize || "std"}`;
+    // Check variant-specific stock if a matching variant exists
+    let availableStock = product.stock;
+    let unitPrice = product.basePrice;
+
+    if (product.variants && product.variants.length > 0) {
+      const matchedVariant = product.variants.find((v) => {
+        if (selectedSku && v.sku === selectedSku) return true;
+        if (selectedSize && v.variantType === "SIZE" && v.value?.toLowerCase() === selectedSize.toLowerCase()) return true;
+        if (selectedColor && v.variantType === "COLOR" && v.value?.toLowerCase() === selectedColor.name.toLowerCase()) return true;
+        return false;
+      });
+
+      if (matchedVariant) {
+        availableStock = matchedVariant.stock;
+        if (matchedVariant.priceDeltaPaise) {
+          unitPrice = product.basePrice + (matchedVariant.priceDeltaPaise / 100);
+        }
+        if (matchedVariant.stock <= 0) {
+          showToast(`Selected option "${matchedVariant.name || matchedVariant.value}" is out of stock`, "warning");
+          return false;
+        }
+      }
+    }
+
+    const requestedQty = options?.quantity !== undefined ? options.quantity : 1;
+    const validatedQty = validateQuantity(requestedQty, availableStock);
+
+    const itemId = `${product.id}_${selectedSku || ""}_${selectedColor?.name || "def"}_${selectedSize || "std"}`;
 
     setItems((prev) => {
       const existingIndex = prev.findIndex((i) => i.id === itemId);
 
       if (existingIndex > -1) {
         const existing = prev[existingIndex];
-        const newQty = validateQuantity(existing.quantity + validatedQty, product.stock);
+        const newQty = validateQuantity(existing.quantity + validatedQty, availableStock);
         const updated = [...prev];
         updated[existingIndex] = {
           ...existing,
+          selectedSku: selectedSku || existing.selectedSku,
           quantity: newQty,
           lineTotal: newQty * existing.unitPrice,
         };
@@ -189,9 +218,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
         product,
         selectedColor,
         selectedSize,
+        selectedSku,
         quantity: validatedQty,
-        unitPrice: product.basePrice,
-        lineTotal: validatedQty * product.basePrice,
+        unitPrice,
+        lineTotal: validatedQty * unitPrice,
       };
       return [...prev, newItem];
     });

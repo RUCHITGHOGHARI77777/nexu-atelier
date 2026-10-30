@@ -50,7 +50,14 @@ export class SandboxPaymentAdapter implements IPaymentAdapter {
       .update(`${params.providerOrderId}|${params.providerPaymentId}`)
       .digest("hex");
 
-    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(params.signature));
+    const expectedBuf = Buffer.from(expected);
+    const providedBuf = Buffer.from(params.signature);
+
+    if (expectedBuf.length !== providedBuf.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(expectedBuf, providedBuf);
   }
 
   public generateTestSignature(providerOrderId: string, providerPaymentId: string): string {

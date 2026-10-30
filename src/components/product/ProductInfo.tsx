@@ -65,8 +65,23 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const [validationError, setValidationError] = useState("");
 
+  // Resolve matching variant if available
+  const matchedVariant = React.useMemo(() => {
+    if (!product.variants || product.variants.length === 0) return null;
+    return (
+      product.variants.find((v) => {
+        if (selectedSize && v.variantType === "SIZE" && v.value?.toLowerCase() === selectedSize.toLowerCase()) return true;
+        if (selectedColor && v.variantType === "COLOR" && v.value?.toLowerCase() === selectedColor.name.toLowerCase()) return true;
+        return false;
+      }) || null
+    );
+  }, [product.variants, selectedSize, selectedColor]);
+
+  const activeStock = matchedVariant ? matchedVariant.stock : product.stock;
+  const activePrice = product.basePrice + (matchedVariant?.priceDeltaPaise ? matchedVariant.priceDeltaPaise / 100 : 0);
+
   const discountPercentage = calculateDiscountPercentage(
-    product.basePrice,
+    activePrice,
     product.compareAtPrice
   );
 
@@ -86,12 +101,17 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
       setValidationError("Please select a size before adding to bag");
       return;
     }
+    if (activeStock <= 0) {
+      setValidationError("Selected variant is temporarily out of stock");
+      return;
+    }
     setValidationError("");
 
     const success = addToCart(product, {
       color: selectedColor,
       size: selectedSize,
       quantity,
+      sku: matchedVariant?.sku,
     });
 
     if (success) {
@@ -108,12 +128,17 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
       setValidationError("Please select a size before proceeding to checkout");
       return;
     }
+    if (activeStock <= 0) {
+      setValidationError("Selected variant is temporarily out of stock");
+      return;
+    }
     setValidationError("");
 
     const success = addToCart(product, {
       color: selectedColor,
       size: selectedSize,
       quantity,
+      sku: matchedVariant?.sku,
     });
 
     if (success) {
@@ -122,7 +147,7 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
   };
 
   const handleIncrement = () => {
-    if (quantity < product.stock) {
+    if (quantity < activeStock) {
       setQuantity((q) => q + 1);
     }
   };
@@ -178,9 +203,9 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
       <div className="space-y-1">
         <div className="flex items-baseline gap-3">
           <span className="font-mono text-2xl sm:text-3xl font-black text-zinc-950">
-            {formatCurrency(product.basePrice)}
+            {formatCurrency(activePrice)}
           </span>
-          {product.compareAtPrice && product.compareAtPrice > product.basePrice && (
+          {product.compareAtPrice && product.compareAtPrice > activePrice && (
             <span className="font-mono text-sm text-zinc-400 line-through">
               {formatCurrency(product.compareAtPrice)}
             </span>
@@ -252,20 +277,29 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
           <div className="flex flex-wrap gap-2">
             {product.availableSizes.map((size) => {
               const isSelected = selectedSize === size;
+              const sizeVariant = product.variants?.find(
+                (v) => v.variantType === "SIZE" && v.value?.toLowerCase() === size.toLowerCase()
+              );
+              const isOutOfStock = sizeVariant ? sizeVariant.stock <= 0 : false;
+
               return (
                 <button
                   key={size}
+                  disabled={isOutOfStock}
                   onClick={() => {
+                    if (isOutOfStock) return;
                     setSelectedSize(size);
                     setValidationError("");
                   }}
                   className={`px-3.5 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                    isSelected
+                    isOutOfStock
+                      ? "opacity-40 line-through bg-zinc-50 border-zinc-200 cursor-not-allowed text-zinc-400"
+                      : isSelected
                       ? "bg-zinc-900 text-white border-zinc-900 shadow-sm font-bold"
                       : "bg-zinc-100 text-zinc-800 border-zinc-200 hover:border-zinc-400"
                   }`}
                 >
-                  {size}
+                  {size} {isOutOfStock ? "(Out)" : ""}
                 </button>
               );
             })}
@@ -285,10 +319,10 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
             Quantity:
           </span>
           <span className="font-mono text-[11px]">
-            {product.stock > 5 ? (
-              <span className="text-emerald-700 font-semibold">Ready to Ship ({product.stock} available)</span>
-            ) : product.stock > 0 ? (
-              <span className="text-amber-700 font-semibold">Only {product.stock} units left in studio</span>
+            {activeStock > 5 ? (
+              <span className="text-emerald-700 font-semibold">Ready to Ship ({activeStock} available)</span>
+            ) : activeStock > 0 ? (
+              <span className="text-amber-700 font-semibold">Only {activeStock} units left in studio</span>
             ) : (
               <span className="text-rose-600 font-semibold">Temporarily out of stock</span>
             )}

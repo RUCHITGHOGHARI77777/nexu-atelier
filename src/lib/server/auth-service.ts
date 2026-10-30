@@ -4,6 +4,7 @@ import { hashPassword, verifyPassword } from "./password-util";
 import { prisma } from "./prisma";
 import { UserRole } from "@prisma/client";
 import { sanitizeText } from "./sanitizer";
+import { notificationService } from "./notification-service";
 
 export const AUTH_COOKIE_NAME = "nexu_customer_session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
@@ -31,6 +32,13 @@ export interface IAuthService {
   logout(token: string): Promise<void>;
 
   getUserById(userId: string): Promise<CustomerUser | null>;
+
+  generatePasswordResetToken(email: string): Promise<{ success: boolean; token?: string; error?: string }>;
+
+  resetPasswordWithToken(
+    token: string,
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string }>;
 }
 
 export class PrismaAuthService implements IAuthService {
@@ -78,6 +86,20 @@ export class PrismaAuthService implements IAuthService {
         },
         include: { profile: true },
       });
+
+      // Queue welcome onboarding outbox notification
+      notificationService
+        .queueNotification({
+          channel: "EMAIL",
+          recipient: cleanEmail,
+          template: "WELCOME_ONBOARDING",
+          payload: {
+            name: cleanName,
+            email: cleanEmail,
+            welcomeCoupon: "NEXUFIRST",
+          },
+        })
+        .catch(() => {});
 
       return {
         success: true,
@@ -223,6 +245,85 @@ export class PrismaAuthService implements IAuthService {
       });
     } catch {
       // Ignore if session already expired or removed
+    }
+  }
+
+  public async generatePasswordResetToken(
+    email: string
+  ): Promise<{ success: boolean; token?: string; error?: string }> {
+    const user = await prisma.user.findUnique({
+      where: { email: email.trim().toLowerCase() },
+    });
+    if (!user) {
+      return { success: false, error: "Account not found." };
+    }
+    const timestamp = Date.now();
+    const payload = `${user.id}:${timestamp}`;
+    const secret = process.env.NEXTAUTH_SECRET || "nexu_secret_fallback_salt_2026";
+    const sig = crypto.createHmac("sha256", secret + user.passwordHash).update(payload).digest("hex");
+    const token = Buffer.from(`${payload}:${sig}`).toString("base64url");
+    return { success: true, token };
+  }
+
+  public async resetPasswordWithToken(
+    token: string,
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string }> {
+    if (!token || !newPassword || newPassword.length < 8) {
+      return { success: false, error: "New password must be at least 8 characters long." };
+    }
+
+    try {
+      const decoded = Buffer.from(token, "base64url").toString("utf-8");
+      const [userId, timestampStr, sig] = decoded.split(":");
+      if (!userId || !timestampStr || !sig) {
+        return { success: false, error: "Invalid password reset token format." };
+      }
+
+      const timestamp = parseInt(timestampStr, 10);
+      if (isNaN(timestamp) || Date.now() - timestamp > 1000 * 60 * 60) {
+        return { success: false, error: "Password reset link has expired. Please request a new one." };
+      }
+
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        return { success: false, error: "User account not found." };
+      }
+
+      const secret = process.env.NEXTAUTH_SECRET || "nexu_secret_fallback_salt_2026";
+      const expectedSig = crypto
+        .createHmac("sha256", secret + user.passwordHash)
+        .update(`${userId}:${timestampStr}`)
+        .digest("hex");
+
+      if (sig !== expectedSig) {
+        return { success: false, error: "Invalid or expired password reset link." };
+      }
+
+      // Hash and update password
+      const newHash = hashPassword(newPassword);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: newHash },
+      });
+
+      // Invalidate all active sessions for security
+      await prisma.session.deleteMany({ where: { userId: user.id } });
+
+      // Record audit event
+      await prisma.auditEvent.create({
+        data: {
+          action: "PASSWORD_RESET_COMPLETED",
+          entityType: "USER",
+          entityId: user.id,
+          performedBy: user.email,
+          note: `Patron successfully reset password via secure cryptographic token.`,
+        },
+      });
+
+      return { success: true };
+    } catch {
+      return { success: false, error: "Failed to reset password. Please try again." };
     }
   }
 

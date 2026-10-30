@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { SEED_PRODUCTS } from "@/data/seedCatalog";
 import { FilterState, ProductCategory, SortOption, Product } from "@/types/marketplace";
 import { filterCatalog } from "@/lib/catalog-filters";
 import { CatalogFilterSidebar } from "@/components/catalog/CatalogFilterSidebar";
@@ -98,13 +97,10 @@ function CatalogContent() {
     };
   }, [filters]);
 
-  // Use live database products if loaded, fallback to pure filter utility
+  // Live database products strictly loaded from PostgreSQL API
   const filteredProducts = useMemo(() => {
-    if (dbProducts !== null) {
-      return dbProducts;
-    }
-    return filterCatalog(SEED_PRODUCTS, filters);
-  }, [dbProducts, filters]);
+    return dbProducts || [];
+  }, [dbProducts]);
 
   const handleFilterChange = (partial: Partial<FilterState>) => {
     setFilters((prev) => {
@@ -164,7 +160,7 @@ function CatalogContent() {
         {/* Main Grid Area */}
         <div className="lg:col-span-3 space-y-6">
           <CatalogSortBar
-            totalCount={SEED_PRODUCTS.length}
+            totalCount={filteredProducts.length}
             filteredCount={filteredProducts.length}
             sortBy={filters.sortBy}
             onSortChange={(sort) => handleFilterChange({ sortBy: sort })}

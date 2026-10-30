@@ -137,6 +137,36 @@ export class NotificationService {
 
   private renderTemplate(template: string, payload: Record<string, any>): { subject: string; body: string } {
     switch (template) {
+      case "WELCOME_ONBOARDING":
+        return {
+          subject: `Welcome to Nexu Atelier, ${payload.name}`,
+          body: `Dear ${payload.name},\nWelcome to Nexu Atelier. Discover heirloom artisan pieces directly from master Indian craft studios.\nUse code ${payload.welcomeCoupon || "NEXUFIRST"} for 15% off your first commission.`,
+        };
+      case "ORDER_CANCELLED":
+        return {
+          subject: `Order Cancelled: ${payload.orderId} | Nexu Atelier`,
+          body: `Dear ${payload.customerName},\nYour order ${payload.orderId} has been successfully cancelled.\nReason: ${payload.reason || "Patron pre-dispatch request"}.\nAny authorized payments have been released.`,
+        };
+      case "DISPUTE_SUBMITTED":
+        return {
+          subject: `Return Request Received: Order ${payload.orderId}`,
+          body: `Dear patron,\nYour return/dispute request for order ${payload.orderId} has been received and routed to our arbitration desk.\nTicket Ref: ${payload.disputeId || "DISP-PENDING"}.`,
+        };
+      case "WISHLIST_BACK_IN_STOCK":
+        return {
+          subject: `Back in Studio: ${payload.productTitle}`,
+          body: `A piece from your saved wishlist, "${payload.productTitle}", has been restocked by ${payload.vendorName}. Available stock: ${payload.stock} units.`,
+        };
+      case "REVIEW_REMINDER":
+        return {
+          subject: `How was your artisan piece? Review ${payload.productTitle}`,
+          body: `Dear ${payload.customerName},\nWe hope you are enjoying your piece from ${payload.vendorName}. Please share your review to help fellow patrons discover authentic craftsmanship.`,
+        };
+      case "ABANDONED_CART_REMINDER":
+        return {
+          subject: `Complete your commission: Pieces awaiting in your studio bag`,
+          body: `You left pieces in your shopping bag at Nexu Atelier. Items remain reserved for a limited time.\nComplimentary shipping applies on orders above ₹2,500.`,
+        };
       case "ORDER_CONFIRMED":
         return {
           subject: `Order Confirmed — ${payload.orderId} | Nexu Atelier`,

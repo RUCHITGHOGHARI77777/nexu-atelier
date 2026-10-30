@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - 2026-10-30 (Complete Customer Commerce & Account System)
+- **Customer Authentication & Password Recovery Workflow:**
+  - Implemented stateless cryptographic HMAC SHA-256 password recovery tokens (`generatePasswordResetToken`, `resetPasswordWithToken`) in `src/lib/server/auth-service.ts`.
+  - Created `/api/auth/reset-password` API with rate limiting, honeypot protection, signature verification, 1-hour expiration, and session revocation.
+  - Built dedicated gallery white reset password interface at `/reset-password` with query parameter extraction and login redirection.
+  - Linked forgot password API `/api/auth/forgot-password` to generate valid reset URLs and dispatch account recovery notifications.
+- **Product Discovery & Storefront Database Isolation:**
+  - Removed all static `SEED_PRODUCTS` references from public storefront routes (`/catalog`, `/product/[slug]`, `Header.tsx`).
+  - Implemented debounced (150ms) live search query in `Header.tsx` targeting `/api/products?q=...`.
+  - Connected `FeaturedCategories.tsx` to dynamically query `/api/categories` with graceful fallback.
+  - Enforced strict 404 `notFound()` response for unpublished or unapproved products.
+- **Variant Selection & Real-Time Stock Validation:**
+  - Populated complete `variants` array in `productRepository.mapDbProductToFrontend`.
+  - Upgraded `ProductInfo.tsx` to calculate active variant pricing, price deltas, dynamic SKU selection, and disable out-of-stock sizes with line-through indicators.
+  - Extended `CartContext.tsx` to accept `sku`, validate against variant-specific stock, calculate variant price modifiers, and persist `selectedSku` in cart items.
+  - Updated checkout flow in `src/app/checkout/page.tsx` to pass `selectedSku` into order lines.
+- **Payment Verification & Cryptographic Security:**
+  - Fixed byte length check in `SandboxPaymentAdapter.verifyPaymentSignature` to avoid buffer length mismatches during cryptographic timing-safe comparisons.
+  - Verified HMAC SHA-256 signature verification and tamper rejection across sandbox payments.
+- **Order Management & Cancellation Lifecycle:**
+  - Automated transactional outbox notifications on order creation (`ORDER_CONFIRMED`), order cancellation (`ORDER_CANCELLED`), and dispute filing (`DISPUTE_SUBMITTED`).
+  - Added full HTML/text notification templates in `notificationService` for `WELCOME_ONBOARDING`, `ORDER_CANCELLED`, `DISPUTE_SUBMITTED`, `WISHLIST_BACK_IN_STOCK`, `REVIEW_REMINDER`, and `ABANDONED_CART_REMINDER`.
+  - Verified pre-dispatch order cancellation atomically restores product and variant stock in PostgreSQL.
+- **Gallery White Aesthetic Consistency:**
+  - Restyled `/checkout/confirmation` receipt cards from dark obsidian (`bg-zinc-950`) to clean gallery white (`bg-white border-zinc-200 shadow-sm text-zinc-950`) matching the design system.
+- **Automated Verification & Test Coverage:**
+  - Added comprehensive 11-test suite `customer-commerce-system.test.ts` covering authentication, reset tokens, multi-supplier orders, payment capture, cancellations, and outbox notifications.
+  - 201/201 tests passing across 19 test suites with zero failures.
+  - 0 TypeScript errors, 0 ESLint errors.
+  - Captured 10 visual browser verification screenshots covering the end-to-end customer journey in `screenshots/customer_*.png`.
+
 ### Added - 2026-10-30 (Safety, Baseline & Verification)
 - **Destructive-Seed Circuit Breaker:** Added fail-closed environment check in `prisma/seed.ts` requiring `ALLOW_SEED_RESET=true` and preventing execution in production to protect existing PostgreSQL records. Tested live to confirm execution is blocked.
 - **Git Repository & Strict `.gitignore`:** Initialized repository with strict exclusion rules for `.env*` secrets, `node_modules`, `.next`, `dist`, logs, and temporary archives.

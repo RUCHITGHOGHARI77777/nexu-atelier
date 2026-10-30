@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
+import { authService } from "@/lib/server/auth-service";
 import { notificationService } from "@/lib/server/notification-service";
 import { checkRateLimit, getClientIp, SECURITY_RATE_LIMITS } from "@/lib/server/rate-limiter";
 import { sanitizeText } from "@/lib/server/sanitizer";
@@ -68,6 +69,9 @@ export async function POST(req: NextRequest) {
     });
 
     if (user) {
+      const tokenRes = await authService.generatePasswordResetToken(cleanEmail);
+      const resetToken = tokenRes.token || `rec_${Date.now()}`;
+
       // Queue transactional notification
       await notificationService.queueNotification({
         channel: "EMAIL",
@@ -75,7 +79,8 @@ export async function POST(req: NextRequest) {
         template: "ACCOUNT_RECOVERY",
         payload: {
           name: user.profile?.name || "Valued Patron",
-          resetToken: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+          resetToken,
+          resetUrl: `/reset-password?token=${encodeURIComponent(resetToken)}`,
           supportEmail: "concierge@nexu.studio",
         },
       });

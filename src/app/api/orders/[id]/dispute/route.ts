@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/server/session-helper";
 import { prisma } from "@/lib/server/prisma";
 import { DisputeStatus, OrderStatus } from "@prisma/client";
+import { notificationService } from "@/lib/server/notification-service";
 
 export const dynamic = "force-dynamic";
 
@@ -99,6 +100,21 @@ export async function POST(
         performedBy: user.email,
       },
     });
+
+    // Queue transactional notification to patron
+    await notificationService
+      .queueNotification({
+        channel: "EMAIL",
+        recipient: user.email,
+        template: "DISPUTE_SUBMITTED",
+        orderId: order.id,
+        payload: {
+          orderId: order.id,
+          disputeId: dispute.id,
+          reason: reason.trim(),
+        },
+      })
+      .catch(() => {});
 
     return NextResponse.json({ success: true, dispute }, { status: 201 });
   } catch (error: any) {

@@ -28,10 +28,15 @@ export interface ColorVariant {
 export interface ProductVariant {
   id: string;
   name: string;
+  variantType?: string;
+  value?: string;
   color?: ColorVariant;
   size?: string;
   sku: string;
   stock: number;
+  hexCode?: string;
+  imageUrl?: string;
+  priceDeltaPaise?: number;
   priceModifier?: number; // difference from basePrice if any
 }
 
@@ -75,6 +80,7 @@ export interface CartItem {
   product: Product;
   selectedColor?: ColorVariant;
   selectedSize?: string;
+  selectedSku?: string;
   quantity: number;
   unitPrice: number;
   lineTotal: number;

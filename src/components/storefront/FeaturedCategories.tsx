@@ -1,11 +1,32 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { CATEGORIES_METADATA } from "@/data/seedCatalog";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 
 export const FeaturedCategories: React.FC = () => {
-  const [heroCategory, ...gridCategories] = CATEGORIES_METADATA;
+  const [categories, setCategories] = useState(CATEGORIES_METADATA);
+
+  useEffect(() => {
+    async function loadLiveCategories() {
+      try {
+        const res = await fetch("/api/categories");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.categories) && data.categories.length > 0) {
+            setCategories(data.categories);
+          }
+        }
+      } catch {
+        // Fallback to initial metadata
+      }
+    }
+    loadLiveCategories();
+  }, []);
+
+  const [heroCategory, ...gridCategories] = categories;
 
   return (
     <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

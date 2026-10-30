@@ -208,6 +208,7 @@ export default function CheckoutPage() {
     const payload = {
       items: items.map((i) => ({
         productId: i.productId,
+        selectedSku: i.selectedSku,
         selectedColorName: i.selectedColor?.name,
         selectedSize: i.selectedSize,
         quantity: i.quantity,

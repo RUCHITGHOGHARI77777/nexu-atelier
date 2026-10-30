@@ -49,46 +49,46 @@ function ConfirmationContent() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-8">
       {/* Confirmation Banner */}
-      <div className="p-8 sm:p-12 rounded-3xl border border-zinc-800 bg-zinc-950 text-center space-y-6">
-        <div className="w-16 h-16 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto shadow-xl">
+      <div className="p-8 sm:p-12 rounded-3xl border border-zinc-200 bg-white shadow-sm text-center space-y-6">
+        <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
           <CheckCircle2 className="w-8 h-8" />
         </div>
 
         <div className="space-y-2">
-          <span className="text-[11px] font-mono text-emerald-400 font-bold uppercase tracking-widest block">
+          <span className="text-[11px] font-mono text-emerald-700 font-bold uppercase tracking-widest block">
             TRANSMISSION VERIFIED • ESCROW ALLOCATED
           </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-950 tracking-tight">
             Order Successfully Placed
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto leading-relaxed">
+          <p className="text-xs sm:text-sm text-zinc-600 max-w-md mx-auto leading-relaxed">
             Your studio commission has been placed into our verified artisan escrow system. We have transmitted the order details directly to the creating maker workshops.
           </p>
         </div>
 
         {order ? (
-          <div className="max-w-md mx-auto p-4 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-left space-y-2 font-mono">
-            <div className="flex items-center justify-between text-zinc-400">
+          <div className="max-w-md mx-auto p-4 rounded-xl bg-zinc-50 border border-zinc-200 text-xs text-left space-y-2 font-mono">
+            <div className="flex items-center justify-between text-zinc-600">
               <span>Order Number:</span>
-              <span className="font-bold text-white">{order.id}</span>
+              <span className="font-bold text-zinc-950">{order.id}</span>
             </div>
-            <div className="flex items-center justify-between text-zinc-400">
+            <div className="flex items-center justify-between text-zinc-600">
               <span>Customer:</span>
-              <span className="text-zinc-200">{order.customerName}</span>
+              <span className="text-zinc-900 font-medium">{order.customerName}</span>
             </div>
-            <div className="flex items-center justify-between text-zinc-400">
+            <div className="flex items-center justify-between text-zinc-600">
               <span>Destination:</span>
-              <span className="text-zinc-200">
+              <span className="text-zinc-900 font-medium">
                 {order.shippingAddress.city}, {order.shippingAddress.pincode}
               </span>
             </div>
-            <div className="flex items-center justify-between text-zinc-400">
+            <div className="flex items-center justify-between text-zinc-600">
               <span>Courier Speed:</span>
-              <span className="text-zinc-200">{order.deliveryMethod.name}</span>
+              <span className="text-zinc-900 font-medium">{order.deliveryMethod.name}</span>
             </div>
-            <div className="flex items-center justify-between text-zinc-300 pt-2 border-t border-zinc-800 font-bold text-sm">
+            <div className="flex items-center justify-between text-zinc-900 pt-2 border-t border-zinc-200 font-bold text-sm">
               <span>Total Paid:</span>
-              <span className="text-white">
+              <span className="text-zinc-950">
                 {formatCurrency(order.totals.total)}
               </span>
             </div>

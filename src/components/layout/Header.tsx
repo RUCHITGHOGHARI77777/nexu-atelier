@@ -19,7 +19,6 @@ import {
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
-import { SEED_PRODUCTS } from "@/data/seedCatalog";
 import { Product } from "@/types/marketplace";
 
 export const Header: React.FC = () => {
@@ -38,21 +37,34 @@ export const Header: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
-  // Live search suggestion filter
+  // Live search suggestion filter querying real database
   useEffect(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const q = searchQuery.trim();
     setSelectedSuggestionIndex(-1);
     if (!q) {
       setSearchResults([]);
       return;
     }
-    const matches = SEED_PRODUCTS.filter(
-      (p) =>
-        p.title.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q) ||
-        p.vendor.name.toLowerCase().includes(q)
-    ).slice(0, 5);
-    setSearchResults(matches);
+
+    let active = true;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/products?q=${encodeURIComponent(q)}&limit=5`);
+        if (res.ok) {
+          const data = await res.json();
+          if (active && Array.isArray(data.products)) {
+            setSearchResults(data.products);
+          }
+        }
+      } catch {
+        // graceful silence
+      }
+    }, 150);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }, [searchQuery]);
 
   // Click outside to close search & account dropdown

@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight, ArrowLeft } from "lucide-react";
-import { SEED_PRODUCTS } from "@/data/seedCatalog";
 import { productRepository } from "@/lib/server/product-repository";
 import { ProductShowcase } from "@/components/product/ProductShowcase";
 import { ProductSpecs } from "@/components/product/ProductSpecs";
@@ -23,8 +22,7 @@ interface ProductPageProps {
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
-  const dbProduct = await productRepository.getProductBySlug(params.slug);
-  const product = dbProduct || SEED_PRODUCTS.find((p) => p.slug === params.slug);
+  const product = await productRepository.getProductBySlug(params.slug);
   if (!product) {
     return {
       title: "Product Not Found — Nexu Atelier",
@@ -46,8 +44,7 @@ export async function generateMetadata({
 }
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
-  const dbProduct = await productRepository.getProductBySlug(params.slug);
-  const product = dbProduct || SEED_PRODUCTS.find((p) => p.slug === params.slug);
+  const product = await productRepository.getProductBySlug(params.slug);
 
   if (!product) {
     notFound();
