@@ -73,6 +73,8 @@ export interface SellerProductInput {
   careInstructions?: string;
   images: string[];
   variants?: SellerProductVariantInput[];
+  attributes?: Record<string, { value: any; unit?: string | null }>;
+  draftKey?: string;
 }
 
 export interface SellerProductDetailView {
@@ -115,6 +117,12 @@ export interface SellerProductDetailView {
     stock: number;
     additionalPrice: number;
   }[];
+  attributes?: Record<string, { value: any; unit?: string | null }>;
+  submittedForReviewAt?: string | null;
+  isReviewOverdue?: boolean;
+  reviewOverdueAt?: string | null;
+  rejectedFields?: string[];
+  suggestedCorrections?: string | null;
   createdAt: string;
   updatedAt: string;
 }

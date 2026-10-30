@@ -103,6 +103,13 @@ export interface AdminProductView {
   variantsCount: number;
   images: string[];
   variants?: AdminProductVariantView[];
+  attributes?: Record<string, { value: any; unit?: string | null }>;
+  submittedForReviewAt?: string | null;
+  reviewSlaMinutes?: number;
+  isReviewOverdue?: boolean;
+  reviewOverdueAt?: string | null;
+  rejectedFields?: string[];
+  suggestedCorrections?: string | null;
   createdAt: string;
 }
 

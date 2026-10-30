@@ -14,11 +14,11 @@ export async function PATCH(
 
   try {
     const body = await req.json();
-    const { status, notes } = body;
+    const { status, notes, rejectedFields, suggestedCorrections } = body;
 
     if (!status || !Object.values(ProductApprovalStatus).includes(status)) {
       return NextResponse.json(
-        { error: "Valid approval status is required (DRAFT, PENDING_REVIEW, APPROVED, REJECTED, ARCHIVED)." },
+        { error: "Valid approval status is required (DRAFT, PENDING_REVIEW, APPROVED, REJECTED, CHANGES_REQUESTED, ARCHIVED)." },
         { status: 400 }
       );
     }
@@ -27,7 +27,11 @@ export async function PATCH(
       params.id,
       status as ProductApprovalStatus,
       notes,
-      auth.context.user.id
+      auth.context.user.id,
+      {
+        rejectedFields: Array.isArray(rejectedFields) ? rejectedFields : undefined,
+        suggestedCorrections: typeof suggestedCorrections === "string" ? suggestedCorrections : undefined,
+      }
     );
 
     if (!res.success) {

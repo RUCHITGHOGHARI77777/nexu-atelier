@@ -237,73 +237,141 @@ model Seller {
   shipments             Shipment[]
   reviewResponses       SellerReviewResponse[]
   sellerFeedbacks       SellerFeedback[]
+  drafts                SupplierDraft[]
 
   @@index([slug])
   @@index([status])
 }
 
 model Category {
-  id          String    @id @default(cuid())
-  slug        String    @unique
+  id          String              @id @default(cuid())
+  slug        String              @unique
   name        String
   description String
   image       String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
   products    Product[]
+  attributes  CategoryAttribute[]
 
   @@index([slug])
 }
 
-model Product {
-  id                  String                @id @default(cuid())
-  slug                String                @unique
-  title               String
-  subtitle            String
-  description         String
+model CategoryAttribute {
+  id                  String    @id @default(cuid())
   categoryId          String
-  category            Category              @relation(fields: [categoryId], references: [id])
-  vendorId            String
-  vendor              Seller                @relation(fields: [vendorId], references: [id])
-  basePricePaise      Int
-  compareAtPricePaise Int?
-  stock               Int                   @default(0)
-  lowStockThreshold   Int                   @default(5)
-  isPublished         Boolean               @default(true)
-  approvalStatus      ProductApprovalStatus @default(APPROVED)
-  moderationNotes     String?
-  isFeatured          Boolean               @default(false)
-  isBestseller        Boolean               @default(false)
-  isArtisanDirect     Boolean               @default(false)
-  rating              Float                 @default(5.0)
-  ratingCount         Int                   @default(0)
-  ratingBreakdownJson String?
-  material            String?
-  dimensions          String?
-  weight              String?
-  careInstructions    String?
-  brand               String?
-  sku                 String?
-  productType         String?
-  subcategory         String?
-  searchKeywords      String?
-  dispatchEstimate    String?
-  packageDimensions   String?
-  taxRatePercent      Float?                @default(12.0)
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
-  images              ProductImage[]
-  variants            ProductVariant[]
-  orderItems          OrderItem[]
-  cartItems           CartItem[]
-  reviews             ProductReview[]
-  questions           ProductQuestion[]
+  category            Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name                String
+  slug                String
+  dataType            String
+  isRequired          Boolean   @default(false)
+  allowedValuesJson   String?
+  defaultUnit         String?
+  allowedUnitsJson    String?
+  validationRulesJson String?
+  isCustomerVisible   Boolean   @default(true)
+  isVariantAttribute  Boolean   @default(false)
+  displayOrder        Int       @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@unique([categoryId, slug])
+  @@index([categoryId])
+}
+
+model Product {
+  id                       String                @id @default(cuid())
+  slug                     String                @unique
+  title                    String
+  subtitle                 String
+  description              String
+  categoryId               String
+  category                 Category              @relation(fields: [categoryId], references: [id])
+  vendorId                 String
+  vendor                   Seller                @relation(fields: [vendorId], references: [id])
+  basePricePaise           Int
+  compareAtPricePaise      Int?
+  stock                    Int                   @default(0)
+  lowStockThreshold        Int                   @default(5)
+  isPublished              Boolean               @default(true)
+  approvalStatus           ProductApprovalStatus @default(APPROVED)
+  moderationNotes          String?
+  isFeatured               Boolean               @default(false)
+  isBestseller             Boolean               @default(false)
+  isArtisanDirect          Boolean               @default(false)
+  rating                   Float                 @default(5.0)
+  ratingCount              Int                   @default(0)
+  ratingBreakdownJson      String?
+  material                 String?
+  dimensions               String?
+  weight                   String?
+  careInstructions         String?
+  brand                    String?
+  sku                      String?
+  productType              String?
+  subcategory              String?
+  searchKeywords           String?
+  dispatchEstimate         String?
+  packageDimensions        String?
+  taxRatePercent           Float?                @default(12.0)
+  attributesJson           String?
+  submittedForReviewAt     DateTime?
+  reviewSlaMinutes         Int?                  @default(60)
+  isReviewOverdue          Boolean               @default(false)
+  reviewOverdueAt          DateTime?
+  lastSlaReminderAt        DateTime?
+  slaReminderCount         Int                   @default(0)
+  rejectedFieldsJson       String?
+  suggestedCorrectionsJson String?
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
+  images                   ProductImage[]
+  variants                 ProductVariant[]
+  revisions                ProductRevision[]
+  orderItems               OrderItem[]
+  cartItems                CartItem[]
+  reviews                  ProductReview[]
+  questions                ProductQuestion[]
 
   @@index([categoryId])
   @@index([vendorId])
   @@index([slug])
   @@index([isPublished])
   @@index([approvalStatus])
+}
+
+model SupplierDraft {
+  id            String   @id @default(cuid())
+  sellerId      String
+  seller        Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  productId     String?
+  draftKey      String
+  title         String?
+  categoryId    String?
+  draftDataJson String
+  version       Int      @default(1)
+  isSubmitted   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([sellerId, draftKey])
+  @@index([sellerId])
+  @@index([productId])
+}
+
+model ProductRevision {
+  id                String   @id @default(cuid())
+  productId         String
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  revisionNumber    Int
+  snapshotJson      String
+  changedFieldsJson String?
+  adminFeedback     String?
+  submittedBy       String
+  createdAt         DateTime @default(now())
+
+  @@index([productId])
+  @@index([productId, revisionNumber])
 }
 
 model ProductImage {

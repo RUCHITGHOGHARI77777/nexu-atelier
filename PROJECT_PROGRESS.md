@@ -84,6 +84,12 @@ NEXU ATELIER is a single reusable Next.js application that hosts three role-gate
 13. **Full-Depth Supplier Product Engine (Part 3):** Full product creation & draft saving (`/seller/products/new`), device file upload with cover indicator, zero auto-approval (`DRAFT`/`PENDING_REVIEW`), full product editing (`/seller/products/[id]`), automatic unpublishing/re-moderation upon live product edit, and seller dashboard (`/seller/products`) with status tabs and inline admin feedback.
 14. **Storefront Database Integration (Part 5):** Dynamic `/api/products` integration in `/catalog`, dynamic `/product/[slug]`, and homepage `TrendingSection`.
 15. **Variant-Specific Inventory & Checkout Integrity (Part 6):** Atomic variant stock validation and decrementing during checkout in `order-service.ts`, out-of-stock guards, and variant stock restoration upon cancellation.
+16. **Smart Listing, Auto-Draft, Category Attribute & Product Quality Engine:**
+    - LocalStorage & PostgreSQL debounced background auto-draft synchronization with optimistic locking and conflict resolution (`SupplierDraft`).
+    - Dynamic category attribute definitions (`CategoryAttribute`) with custom unit selection and customer storefront specifications integration.
+    - Real listing quality evaluation engine (`listing-quality-checker.ts`) checking title spam, attributes, unit consistency, prohibited claims, pricing sanity, and providing 0-100 score with direct navigation hooks.
+    - Supplier Correction Assistant (`CorrectionAssistantBanner`) for `CHANGES_REQUESTED` products with targeted field rejections, administrative feedback, and snapshot history (`ProductRevision`).
+    - Admin Review SLA Engine with configurable thresholds, background scanning, breach notifications, and strict non-auto-approval safety rule.
 
 ### B. Incomplete Features (Queued for Resolution)
 1. **Complete Shopping & Supplier Fulfillment Journey (Part 7):**

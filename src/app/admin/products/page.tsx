@@ -15,6 +15,7 @@ import {
   Package,
   Layers,
   X,
+  Clock,
 } from "lucide-react";
 import { AdminProductView, ProductApprovalStatus } from "@/types/admin";
 import { formatCurrency, formatDateTime } from "@/lib/formatters";
@@ -34,7 +35,10 @@ export default function AdminProductsPage() {
   // Moderation state
   const [moderationAction, setModerationAction] = useState<"APPROVED" | "REJECTED" | "ARCHIVED" | "CHANGES_REQUESTED" | null>(null);
   const [moderationNotes, setModerationNotes] = useState("");
+  const [selectedRejectedFields, setSelectedRejectedFields] = useState<string[]>([]);
+  const [suggestedCorrections, setSuggestedCorrections] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScanningSla, setIsScanningSla] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
@@ -115,6 +119,8 @@ export default function AdminProductsPage() {
         body: JSON.stringify({
           status: targetStatus,
           notes: formattedNotes,
+          rejectedFields: selectedRejectedFields.length > 0 ? selectedRejectedFields : undefined,
+          suggestedCorrections: suggestedCorrections.trim() || undefined,
         }),
       });
 
@@ -124,6 +130,8 @@ export default function AdminProductsPage() {
         setSelectedProduct(null);
         setModerationAction(null);
         setModerationNotes("");
+        setSelectedRejectedFields([]);
+        setSuggestedCorrections("");
         fetchProducts();
       } else {
         setActionError(data.error || "Failed to moderate piece.");
@@ -132,6 +140,29 @@ export default function AdminProductsPage() {
       setActionError("Network error while submitting moderation verdict.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleTriggerSlaScan = async () => {
+    setIsScanningSla(true);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const res = await fetch("/api/admin/sla/scan", { method: "POST" });
+      if (res.ok) {
+        const body = await res.json();
+        setActionSuccess(
+          `Review SLA scan executed: ${body.result?.processedCount || 0} pending creations evaluated, ${body.result?.breachesRecorded || 0} SLA breach alert(s) dispatched.`
+        );
+        fetchProducts();
+      } else {
+        const err = await res.json();
+        setActionError(err.error || "Failed to execute SLA scan.");
+      }
+    } catch {
+      setActionError("Network error while executing review SLA scan.");
+    } finally {
+      setIsScanningSla(false);
     }
   };
 
@@ -237,6 +268,7 @@ export default function AdminProductsPage() {
             {[
               { id: "ALL", label: "All Pieces" },
               { id: "PENDING_REVIEW", label: "Awaiting Review" },
+              { id: "OVERDUE", label: "SLA Overdue" },
               { id: "APPROVED", label: "Approved" },
               { id: "CHANGES_REQUESTED", label: "Changes Requested" },
               { id: "REJECTED", label: "Rejected" },
@@ -256,6 +288,17 @@ export default function AdminProductsPage() {
                 {tab.label}
               </button>
             ))}
+
+            <button
+              type="button"
+              disabled={isScanningSla}
+              onClick={handleTriggerSlaScan}
+              className="ml-auto inline-flex items-center gap-1.5 px-3 py-1 text-[11px] rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-mono transition-colors shrink-0"
+              title="Scan pending creations against configured 15/30/45/60 min review SLA timers"
+            >
+              <Clock className={`w-3.5 h-3.5 text-amber-400 ${isScanningSla ? "animate-spin" : ""}`} />
+              <span>{isScanningSla ? "Scanning..." : "Scan Review SLAs"}</span>
+            </button>
           </div>
         </form>
       </div>
@@ -266,7 +309,7 @@ export default function AdminProductsPage() {
           <RefreshCw className="w-6 h-6 animate-spin text-zinc-500 mx-auto mb-3" />
           <p className="text-xs text-zinc-400">Loading catalog items...</p>
         </div>
-      ) : products.length === 0 ? (
+      ) : products.filter((p) => statusFilter !== "OVERDUE" || (p.approvalStatus === "PENDING_REVIEW" && p.isReviewOverdue)).length === 0 ? (
         <div className="p-16 border border-zinc-800/80 rounded bg-zinc-900/20 text-center text-xs text-zinc-500">
           No creations match the selected filter.
         </div>
@@ -281,12 +324,14 @@ export default function AdminProductsPage() {
                   <th className="py-3 px-4">Artisan Studio</th>
                   <th className="py-3 px-4">Valuation</th>
                   <th className="py-3 px-4">Stock</th>
-                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Review SLA / Status</th>
                   <th className="py-3 px-4 text-right">Moderation</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/60 bg-zinc-950/40">
-                {products.map((p) => (
+                {products
+                  .filter((p) => statusFilter !== "OVERDUE" || (p.approvalStatus === "PENDING_REVIEW" && p.isReviewOverdue))
+                  .map((p) => (
                   <tr key={p.id} className="hover:bg-zinc-900/30 transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
@@ -322,7 +367,21 @@ export default function AdminProductsPage() {
                     </td>
 
                     <td className="py-3 px-4">
-                      {getApprovalBadge(p.approvalStatus, p.isPublished)}
+                      <div className="space-y-1">
+                        {getApprovalBadge(p.approvalStatus, p.isPublished)}
+                        {p.approvalStatus === "PENDING_REVIEW" && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded ${
+                              p.isReviewOverdue
+                                ? "bg-rose-500/20 text-rose-300 font-bold border border-rose-500/40"
+                                : "bg-amber-500/10 text-amber-300 border border-amber-500/20"
+                            }`}>
+                              <Clock className="w-2.5 h-2.5" />
+                              <span>{p.isReviewOverdue ? "SLA BREACHED" : "SLA 60m"}</span>
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </td>
 
                     <td className="py-3 px-4 text-right">
@@ -575,22 +634,76 @@ export default function AdminProductsPage() {
                 </h4>
 
                 {(moderationAction === "REJECTED" || moderationAction === "CHANGES_REQUESTED") && (
-                  <div>
-                    <label className="block text-[11px] font-mono text-zinc-400 mb-1">
-                      Feedback for Maker / Workshop <span className="text-rose-400">*</span>
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={moderationNotes}
-                      onChange={(e) => setModerationNotes(e.target.value)}
-                      placeholder={
-                        moderationAction === "CHANGES_REQUESTED"
-                          ? "Specify required modifications (e.g. please upload higher resolution imagery or update dimensions)."
-                          : "Specify reasons for listing rejection."
-                      }
-                      className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
-                      required
-                    />
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[11px] font-mono text-zinc-400 mb-1">
+                        Curator Feedback for Maker / Workshop <span className="text-rose-400">*</span>
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={moderationNotes}
+                        onChange={(e) => setModerationNotes(e.target.value)}
+                        placeholder={
+                          moderationAction === "CHANGES_REQUESTED"
+                            ? "Specify required modifications (e.g. please upload higher resolution imagery or update dimensions)."
+                            : "Specify reasons for listing rejection."
+                        }
+                        className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+                        required
+                      />
+                    </div>
+
+                    {moderationAction === "CHANGES_REQUESTED" && (
+                      <div className="space-y-3 p-3 bg-zinc-950/80 border border-zinc-800 rounded-lg">
+                        <label className="block text-[11px] font-mono text-zinc-400">
+                          Flag Specific Fields for Maker Correction:
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                          {[
+                            { key: "title", label: "Title" },
+                            { key: "description", label: "Description" },
+                            { key: "images", label: "Photographs" },
+                            { key: "basePrice", label: "Pricing / MRP" },
+                            { key: "attributes", label: "Specifications" },
+                            { key: "variants", label: "Variant SKUs" },
+                            { key: "weight", label: "Weight" },
+                            { key: "dispatchEstimate", label: "Dispatch Estimate" },
+                          ].map((f) => {
+                            const checked = selectedRejectedFields.includes(f.key);
+                            return (
+                              <label key={f.key} className="flex items-center gap-1.5 cursor-pointer text-zinc-300 text-[11px]">
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedRejectedFields([...selectedRejectedFields, f.key]);
+                                    } else {
+                                      setSelectedRejectedFields(selectedRejectedFields.filter((x) => x !== f.key));
+                                    }
+                                  }}
+                                  className="rounded border-zinc-700 bg-zinc-900 text-amber-500"
+                                />
+                                <span>{f.label}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-mono text-zinc-400 mb-1">
+                            Curator Suggested Correction (Optional Guidance):
+                          </label>
+                          <input
+                            type="text"
+                            value={suggestedCorrections}
+                            onChange={(e) => setSuggestedCorrections(e.target.value)}
+                            placeholder="e.g. Please clarify fabric purity (e.g. 100% Khadi Silk) and upload 1 texture close-up."
+                            className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

@@ -12,6 +12,8 @@ import {
 } from "@/types/seller";
 import { Product } from "@/types/marketplace";
 import { mapDbProductToFrontend } from "./product-repository";
+import { productRevisionService } from "./product-revision-service";
+import { supplierDraftService } from "./supplier-draft-service";
 import {
   OrderStatus,
   SellerStatus,
@@ -346,6 +348,8 @@ export class SellerService {
             dispatchEstimate: input.dispatchEstimate?.trim() || null,
             packageDimensions: input.packageDimensions?.trim() || null,
             taxRatePercent: input.taxRatePercent !== undefined ? input.taxRatePercent : 12.0,
+            attributesJson: input.attributes ? JSON.stringify(input.attributes) : null,
+            submittedForReviewAt: approvalStatus === ProductApprovalStatus.PENDING_REVIEW ? new Date() : null,
             images: {
               create: (input.images || []).map((url, idx) => ({
                 url,
@@ -403,6 +407,12 @@ export class SellerService {
       });
 
       if (!created) throw new Error("Product creation failed.");
+
+      if (input.draftKey) {
+        await supplierDraftService.markDraftSubmitted(seller.id, input.draftKey);
+      }
+      await productRevisionService.createRevision(created.id, seller.businessEmail || seller.name);
+
       return { success: true, product: mapDbProductToFrontend(created) };
     } catch (err: any) {
       if (err.code === "P2002") {
@@ -481,6 +491,12 @@ export class SellerService {
           stock: v.stock,
           additionalPrice: Math.round(v.additionalPricePaise / 100),
         })),
+        attributes: product.attributesJson ? JSON.parse(product.attributesJson) : undefined,
+        submittedForReviewAt: product.submittedForReviewAt ? product.submittedForReviewAt.toISOString() : null,
+        isReviewOverdue: product.isReviewOverdue,
+        reviewOverdueAt: product.reviewOverdueAt ? product.reviewOverdueAt.toISOString() : null,
+        rejectedFields: product.rejectedFieldsJson ? JSON.parse(product.rejectedFieldsJson) : undefined,
+        suggestedCorrections: product.suggestedCorrectionsJson || null,
         createdAt: product.createdAt.toISOString(),
         updatedAt: product.updatedAt.toISOString(),
       },
@@ -537,6 +553,7 @@ export class SellerService {
         if (input.dispatchEstimate !== undefined) updateData.dispatchEstimate = input.dispatchEstimate ? input.dispatchEstimate.trim() : null;
         if (input.packageDimensions !== undefined) updateData.packageDimensions = input.packageDimensions ? input.packageDimensions.trim() : null;
         if (input.taxRatePercent !== undefined) updateData.taxRatePercent = input.taxRatePercent;
+        if (input.attributes !== undefined) updateData.attributesJson = JSON.stringify(input.attributes);
 
         // Workflow Status Transitions:
         let auditAction = "PRODUCT_UPDATED";
@@ -546,11 +563,21 @@ export class SellerService {
           // Material change on approved product automatically unpublishes and requires admin re-review
           updateData.approvalStatus = ProductApprovalStatus.PENDING_REVIEW;
           updateData.isPublished = false;
+          updateData.submittedForReviewAt = new Date();
+          updateData.isReviewOverdue = false;
+          updateData.reviewOverdueAt = null;
+          updateData.slaReminderCount = 0;
           auditAction = "PRODUCT_EDITED_REMODERATION_TRIGGERED";
           auditNote = `Approved piece "${existing.title}" edited by seller; automatically queued for Admin review and unpublished (Re-moderation triggered).`;
-        } else if (input.action === "SUBMIT") {
+        } else if (input.action === "SUBMIT" || existing.approvalStatus === ProductApprovalStatus.CHANGES_REQUESTED) {
           updateData.approvalStatus = ProductApprovalStatus.PENDING_REVIEW;
           updateData.isPublished = false;
+          updateData.submittedForReviewAt = new Date();
+          updateData.isReviewOverdue = false;
+          updateData.reviewOverdueAt = null;
+          updateData.slaReminderCount = 0;
+          updateData.rejectedFieldsJson = null;
+          updateData.suggestedCorrectionsJson = null;
           auditAction = "PRODUCT_RESUBMITTED_FOR_REVIEW";
           auditNote = `Product "${existing.title}" submitted for Admin review.`;
         } else if (input.action === "DRAFT") {
@@ -624,6 +651,15 @@ export class SellerService {
             variants: true,
           },
         });
+      });
+
+      if (!updated) throw new Error("Product update failed.");
+
+      if (input.draftKey) {
+        await supplierDraftService.markDraftSubmitted(sellerId, input.draftKey);
+      }
+      await productRevisionService.createRevision(productId, existing.vendor.businessEmail || existing.vendor.name, {
+        changedFields: Object.keys(input),
       });
 
       return { success: true, product: mapDbProductToFrontend(updated) };

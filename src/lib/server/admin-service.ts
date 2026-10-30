@@ -1,4 +1,6 @@
 import { prisma } from "./prisma";
+import { reviewSlaService } from "./review-sla-service";
+import { productRevisionService } from "./product-revision-service";
 import {
   SellerStatus,
   ProductApprovalStatus,
@@ -385,6 +387,13 @@ export class AdminService {
         colorName: v.variantType.toUpperCase() === "COLOR" ? v.name : null,
         colorHex: v.hexCode,
       })),
+      attributes: p.attributesJson ? JSON.parse(p.attributesJson) : undefined,
+      submittedForReviewAt: p.submittedForReviewAt ? p.submittedForReviewAt.toISOString() : null,
+      reviewSlaMinutes: p.reviewSlaMinutes || 60,
+      isReviewOverdue: p.isReviewOverdue,
+      reviewOverdueAt: p.reviewOverdueAt ? p.reviewOverdueAt.toISOString() : null,
+      rejectedFields: p.rejectedFieldsJson ? JSON.parse(p.rejectedFieldsJson) : undefined,
+      suggestedCorrections: p.suggestedCorrectionsJson || null,
       createdAt: p.createdAt.toISOString(),
     }));
 
@@ -396,13 +405,17 @@ export class AdminService {
   }
 
   /**
-   * Moderates a product: approve, reject, or archive with mandatory notes on rejection.
+   * Moderates a product: approve, reject, or request changes with mandatory notes and structured feedback.
    */
   public async moderateProduct(
     productId: string,
     status: ProductApprovalStatus,
     notes: string | undefined,
-    adminUserId: string
+    adminUserId: string,
+    options?: {
+      rejectedFields?: string[];
+      suggestedCorrections?: string;
+    }
   ): Promise<{ success: boolean; error?: string }> {
     const product = await prisma.product.findUnique({
       where: { id: productId },
@@ -424,13 +437,23 @@ export class AdminService {
       await prisma.$transaction(async (tx) => {
         const isPublished = status === ProductApprovalStatus.APPROVED && product.vendor.status === SellerStatus.APPROVED;
 
+        const updateData: any = {
+          approvalStatus: status,
+          moderationNotes: notes?.trim() || null,
+          isPublished,
+        };
+
+        if (status === ProductApprovalStatus.CHANGES_REQUESTED) {
+          updateData.rejectedFieldsJson = options?.rejectedFields ? JSON.stringify(options.rejectedFields) : null;
+          updateData.suggestedCorrectionsJson = options?.suggestedCorrections?.trim() || null;
+        } else if (status === ProductApprovalStatus.APPROVED || status === ProductApprovalStatus.REJECTED) {
+          updateData.rejectedFieldsJson = null;
+          updateData.suggestedCorrectionsJson = null;
+        }
+
         await tx.product.update({
           where: { id: productId },
-          data: {
-            approvalStatus: status,
-            moderationNotes: notes?.trim() || null,
-            isPublished,
-          },
+          data: updateData,
         });
 
         await tx.auditEvent.create({
@@ -442,6 +465,15 @@ export class AdminService {
             performedBy: adminUserId,
           },
         });
+      });
+
+      // Stop pending SLA timers and clear overdue flags
+      await reviewSlaService.onProductModerated(productId);
+
+      // Create snapshot revision
+      await productRevisionService.createRevision(productId, adminUserId, {
+        adminFeedback: notes?.trim() || null,
+        changedFields: options?.rejectedFields,
       });
 
       return { success: true };

@@ -57,6 +57,37 @@ export function mapDbProductToFrontend(p: any): Product {
     .filter((v: any) => v.variantType === "SIZE")
     .map((v: any) => v.value);
 
+  let dynamicSpecs: Array<{ label: string; value: string }> = [];
+  if (p.attributesJson) {
+    try {
+      const parsedAttrs = JSON.parse(p.attributesJson);
+      for (const [key, entry] of Object.entries<any>(parsedAttrs)) {
+        if (entry && entry.value !== undefined && entry.value !== null && entry.value !== "") {
+          const label = key
+            .split("_")
+            .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(" ");
+          let displayVal = "";
+          if (typeof entry.value === "object" && entry.value !== null) {
+            displayVal = Object.entries(entry.value)
+              .map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1)}: ${v}`)
+              .join(", ");
+          } else if (Array.isArray(entry.value)) {
+            displayVal = entry.value.join(", ");
+          } else if (typeof entry.value === "boolean") {
+            displayVal = entry.value ? "Yes" : "No";
+          } else {
+            displayVal = String(entry.value);
+          }
+          if (entry.unit) {
+            displayVal += ` ${entry.unit}`;
+          }
+          dynamicSpecs.push({ label, value: displayVal });
+        }
+      }
+    } catch {}
+  }
+
   return {
     id: p.id,
     slug: p.slug,
@@ -96,6 +127,7 @@ export function mapDbProductToFrontend(p: any): Product {
       ...(p.brand ? [{ label: "Brand", value: p.brand }] : []),
       ...(p.sku ? [{ label: "SKU", value: p.sku }] : []),
       ...(p.dispatchEstimate ? [{ label: "Dispatch", value: p.dispatchEstimate }] : []),
+      ...dynamicSpecs,
     ],
     highlights: [
       "Master artisan craftsmanship with verifiable provenance",

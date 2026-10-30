@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - 2026-10-30 (Smart Listing, Auto-Draft, Category Attribute & Quality Engine)
+- **Auto-Draft & Recovery Engine:**
+  - Multi-tier draft persistence: immediate LocalStorage metadata, IndexedDB-ready client manager, and debounced (2.5s) background synchronization to PostgreSQL `SupplierDraft` table.
+  - Visual status pill (`AutoDraftStatusBadge`) providing real-time feedback: `SAVING`, `SAVED`, `OFFLINE`, `SYNC_FAILED`, `CONFLICT`.
+  - Optimistic locking with incremental versioning detecting parallel edits and offering resume/discard resolution dialogs.
+  - Automatic draft cleanup upon successful product submission and snapshot creation in `ProductRevision`.
+  - Zero sensitive credentials or tokens in browser storage.
+- **Category-Based Dynamic Attribute Engine:**
+  - Admin-configurable attributes per category/subcategory stored in `CategoryAttribute` table with unique constraint on `(categoryId, slug)`.
+  - Supported attribute types: `TEXT`, `NUMBER`, `BOOLEAN`, `DROPDOWN`, `MULTI_SELECT`, `MEASUREMENT` (with configurable unit selectors like g, kg, ml, L, cm, inch, carat), and `STRUCTURED_SPECS`.
+  - Rendered dynamically in supplier product creation (`/seller/products/new`) and editing (`/seller/products/[id]`) via `CategoryAttributeFields`.
+  - Seeded 19 initial attributes across all standard catalog categories (`cat_apparel`, `cat_audio`, `cat_home`, `cat_footwear`, `cat_essentials`).
+  - Seamlessly mapped into frontend `specifications` array on customer product detail pages.
+- **Smart Listing Quality Checker:**
+  - Real-time client & server quality evaluation engine (`listing-quality-checker.ts`) returning 0-100 score, hard blockers, warnings, and helpful recommendations.
+  - Hard blocker validation: Title spam/ALL-CAPS/length, missing required dynamic attributes, unit mismatch, missing images, invalid pricing (MRP < Selling price, >85% discount), duplicate SKUs, variant stock, missing brand, invalid dimensions/weight.
+  - Prohibited/restricted claim detection: medical claims ("100% cure", "miracle", "fda approved"), guaranteed wealth, counterfeit terminology.
+  - Visual widget (`SmartQualityChecker`) with circular score gauge, breakdown progress bars, direct "Fix" field navigation hooks, and transparent informational disclaimer.
+- **Supplier Correction Assistant:**
+  - Targeted feedback interface (`CorrectionAssistantBanner`) for listings in `CHANGES_REQUESTED` state.
+  - Identifies specific rejected fields (`rejectedFieldsJson`), displays Admin explanatory remarks, and itemizes action-oriented suggestions (`suggestedCorrectionsJson`).
+  - Integrated product revision modal allowing suppliers to view previous submission snapshots.
+  - Allows targeted updates, re-runs quality checks, and resubmits to `PENDING_REVIEW` with an immutable revision snapshot.
+- **Admin Review SLA Engine & Moderation:**
+  - Configurable SLA thresholds in `PlatformSetting` (default 60 min, reminders at 15m, 30m, 45m).
+  - Background scan (`review-sla-service.ts`) flagging overdue reviews (`isReviewOverdue = true`), calculating elapsed time, and queueing notification alerts.
+  - Hard safety rule: SLA breach never auto-approves products; products remain pending human moderator judgment.
+  - Admin products UI enhanced with "SLA Overdue" filter tab, overdue warning badges, "Scan Review SLAs" button, and change request modal supporting field-specific rejections and structured suggestions.
+- **Automated Verification & Test Coverage:**
+  - 18 comprehensive automated tests in `src/lib/server/__tests__/smart-listing-engine.test.ts` verifying attribute CRUD, draft conflict resolution, quality validation, SLA breach without auto-approval, and revision workflows.
+  - Full project test suite: 20/20 test suites passing, 219/219 tests passing.
+  - 0 TypeScript compilation errors (`npx tsc --noEmit`).
+  - 0 ESLint errors (`npm run lint`).
+  - 4 visual browser verification screenshots in `screenshots/smart_listing_*.png`.
+
 ### Added - 2026-10-30 (Complete Customer Commerce & Account System)
 - **Customer Authentication & Password Recovery Workflow:**
   - Implemented stateless cryptographic HMAC SHA-256 password recovery tokens (`generatePasswordResetToken`, `resetPasswordWithToken`) in `src/lib/server/auth-service.ts`.

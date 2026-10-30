@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -19,10 +19,16 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { SellerProductInput, SellerProductVariantInput, SellerProductDetailView } from "@/types/seller";
+import { ProductAttributesMap, SmartListingQualityResult, SupplierDraftData } from "@/types/listing-engine";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { ProductImageUploader } from "@/components/seller/ProductImageUploader";
+import { AutoDraftStatusBadge } from "@/components/seller/AutoDraftStatusBadge";
+import { AutoDraftManager, AutoDraftState } from "@/lib/client/auto-draft-manager";
+import { CategoryAttributeFields } from "@/components/seller/CategoryAttributeFields";
+import { SmartQualityChecker } from "@/components/seller/SmartQualityChecker";
+import { CorrectionAssistantBanner } from "@/components/seller/CorrectionAssistantBanner";
 import { formatCurrency } from "@/lib/formatters";
 
 interface CategoryOption {
@@ -66,9 +72,36 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   const [packageDimensions, setPackageDimensions] = useState("");
   const [taxRatePercent, setTaxRatePercent] = useState<number>(12.0);
 
+  // Dynamic Category Attributes
+  const [attributes, setAttributes] = useState<ProductAttributesMap>({});
+
   // Imagery & Variants
   const [images, setImages] = useState<string[]>([]);
   const [variants, setVariants] = useState<SellerProductVariantInput[]>([]);
+
+  // Auto-Draft & Quality Checker State
+  const [draftManager, setDraftManager] = useState<AutoDraftManager | null>(null);
+  const [autoDraftState, setAutoDraftState] = useState<AutoDraftState>({
+    status: "IDLE",
+    lastSavedAt: null,
+    serverVersion: 1,
+    clientVersion: 1,
+    hasConflict: false,
+  });
+  const [qualityResult, setQualityResult] = useState<SmartListingQualityResult | null>(null);
+  const qualityDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Field refs for navigation
+  const fieldRefs = {
+    title: useRef<HTMLInputElement>(null),
+    description: useRef<HTMLTextAreaElement>(null),
+    categoryId: useRef<HTMLSelectElement>(null),
+    basePrice: useRef<HTMLInputElement>(null),
+    compareAtPrice: useRef<HTMLInputElement>(null),
+    images: useRef<HTMLDivElement>(null),
+    variants: useRef<HTMLDivElement>(null),
+    attributes: useRef<HTMLDivElement>(null),
+  };
 
   // Fetch initial product data and categories
   useEffect(() => {
@@ -113,6 +146,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           setPackageDimensions(p.packageDimensions || "");
           setTaxRatePercent(p.taxRatePercent || 12.0);
           setImages(p.images || []);
+          setAttributes(p.attributes || {});
           setVariants(
             p.variants.map((v) => ({
               id: v.id,
@@ -138,7 +172,115 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     }
 
     loadData();
+
+    const manager = new AutoDraftManager(`seller_edit_${productId}`, productId, (st) => {
+      setAutoDraftState(st);
+    });
+    setDraftManager(manager);
   }, [productId]);
+
+  // Quality check and autosave sync
+  useEffect(() => {
+    if (isLoading || !initialProduct) return;
+
+    const payload: SupplierDraftData = {
+      title,
+      subtitle,
+      description,
+      categoryId,
+      brand,
+      sku,
+      basePrice,
+      compareAtPrice,
+      stock,
+      lowStockThreshold,
+      material,
+      dimensions,
+      weight,
+      careInstructions,
+      dispatchEstimate,
+      packageDimensions,
+      productType,
+      subcategory,
+      searchKeywords,
+      taxRatePercent,
+      images,
+      variants: variants.map((v) => ({ ...v, additionalPrice: v.additionalPrice || 0 })),
+      attributes,
+    };
+
+    if (draftManager) {
+      draftManager.scheduleServerSync(payload, 1500);
+    }
+
+    if (qualityDebounceTimer.current) {
+      clearTimeout(qualityDebounceTimer.current);
+    }
+
+    qualityDebounceTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/seller/quality-check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ product: payload }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setQualityResult(data.evaluation);
+        }
+      } catch {}
+    }, 400);
+
+    return () => {
+      if (qualityDebounceTimer.current) clearTimeout(qualityDebounceTimer.current);
+    };
+  }, [
+    title,
+    subtitle,
+    description,
+    categoryId,
+    brand,
+    sku,
+    basePrice,
+    compareAtPrice,
+    stock,
+    lowStockThreshold,
+    material,
+    dimensions,
+    weight,
+    careInstructions,
+    dispatchEstimate,
+    packageDimensions,
+    productType,
+    subcategory,
+    searchKeywords,
+    taxRatePercent,
+    images,
+    variants,
+    attributes,
+    isLoading,
+    initialProduct,
+    draftManager,
+  ]);
+
+  const handleNavigateToField = (fieldKey: string) => {
+    if (fieldKey.startsWith("attributes")) {
+      fieldRefs.attributes.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else if (fieldKey.startsWith("variants")) {
+      fieldRefs.variants.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else if (fieldKey === "images") {
+      fieldRefs.images.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else if (fieldKey === "title") {
+      fieldRefs.title.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      fieldRefs.title.current?.focus();
+    } else if (fieldKey === "description") {
+      fieldRefs.description.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      fieldRefs.description.current?.focus();
+    } else if (fieldKey === "basePrice" || fieldKey === "compareAtPrice") {
+      fieldRefs.basePrice.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      fieldRefs.basePrice.current?.focus();
+    }
+  };
 
   const discountPercent =
     compareAtPrice && compareAtPrice > basePrice
@@ -178,16 +320,25 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     setErrorMessage(null);
     setSuccessMessage(null);
 
+    if (action === "SUBMIT" && qualityResult && !qualityResult.canSubmit) {
+      setErrorMessage(`Please resolve the ${qualityResult.errors.length} hard blocker(s) identified in the Quality Checker.`);
+      handleNavigateToField(qualityResult.errors[0].field);
+      return;
+    }
+
     if (!title.trim() || title.trim().length < 2) {
       setErrorMessage("Piece title must be at least 2 characters.");
+      handleNavigateToField("title");
       return;
     }
     if (!description.trim() || description.trim().length < 10) {
       setErrorMessage("Description must be at least 10 characters long.");
+      handleNavigateToField("description");
       return;
     }
     if (basePrice <= 0) {
       setErrorMessage("Base price must be greater than zero.");
+      handleNavigateToField("basePrice");
       return;
     }
     if (stock < 0) {
@@ -196,26 +347,13 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     }
     if (images.length === 0) {
       setErrorMessage("Please upload or add at least one product photograph.");
+      handleNavigateToField("images");
       return;
-    }
-
-    // SKU uniqueness validation
-    const skuSet = new Set<string>();
-    for (const v of variants) {
-      if (!v.sku || !v.sku.trim()) {
-        setErrorMessage("All configured variants must have a defined SKU.");
-        return;
-      }
-      if (skuSet.has(v.sku.trim().toUpperCase())) {
-        setErrorMessage(`Duplicate variant SKU detected: ${v.sku}`);
-        return;
-      }
-      skuSet.add(v.sku.trim().toUpperCase());
     }
 
     const payload: Partial<SellerProductInput> = {
       title: title.trim(),
-      subtitle: subtitle.trim(),
+      subtitle: subtitle.trim() || (brand ? `Crafted by ${brand}` : "Handcrafted studio piece"),
       description: description.trim(),
       categoryId,
       basePrice: Number(basePrice),
@@ -237,6 +375,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
       careInstructions: careInstructions.trim(),
       images,
       variants,
+      attributes,
+      draftKey: `seller_edit_${productId}`,
     };
 
     setIsSubmitting(true);
@@ -249,6 +389,9 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
 
       const data = await res.json();
       if (res.ok) {
+        if (draftManager) {
+          await draftManager.discard();
+        }
         setSuccessMessage(
           action === "SUBMIT"
             ? "Piece submitted for Admin review. It will remain hidden until approved."
@@ -268,7 +411,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto py-20 text-center space-y-3">
-        <Loader2 className="w-8 h-8 text-amber-500 animate-spin mx-auto" />
+        <Loader2 className="w-8 h-8 text-zinc-600 animate-spin mx-auto" />
         <p className="text-xs font-mono text-zinc-500">Loading piece specifications from PostgreSQL...</p>
       </div>
     );
@@ -278,8 +421,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     return (
       <div className="max-w-4xl mx-auto py-20 text-center space-y-4">
         <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
-        <h2 className="text-lg font-bold text-zinc-100">Piece Retrieval Error</h2>
-        <p className="text-xs text-zinc-400">{errorMessage || "You do not have access to this creation."}</p>
+        <h2 className="text-lg font-bold text-zinc-900">Piece Retrieval Error</h2>
+        <p className="text-xs text-zinc-500">{errorMessage || "You do not have access to this creation."}</p>
         <Button href="/seller/products" variant="outline" size="sm">
           Return to Studio Catalog
         </Button>
@@ -287,20 +430,22 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     );
   }
 
+  const currentCategory = categories.find((c) => c.id === categoryId);
+
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-12">
+    <div className="max-w-4xl mx-auto space-y-6 pb-16">
       {/* Top Header */}
-      <div className="flex items-center justify-between border-b border-zinc-800 pb-5">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-200 pb-5">
         <div className="flex items-center gap-3">
           <Link
             href="/seller/products"
-            className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded transition-colors"
+            className="p-2 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono tracking-widest text-zinc-500 uppercase">
+              <span className="text-[10px] font-mono tracking-widest text-zinc-400 uppercase">
                 Catalog Editor
               </span>
               <Badge
@@ -309,8 +454,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                     ? "success"
                     : initialProduct.approvalStatus === "PENDING_REVIEW"
                     ? "warning"
-                    : initialProduct.approvalStatus === "DRAFT"
-                    ? "neutral"
+                    : initialProduct.approvalStatus === "CHANGES_REQUESTED"
+                    ? "accent"
                     : "outline"
                 }
                 size="sm"
@@ -318,111 +463,78 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
               >
                 {initialProduct.approvalStatus}
               </Badge>
+              {initialProduct.isPublished && (
+                <Badge variant="success" size="sm" className="text-[9px]">
+                  Live on Storefront
+                </Badge>
+              )}
             </div>
-            <h1 className="text-xl font-semibold tracking-tight text-zinc-100 mt-0.5">
-              Edit: {initialProduct.title}
+            <h1 className="text-xl font-bold tracking-tight text-zinc-950 mt-0.5">
+              Edit &ldquo;{initialProduct.title}&rdquo;
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {initialProduct.isPublished && (
-            <Button
-              href={`/product/${initialProduct.slug}`}
-              target="_blank"
-              variant="outline"
-              size="sm"
-              className="text-xs flex items-center gap-1.5"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Storefront View
-            </Button>
-          )}
+        <div className="flex items-center gap-3">
+          <AutoDraftStatusBadge
+            status={autoDraftState.status}
+            lastSavedAt={autoDraftState.lastSavedAt}
+            onDiscard={() => draftManager?.discard()}
+          />
           <Button href="/seller/products" variant="outline" size="sm">
             Cancel
           </Button>
         </div>
       </div>
 
-      {/* Moderation Standing Alert / Feedback */}
-      {initialProduct.moderationNotes && (
-        <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-1 text-xs">
-          <span className="font-semibold text-amber-300 font-mono text-[10px] uppercase block">
-            Admin Feedback / Review Notes:
-          </span>
-          <p className="text-amber-200">{initialProduct.moderationNotes}</p>
-        </div>
+      {/* Editorial Correction Assistant Banner (when changes requested) */}
+      {initialProduct.approvalStatus === "CHANGES_REQUESTED" && (
+        <CorrectionAssistantBanner
+          moderationNotes={initialProduct.moderationNotes}
+          rejectedFields={initialProduct.rejectedFields}
+          suggestedCorrections={initialProduct.suggestedCorrections}
+          productId={productId}
+          onNavigateToField={handleNavigateToField}
+        />
       )}
 
-      {/* Material Edit Re-Review Warning */}
-      {initialProduct.approvalStatus === "APPROVED" && (
-        <div className="p-4 bg-zinc-900/60 border border-zinc-800 rounded-xl flex items-start gap-3 text-xs text-zinc-400">
-          <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-          <div>
-            <span className="font-semibold text-zinc-200 block font-mono text-[11px] uppercase">
-              Notice: Re-moderation Required on Edit
-            </span>
-            <p className="mt-0.5 leading-relaxed">
-              This piece is currently live and approved. Modifying its details, pricing, images, or variants will automatically return it to <strong className="text-zinc-300">Pending Review</strong> and temporarily unpublish it until verified again by the platform Admin.
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Smart Listing Quality Checker */}
+      <SmartQualityChecker
+        evaluation={qualityResult}
+        onNavigateToField={handleNavigateToField}
+      />
 
-      {/* Error / Success Alerts */}
+      {/* Status & Error Alerts */}
       {errorMessage && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded text-xs text-rose-300 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
-      {successMessage && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded text-xs text-emerald-300 flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>{successMessage}</span>
-        </div>
-      )}
 
-      <div className="space-y-8">
-        {/* Section 1: Basic Information */}
-        <div className="p-6 bg-zinc-900/30 border border-zinc-800 rounded-2xl space-y-4">
-          <h2 className="text-sm font-medium text-zinc-200 uppercase tracking-wider font-mono flex items-center gap-2">
-            <Package className="w-4 h-4 text-zinc-400" />
-            1. Essential Narrative & Identification
+      {/* Main Editing Form */}
+      <div className="space-y-6">
+        {/* Section 1: Identification & Taxonomy */}
+        <div className="p-6 bg-white border border-zinc-200 rounded-2xl shadow-xs space-y-4">
+          <h2 className="text-sm font-semibold text-zinc-950 uppercase tracking-wider font-mono flex items-center gap-2">
+            <Package className="w-4 h-4 text-zinc-600" />
+            1. Classification & Brand
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Piece Title <span className="text-rose-400">*</span>
-              </label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Subtitle / Maker Tagline
-              </label>
-              <Input
-                value={subtitle}
-                onChange={(e) => setSubtitle(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Marketplace Category <span className="text-rose-400">*</span>
+              <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                Marketplace Category <span className="text-rose-500">*</span>
               </label>
               <select
+                ref={fieldRefs.categoryId}
                 value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+                onChange={(e) => {
+                  setCategoryId(e.target.value);
+                  setAttributes({});
+                }}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                required
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -433,120 +545,93 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Brand / Studio Maker
+              <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                Craft Brand / Atelier Studio
               </label>
               <Input
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
-                placeholder="e.g. Solstice Studio"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Primary Master SKU
-              </label>
-              <Input
-                value={sku}
-                onChange={(e) => setSku(e.target.value.toUpperCase())}
-                placeholder="e.g. SLS-IND-01"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Product Type
-              </label>
-              <Input
-                value={productType}
-                onChange={(e) => setProductType(e.target.value)}
-                placeholder="e.g. Physical Craft"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Subcategory / Discipline
-              </label>
-              <Input
-                value={subcategory}
-                onChange={(e) => setSubcategory(e.target.value)}
-                placeholder="e.g. Handloom Textiles"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Search Keywords &amp; Tags
-              </label>
-              <Input
-                value={searchKeywords}
-                onChange={(e) => setSearchKeywords(e.target.value)}
-                placeholder="e.g. organic, indigo, linen"
+                placeholder="e.g. Veda Handlooms"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-mono text-zinc-400 mb-1">
-              Curatorial Narrative & Details <span className="text-rose-400">*</span>
+            <label className="block text-xs font-semibold text-zinc-700 mb-1">
+              Piece Title <span className="text-rose-500">*</span>
+            </label>
+            <input
+              ref={fieldRefs.title}
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-zinc-700 mb-1">
+              Curatorial Narrative & Storytelling <span className="text-rose-500">*</span>
             </label>
             <textarea
+              ref={fieldRefs.description}
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
               required
             />
           </div>
         </div>
 
-        {/* Section 2: Direct Device Imagery Upload */}
-        <div className="p-6 bg-zinc-900/30 border border-zinc-800 rounded-2xl">
+        {/* Section 2: Direct Device Imagery */}
+        <div ref={fieldRefs.images} className="p-6 bg-white border border-zinc-200 rounded-2xl shadow-xs">
           <ProductImageUploader images={images} onChange={setImages} maxImages={8} />
         </div>
 
         {/* Section 3: Commercial Valuation & Stock */}
-        <div className="p-6 bg-zinc-900/30 border border-zinc-800 rounded-2xl space-y-4">
-          <h2 className="text-sm font-medium text-zinc-200 uppercase tracking-wider font-mono flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-zinc-400" />
-            3. Commercial Valuation & Inventory Balance
+        <div className="p-6 bg-white border border-zinc-200 rounded-2xl shadow-xs space-y-4">
+          <h2 className="text-sm font-semibold text-zinc-950 uppercase tracking-wider font-mono flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-zinc-600" />
+            3. Commercial Valuation & Inventory
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
             <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Selling Price (INR) <span className="text-rose-400">*</span>
+              <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                Selling Price (INR) <span className="text-rose-500">*</span>
               </label>
-              <Input
+              <input
+                ref={fieldRefs.basePrice}
                 type="number"
                 min="1"
                 step="1"
                 value={basePrice}
                 onChange={(e) => setBasePrice(Number(e.target.value))}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                MRP / Benchmark (INR)
+              <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                MRP Benchmark (INR)
               </label>
-              <Input
+              <input
+                ref={fieldRefs.compareAtPrice}
                 type="number"
                 min="0"
                 step="1"
                 value={compareAtPrice || ""}
                 onChange={(e) => setCompareAtPrice(e.target.value ? Number(e.target.value) : undefined)}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Stock Available <span className="text-rose-400">*</span>
+              <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                Available Stock <span className="text-rose-500">*</span>
               </label>
               <Input
                 type="number"
@@ -559,7 +644,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
+              <label className="block text-xs font-semibold text-zinc-700 mb-1">
                 Low Stock Threshold
               </label>
               <Input
@@ -572,8 +657,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                GST / Tax Rate (%)
+              <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                GST Rate (%)
               </label>
               <Input
                 type="number"
@@ -585,153 +670,92 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             </div>
           </div>
 
-          {/* Pricing Row Preview */}
-          <div className="p-3.5 bg-zinc-950/80 border border-zinc-800/80 rounded-xl flex items-center justify-between text-xs">
-            <div className="flex items-center gap-3">
-              <span className="text-zinc-400 font-mono">Storefront Pricing Display:</span>
-              <span className="font-bold text-zinc-100 font-mono text-sm">
-                {formatCurrency(basePrice)}
-              </span>
-              {compareAtPrice && compareAtPrice > basePrice && (
-                <span className="text-zinc-500 font-mono line-through text-xs">
-                  {formatCurrency(compareAtPrice)}
-                </span>
+          <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl flex items-center justify-between text-xs">
+            <span className="text-zinc-600 font-medium">Automatic Discount Preview:</span>
+            <div className="flex items-center gap-2">
+              {discountPercent > 0 ? (
+                <>
+                  <span className="line-through text-zinc-400 font-mono">
+                    {formatCurrency(compareAtPrice || 0)}
+                  </span>
+                  <span className="font-bold text-zinc-950 font-mono">
+                    {formatCurrency(basePrice)}
+                  </span>
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded-md text-[10px]">
+                    {discountPercent}% OFF
+                  </span>
+                </>
+              ) : (
+                <span className="text-zinc-500 font-mono">No discount applied</span>
               )}
             </div>
-
-            {discountPercent > 0 && (
-              <span className="text-[11px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
-                {discountPercent}% Patron Savings
-              </span>
-            )}
           </div>
         </div>
 
-        {/* Section 4: Specifications & Provenance */}
-        <div className="p-6 bg-zinc-900/30 border border-zinc-800 rounded-2xl space-y-4">
-          <h2 className="text-sm font-medium text-zinc-200 uppercase tracking-wider font-mono flex items-center gap-2">
-            <Info className="w-4 h-4 text-zinc-400" />
-            4. Material Provenance & Architectural Specs
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Material Formulation
-              </label>
-              <Input
-                value={material}
-                onChange={(e) => setMaterial(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Dimensions
-              </label>
-              <Input
-                value={dimensions}
-                onChange={(e) => setDimensions(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Item Weight (g / kg)
-              </label>
-              <Input
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                placeholder="e.g. 350g"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Package Box Dimensions
-              </label>
-              <Input
-                value={packageDimensions}
-                onChange={(e) => setPackageDimensions(e.target.value)}
-                placeholder="e.g. 30cm x 20cm x 5cm"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Dispatch / Lead Time
-              </label>
-              <Input
-                value={dispatchEstimate}
-                onChange={(e) => setDispatchEstimate(e.target.value)}
-                placeholder="e.g. Ships in 2-3 business days"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Care Instructions
-              </label>
-              <Input
-                value={careInstructions}
-                onChange={(e) => setCareInstructions(e.target.value)}
-                placeholder="e.g. Dry clean only"
-              />
-            </div>
-          </div>
+        {/* Section 4: Category-Specific Dynamic Specifications */}
+        <div ref={fieldRefs.attributes} className="p-6 bg-white border border-zinc-200 rounded-2xl shadow-xs space-y-4">
+          <CategoryAttributeFields
+            categoryId={categoryId}
+            categoryName={currentCategory?.name}
+            attributes={attributes}
+            onChange={setAttributes}
+          />
         </div>
 
-        {/* Section 5: Variants Matrix */}
-        <div className="p-6 bg-zinc-900/30 border border-zinc-800 rounded-2xl space-y-4">
+        {/* Section 5: Sizes, Colors & Variant Matrix */}
+        <div ref={fieldRefs.variants} className="p-6 bg-white border border-zinc-200 rounded-2xl shadow-xs space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-zinc-200 uppercase tracking-wider font-mono flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-zinc-400" />
-              5. Sizes, Colors & Variant Matrix
-            </h2>
-            <Button
+            <div>
+              <h2 className="text-sm font-semibold text-zinc-950 uppercase tracking-wider font-mono flex items-center gap-2">
+                <Package className="w-4 h-4 text-zinc-600" />
+                5. Sizes, Colors & Variant Matrix
+              </h2>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Configure discrete SKUs for each size and colorway with isolated inventory.
+              </p>
+            </div>
+
+            <button
               type="button"
-              variant="outline"
-              size="sm"
               onClick={handleAddVariant}
-              className="text-xs flex items-center gap-1.5"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-xs font-semibold text-zinc-800 transition-colors shadow-2xs"
             >
               <Plus className="w-3.5 h-3.5" />
-              Add Variant Line
-            </Button>
+              <span>Add Variant</span>
+            </button>
           </div>
 
           {variants.length === 0 ? (
-            <p className="text-xs text-zinc-500 font-mono py-2">
-              No variant lines configured. The piece will be offered as a single standard unit.
+            <p className="text-xs text-zinc-400 py-3">
+              No variant lines configured. Product is sold as a standard unit.
             </p>
           ) : (
             <div className="space-y-3">
               {variants.map((v, idx) => (
                 <div
                   key={idx}
-                  className="p-4 bg-zinc-950/80 border border-zinc-800 rounded-xl grid grid-cols-1 sm:grid-cols-12 gap-3 items-end"
+                  className="p-3.5 bg-zinc-50 border border-zinc-200 rounded-xl grid grid-cols-1 sm:grid-cols-12 gap-3 items-end"
                 >
                   <div className="sm:col-span-3">
-                    <label className="block text-[10px] font-mono text-zinc-400 mb-1">
+                    <label className="block text-[10px] font-semibold text-zinc-600 mb-1">
                       Variant SKU *
                     </label>
                     <Input
                       value={v.sku}
                       onChange={(e) => handleUpdateVariant(idx, "sku", e.target.value.toUpperCase())}
+                      placeholder="SKU-XXXX"
                       required
                     />
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-[10px] font-mono text-zinc-400 mb-1">
+                    <label className="block text-[10px] font-semibold text-zinc-600 mb-1">
                       Type
                     </label>
                     <select
                       value={v.variantType}
                       onChange={(e) => handleUpdateVariant(idx, "variantType", e.target.value as "COLOR" | "SIZE")}
-                      className="w-full px-2.5 py-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none"
+                      className="w-full px-2.5 py-2 bg-white border border-zinc-200 rounded-lg text-xs text-zinc-900 focus:outline-none"
                     >
                       <option value="SIZE">Size</option>
                       <option value="COLOR">Color</option>
@@ -739,7 +763,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-[10px] font-mono text-zinc-400 mb-1">
+                    <label className="block text-[10px] font-semibold text-zinc-600 mb-1">
                       Label / Value *
                     </label>
                     <Input
@@ -750,13 +774,14 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                           handleUpdateVariant(idx, "name", e.target.value);
                         }
                       }}
+                      placeholder="e.g. M or Indigo"
                       required
                     />
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-[10px] font-mono text-zinc-400 mb-1">
-                      Stock
+                    <label className="block text-[10px] font-semibold text-zinc-600 mb-1">
+                      Stock Units
                     </label>
                     <Input
                       type="number"
@@ -767,7 +792,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-[10px] font-mono text-zinc-400 mb-1">
+                    <label className="block text-[10px] font-semibold text-zinc-600 mb-1">
                       Price Delta (INR)
                     </label>
                     <Input
@@ -782,7 +807,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                     <button
                       type="button"
                       onClick={() => handleRemoveVariant(idx)}
-                      className="p-2 text-zinc-500 hover:text-rose-400 rounded transition-colors"
+                      className="p-2 text-zinc-400 hover:text-rose-600 rounded-lg transition-colors"
                       title="Remove variant"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -794,8 +819,58 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           )}
         </div>
 
-        {/* Dual Actions: Save as Draft vs Resubmit for Review */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-zinc-800">
+        {/* Section 6: Packaging & Logistics */}
+        <div className="p-6 bg-white border border-zinc-200 rounded-2xl shadow-xs space-y-4">
+          <h2 className="text-sm font-semibold text-zinc-950 uppercase tracking-wider font-mono flex items-center gap-2">
+            <Clock className="w-4 h-4 text-zinc-600" />
+            6. Packaging, Weight & Dispatch
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                Dispatch Estimate
+              </label>
+              <Input
+                value={dispatchEstimate}
+                onChange={(e) => setDispatchEstimate(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                Package Weight
+              </label>
+              <Input
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                Package Dimensions
+              </label>
+              <Input
+                value={packageDimensions}
+                onChange={(e) => setPackageDimensions(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                Master SKU
+              </label>
+              <Input
+                value={sku}
+                onChange={(e) => setSku(e.target.value.toUpperCase())}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Actions Bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-zinc-200">
           <Button
             type="button"
             href="/seller/products"
@@ -815,7 +890,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
               className="flex items-center gap-1.5"
             >
               <Save className="w-4 h-4" />
-              <span>{isSubmitting ? "Saving..." : "Save as Draft"}</span>
+              <span>{isSubmitting ? "Saving..." : "Save Draft Updates"}</span>
             </Button>
 
             <Button
@@ -823,10 +898,18 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
               size="md"
               disabled={isSubmitting}
               onClick={() => handleSave("SUBMIT")}
-              className="bg-zinc-100 text-zinc-900 hover:bg-white flex items-center gap-1.5 font-semibold"
+              className="bg-zinc-950 text-white hover:bg-zinc-800 flex items-center gap-1.5 font-semibold"
             >
-              <Sparkles className="w-4 h-4 text-amber-500" />
-              <span>{isSubmitting ? "Submitting..." : "Submit for Admin Review"}</span>
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>
+                {initialProduct.approvalStatus === "CHANGES_REQUESTED"
+                  ? isSubmitting
+                    ? "Resubmitting..."
+                    : "Resubmit for Curator Review"
+                  : isSubmitting
+                  ? "Submitting..."
+                  : "Submit for Admin Review"}
+              </span>
             </Button>
           </div>
         </div>
