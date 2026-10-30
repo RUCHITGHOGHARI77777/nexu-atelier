@@ -6,12 +6,30 @@ import { ArrowRight, X } from "lucide-react";
 
 export const AnnouncementBar: React.FC = () => {
   const [isDismissed, setIsDismissed] = useState(true);
+  const [bannerText, setBannerText] = useState<string>("Complimentary Pan-India Insured Express Delivery on Curated Orders Above ₹2,500");
+  const [bannerEnabled, setBannerEnabled] = useState(true);
 
   useEffect(() => {
     const dismissed = sessionStorage.getItem("nexu_announcement_dismissed");
     if (!dismissed) {
       setIsDismissed(false);
     }
+
+    fetch("/api/settings/public")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.settings) {
+          if (data.settings.homepage_banner_text) {
+            setBannerText(data.settings.homepage_banner_text);
+          }
+          if (data.settings.homepage_banner_enabled === "false") {
+            setBannerEnabled(false);
+          }
+        }
+      })
+      .catch(() => {
+        // Fallback to default
+      });
   }, []);
 
   const handleDismiss = () => {
@@ -19,25 +37,18 @@ export const AnnouncementBar: React.FC = () => {
     sessionStorage.setItem("nexu_announcement_dismissed", "true");
   };
 
-  if (isDismissed) return null;
+  if (isDismissed || !bannerEnabled) return null;
 
   return (
     <div className="w-full bg-zinc-950 border-b border-zinc-800/80 text-zinc-300 text-xs py-2 px-4 select-none">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 font-mono text-[11px] text-zinc-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-ochre inline-block" />
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
           <span className="tracking-wide">NEXU ATELIER</span>
         </div>
 
         <div className="text-center font-medium truncate text-xs">
-          Direct artisan patronage • Complimentary delivery above ₹2,500 • Commission code{" "}
-          <Link
-            href="/promotions"
-            className="text-ochre font-mono font-semibold underline underline-offset-2 hover:text-ochre-light transition-colors"
-          >
-            NEXUFIRST
-          </Link>{" "}
-          for 15% off
+          {bannerText}
         </div>
 
         <div className="flex items-center gap-3">

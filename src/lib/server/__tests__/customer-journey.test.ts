@@ -163,7 +163,7 @@ describe("Public Customer Journey & E-Commerce Lifecycle", () => {
   describe("5. Server-Authoritative Checkout & Order Placement", () => {
     it("places an idempotent order with coupon deduction, decrements inventory, and logs audit events", async () => {
       const product = await prisma.product.findFirst({
-        where: { isPublished: true, stock: { gt: 5 } },
+        where: { isPublished: true, stock: { gt: 5 }, basePricePaise: { gte: 200000 } },
       });
       expect(product).not.toBeNull();
       if (!product) return;

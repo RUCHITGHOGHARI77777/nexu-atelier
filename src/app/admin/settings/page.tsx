@@ -7,17 +7,84 @@ import {
   AlertCircle,
   CheckCircle2,
   Save,
-  Sliders,
-  ShieldAlert,
+  Globe,
+  Layout,
+  Megaphone,
+  Shield,
+  Layers,
+  FileText,
+  Phone,
+  Palette,
+  Eye,
 } from "lucide-react";
 import { PlatformSettingView } from "@/types/admin";
 import { formatDateTime } from "@/lib/formatters";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Badge } from "@/components/ui/Badge";
+
+interface SettingGroup {
+  id: string;
+  label: string;
+  icon: any;
+  keys: string[];
+}
+
+const SETTING_GROUPS: SettingGroup[] = [
+  {
+    id: "branding",
+    label: "Branding & Identity",
+    icon: Globe,
+    keys: ["site_title", "site_logo", "site_favicon", "theme_preset"],
+  },
+  {
+    id: "homepage_hero",
+    label: "Hero Masthead",
+    icon: Layout,
+    keys: ["homepage_hero_headline", "homepage_hero_subtitle", "homepage_hero_image"],
+  },
+  {
+    id: "banners",
+    label: "Storefront Banners",
+    icon: Megaphone,
+    keys: ["homepage_banner_text", "homepage_banner_enabled"],
+  },
+  {
+    id: "sections",
+    label: "Section Visibility",
+    icon: Layers,
+    keys: ["homepage_show_trending", "homepage_show_curated_categories", "homepage_show_artisan_studios"],
+  },
+  {
+    id: "policies",
+    label: "Marketplace Rules",
+    icon: Shield,
+    keys: [
+      "marketplace_commission_percent",
+      "free_shipping_threshold_inr",
+      "patron_return_window_days",
+      "escrow_clearance_hold_days",
+      "support_email",
+    ],
+  },
+  {
+    id: "footer",
+    label: "Footer & Support",
+    icon: Phone,
+    keys: ["footer_tagline", "footer_support_phone"],
+  },
+  {
+    id: "legal",
+    label: "Legal Policies",
+    icon: FileText,
+    keys: ["policy_returns_content", "policy_shipping_content", "policy_privacy_content"],
+  },
+];
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<PlatformSettingView[]>([]);
   const [editedValues, setEditedValues] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState("branding");
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingKey, setIsSavingKey] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -85,19 +152,22 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const currentGroup = SETTING_GROUPS.find((g) => g.id === activeTab) || SETTING_GROUPS[0];
+  const groupSettings = settings.filter((s) => currentGroup.keys.includes(s.key));
+
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className="space-y-8 max-w-5xl">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-5">
         <div>
           <span className="text-[10px] font-mono tracking-widest text-zinc-500 uppercase">
-            Platform Configuration
+            Storefront & Platform Governance
           </span>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-100 mt-1">
-            Global Marketplace Policies
+            Website Content & System Configuration
           </h1>
           <p className="text-xs text-zinc-400 mt-1">
-            Configure system-wide commissions, shipping thresholds, customer return policies, and concierge contacts.
+            Manage public storefront branding, hero masthead copy, notification banners, section visibility, and policies.
           </p>
         </div>
 
@@ -146,21 +216,41 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
-      {/* Settings Grid */}
+      {/* Group Navigation Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-zinc-800">
+        {SETTING_GROUPS.map((grp) => {
+          const Icon = grp.icon;
+          const isActive = activeTab === grp.id;
+          return (
+            <button
+              key={grp.id}
+              onClick={() => setActiveTab(grp.id)}
+              className={`flex items-center gap-2 px-3 py-2 rounded text-xs whitespace-nowrap transition-colors ${
+                isActive
+                  ? "bg-zinc-100 text-zinc-950 font-medium"
+                  : "bg-zinc-900/60 text-zinc-400 hover:text-zinc-200 border border-zinc-800"
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{grp.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Settings Panel */}
       {isLoading ? (
         <div className="p-16 border border-zinc-800/80 rounded bg-zinc-900/20 text-center">
           <RefreshCw className="w-6 h-6 animate-spin text-zinc-500 mx-auto mb-3" />
-          <p className="text-xs text-zinc-400">Loading platform configuration...</p>
-        </div>
-      ) : settings.length === 0 ? (
-        <div className="p-16 border border-zinc-800/80 rounded bg-zinc-900/20 text-center text-xs text-zinc-500">
-          No platform settings defined.
+          <p className="text-xs text-zinc-400">Loading settings...</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {settings.map((s) => {
+          {groupSettings.map((s) => {
             const currentVal = editedValues[s.key] ?? s.value;
             const isChanged = currentVal !== s.value;
+            const isTextarea = s.key.startsWith("policy_") || s.key === "footer_tagline" || s.key === "homepage_hero_subtitle";
+            const isBoolean = s.key.endsWith("_enabled") || s.key.startsWith("homepage_show_");
 
             return (
               <div
@@ -178,27 +268,76 @@ export default function AdminSettingsPage() {
                   </div>
 
                   <span className="text-[10px] text-zinc-500 font-mono">
-                    Last altered {formatDateTime(s.updatedAt)}
+                    Last updated {formatDateTime(s.updatedAt)}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3 pt-1">
-                  <Input
-                    value={currentVal}
-                    onChange={(e) => handleValueChange(s.key, e.target.value)}
-                    className="font-mono text-xs"
-                  />
+                <div className="pt-1">
+                  {isBoolean ? (
+                    <div className="flex items-center gap-3">
+                      <select
+                        value={currentVal}
+                        onChange={(e) => handleValueChange(s.key, e.target.value)}
+                        className="p-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 font-mono focus:outline-none"
+                      >
+                        <option value="true">Enabled (true)</option>
+                        <option value="false">Disabled (false)</option>
+                      </select>
 
-                  {isChanged && (
-                    <Button
-                      size="sm"
-                      onClick={() => handleSaveSetting(s.key)}
-                      disabled={isSavingKey === s.key}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white shrink-0 flex items-center gap-1.5"
-                    >
-                      <Save className="w-3.5 h-3.5" />
-                      Save Key
-                    </Button>
+                      {isChanged && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleSaveSetting(s.key)}
+                          disabled={isSavingKey === s.key}
+                          className="bg-emerald-600 hover:bg-emerald-500 text-white shrink-0 flex items-center gap-1.5"
+                        >
+                          <Save className="w-3.5 h-3.5" />
+                          Save
+                        </Button>
+                      )}
+                    </div>
+                  ) : isTextarea ? (
+                    <div className="space-y-2">
+                      <textarea
+                        rows={3}
+                        value={currentVal}
+                        onChange={(e) => handleValueChange(s.key, e.target.value)}
+                        className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 font-sans"
+                      />
+                      {isChanged && (
+                        <div className="flex justify-end">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveSetting(s.key)}
+                            disabled={isSavingKey === s.key}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white shrink-0 flex items-center gap-1.5"
+                          >
+                            <Save className="w-3.5 h-3.5" />
+                            Save Setting
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <Input
+                        value={currentVal}
+                        onChange={(e) => handleValueChange(s.key, e.target.value)}
+                        className="font-mono text-xs"
+                      />
+
+                      {isChanged && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleSaveSetting(s.key)}
+                          disabled={isSavingKey === s.key}
+                          className="bg-emerald-600 hover:bg-emerald-500 text-white shrink-0 flex items-center gap-1.5"
+                        >
+                          <Save className="w-3.5 h-3.5" />
+                          Save Key
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

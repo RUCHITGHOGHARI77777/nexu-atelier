@@ -1,10 +1,41 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Sparkles, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 
 export const HeroSection: React.FC = () => {
+  const [headline, setHeadline] = useState("Architectural craft. Direct from master looms & ateliers.");
+  const [subtitle, setSubtitle] = useState(
+    "Nexu Atelier unites heritage loom master weavers, acoustic laboratories, and virgin brass sand-casters directly with discerning global patrons. Zero intermediary markups. 100% verified maker provenance."
+  );
+  const [heroImage, setHeroImage] = useState(
+    "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1200&q=85"
+  );
+
+  useEffect(() => {
+    fetch("/api/settings/public")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.settings) {
+          if (data.settings.homepage_hero_headline) {
+            setHeadline(data.settings.homepage_hero_headline);
+          }
+          if (data.settings.homepage_hero_subtitle) {
+            setSubtitle(data.settings.homepage_hero_subtitle);
+          }
+          if (data.settings.homepage_hero_image) {
+            setHeroImage(data.settings.homepage_hero_image);
+          }
+        }
+      })
+      .catch(() => {
+        // Fallback to default
+      });
+  }, []);
+
   return (
     <section className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12">
       <div className="rounded-3xl border border-zinc-200 bg-white p-6 sm:p-12 lg:p-16 relative overflow-hidden shadow-sm">
@@ -18,14 +49,10 @@ export const HeroSection: React.FC = () => {
 
             <div className="space-y-3">
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-zinc-950 leading-[1.08]">
-                Architectural craft.
-                <br />
-                <span className="text-zinc-500">Direct from master looms & ateliers.</span>
+                {headline}
               </h1>
               <p className="text-sm sm:text-base text-zinc-600 max-w-xl leading-relaxed">
-                Nexu Atelier unites heritage loom master weavers, acoustic laboratories,
-                and virgin brass sand-casters directly with discerning global patrons.
-                Zero intermediary markups. 100% verified maker provenance.
+                {subtitle}
               </p>
             </div>
 
@@ -35,7 +62,7 @@ export const HeroSection: React.FC = () => {
                 href="/catalog"
                 className="px-6 py-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs sm:text-sm flex items-center gap-2 transition-colors shadow-sm"
               >
-                <span>Explore 12 Studio Pieces</span>
+                <span>Explore Curated Pieces</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
 
@@ -80,8 +107,8 @@ export const HeroSection: React.FC = () => {
           <div className="lg:col-span-5 relative">
             <div className="relative aspect-[4/5] rounded-2xl overflow-hidden border border-zinc-200 shadow-xl bg-zinc-100 group">
               <ImageWithFallback
-                src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1200&q=85"
-                alt="Chanderi Silk Embroidered Anarkali Silhouette"
+                src={heroImage}
+                alt="Curated Indian Craft Masterpiece"
                 fill
                 priority
                 sizes="(max-width: 768px) 100vw, 500px"

@@ -1,15 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/server/admin-auth-helper";
 import { adminService } from "@/lib/server/admin-service";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const auth = await requireAdminApi();
   if (!auth.success) return auth.response;
 
   try {
-    const metrics = await adminService.getDashboardMetrics();
+    const { searchParams } = new URL(req.url);
+    const period = searchParams.get("period") || undefined;
+    const metrics = await adminService.getDashboardMetrics({ period });
     return NextResponse.json({ metrics });
   } catch (err: any) {
     return NextResponse.json(

@@ -30,6 +30,11 @@ export interface AdminMetrics {
   completedOrders: number;
   inTransitOrders: number;
   cancelledOrders: number;
+  pendingOrders: number;
+  deliveredOrders: number;
+  pendingPayments: number;
+  pendingPayouts: number;
+  lowStockProducts: number;
   activeSellers: number;
   pendingSellers: number;
   suspendedSellers: number;
@@ -216,9 +221,50 @@ export interface AdminUserView {
   name: string;
   role: UserRole;
   phone: string | null;
+  isSuspended: boolean;
+  suspensionReason: string | null;
   createdAt: string;
   orderCount: number;
   sellerSlug?: string | null;
+}
+
+export interface AdminCustomerDetailView {
+  id: string;
+  email: string;
+  name: string;
+  phone: string | null;
+  role: UserRole;
+  isSuspended: boolean;
+  suspensionReason: string | null;
+  createdAt: string;
+  totalSpent: number;
+  orders: AdminOrderView[];
+  addresses: {
+    id: string;
+    street: string;
+    city: string;
+    state: string;
+    pincode: string;
+    isDefault: boolean;
+  }[];
+  disputes: DisputeCaseView[];
+  auditEvents: AuditEventView[];
+}
+
+export interface AdminPayoutView {
+  id: string;
+  sellerId: string;
+  sellerName: string;
+  sellerSlug: string;
+  orderItemId: string | null;
+  productTitle: string | null;
+  grossAmount: number;
+  commission: number;
+  netPayout: number;
+  status: PayoutStatus;
+  settledAt: string | null;
+  transactionRef: string | null;
+  createdAt: string;
 }
 
 export interface AdminCategoryView {

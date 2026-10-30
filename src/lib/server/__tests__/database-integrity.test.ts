@@ -83,7 +83,12 @@ describe("Database Integrity & Transactional Consistency", () => {
   });
 
   it("creates structured audit event records for order transitions", async () => {
-    const p = SEED_PRODUCTS[1];
+    const p = await prisma.product.findFirst({
+      where: { isPublished: true, stock: { gt: 1 } },
+    });
+    expect(p).not.toBeNull();
+    if (!p) return;
+
     const orderRes = await orderService.createOrder(patronA, {
       items: [{ productId: p.id, quantity: 1 }],
       deliveryMethodId: "standard",

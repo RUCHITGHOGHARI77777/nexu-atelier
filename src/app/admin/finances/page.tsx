@@ -11,8 +11,12 @@ import {
   Lock,
   ArrowDownRight,
   TrendingUp,
+  CreditCard,
+  Banknote,
+  X,
+  FileCheck,
 } from "lucide-react";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, formatDateTime } from "@/lib/formatters";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 
@@ -26,22 +30,57 @@ interface FinancialReconciliation {
   payoutRecordsCount: number;
 }
 
+interface PayoutRecord {
+  id: string;
+  sellerId: string;
+  sellerName: string;
+  sellerSlug: string;
+  orderItemId: string | null;
+  productTitle: string | null;
+  grossAmount: number;
+  commission: number;
+  netPayout: number;
+  status: string;
+  settledAt: string | null;
+  transactionRef: string | null;
+  createdAt: string;
+}
+
 export default function AdminFinancesPage() {
   const [finances, setFinances] = useState<FinancialReconciliation | null>(null);
+  const [payouts, setPayouts] = useState<PayoutRecord[]>([]);
+  const [payoutStatusFilter, setPayoutStatusFilter] = useState("ALL");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  // Settlement modal state
+  const [settlingPayout, setSettlingPayout] = useState<PayoutRecord | null>(null);
+  const [utrRef, setUtrRef] = useState("");
+  const [settlementNote, setSettlementNote] = useState("");
+  const [isSubmittingSettlement, setIsSubmittingSettlement] = useState(false);
 
   const fetchFinances = async () => {
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const res = await fetch("/api/admin/finances");
-      if (res.ok) {
-        const data = await res.json();
+      const statusParam = payoutStatusFilter !== "ALL" ? `?status=${payoutStatusFilter}` : "";
+      const [finRes, payoutsRes] = await Promise.all([
+        fetch("/api/admin/finances"),
+        fetch(`/api/admin/payouts${statusParam}`),
+      ]);
+
+      if (finRes.ok) {
+        const data = await finRes.json();
         setFinances(data.finances);
       } else {
-        const err = await res.json();
+        const err = await finRes.json();
         setErrorMessage(err.error || "Failed to load financial ledger.");
+      }
+
+      if (payoutsRes.ok) {
+        const data = await payoutsRes.json();
+        setPayouts(data.payouts || []);
       }
     } catch {
       setErrorMessage("Network error while connecting to financial service.");
@@ -52,7 +91,64 @@ export default function AdminFinancesPage() {
 
   useEffect(() => {
     fetchFinances();
-  }, []);
+  }, [payoutStatusFilter]);
+
+  const handleSettlePayout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!settlingPayout) return;
+
+    if (!utrRef || utrRef.trim().length < 6) {
+      setErrorMessage("A valid banking UTR or transaction settlement reference (minimum 6 characters) is required.");
+      return;
+    }
+
+    setIsSubmittingSettlement(true);
+    setErrorMessage(null);
+    setActionSuccess(null);
+
+    try {
+      const res = await fetch(`/api/admin/payouts/${settlingPayout.id}/settle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transactionRef: utrRef.trim(),
+          note: settlementNote.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setActionSuccess(`Payout #${settlingPayout.id.slice(-8).toUpperCase()} settled via UTR: ${utrRef.trim()}.`);
+        setSettlingPayout(null);
+        setUtrRef("");
+        setSettlementNote("");
+        fetchFinances();
+      } else {
+        setErrorMessage(data.error || "Failed to settle payout.");
+      }
+    } catch {
+      setErrorMessage("Network error while recording payout settlement.");
+    } finally {
+      setIsSubmittingSettlement(false);
+    }
+  };
+
+  const getPayoutStatusBadge = (status: string) => {
+    switch (status) {
+      case "SETTLED":
+        return <Badge variant="success">Settled (NEFT)</Badge>;
+      case "ELIGIBLE_FOR_PAYOUT":
+        return <Badge variant="warning">Eligible for Payout</Badge>;
+      case "PROCESSING":
+        return <Badge variant="neutral">Processing</Badge>;
+      case "ESCROW_HOLD":
+        return <Badge variant="outline" className="border-amber-500/40 text-amber-300 font-mono">Escrow Hold</Badge>;
+      case "WITHHELD":
+        return <Badge variant="outline" className="border-rose-500/40 text-rose-400 font-mono">Withheld</Badge>;
+      default:
+        return <Badge variant="neutral">{status}</Badge>;
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -60,17 +156,21 @@ export default function AdminFinancesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-5">
         <div>
           <span className="text-[10px] font-mono tracking-widest text-zinc-500 uppercase">
-            Marketplace Treasury
+            Marketplace Treasury & Settlements
           </span>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-100 mt-1">
             Financial Ledger & Escrow Reconciliation
           </h1>
           <p className="text-xs text-zinc-400 mt-1">
-            Authoritative platform accounting: Gross merchandise volume, 10% marketplace fees, escrow reserves, and settled payouts.
+            Authoritative platform accounting: Gross merchandise volume, 10% platform fees, escrow reserves, and NEFT/RTGS studio settlements.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
+          <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 font-mono text-[10px]">
+            Mode: Production Ledger (INR Paise)
+          </Badge>
+
           <Button
             variant="outline"
             size="sm"
@@ -85,9 +185,32 @@ export default function AdminFinancesPage() {
       </div>
 
       {errorMessage && (
-        <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded text-xs text-rose-300 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-          <span>{errorMessage}</span>
+        <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded text-xs text-rose-300 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+          <button
+            onClick={() => setErrorMessage(null)}
+            className="text-zinc-500 hover:text-zinc-300 ml-4 font-mono text-[10px]"
+          >
+            DISMISS
+          </button>
+        </div>
+      )}
+
+      {actionSuccess && (
+        <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded text-xs text-emerald-300 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{actionSuccess}</span>
+          </div>
+          <button
+            onClick={() => setActionSuccess(null)}
+            className="text-zinc-500 hover:text-zinc-300 ml-4 font-mono text-[10px]"
+          >
+            DISMISS
+          </button>
         </div>
       )}
 
@@ -120,7 +243,7 @@ export default function AdminFinancesPage() {
           <p className="text-2xl font-semibold text-amber-400 font-mono">
             {finances ? formatCurrency(finances.escrowHoldsINR) : "—"}
           </p>
-          <span className="text-[10px] text-zinc-500 block">Protected 14-day patron satisfaction window</span>
+          <span className="text-[10px] text-zinc-500 block">Protected 14-day patron satisfaction buffer</span>
         </div>
 
         <div className="p-5 bg-zinc-950/60 border border-zinc-800 rounded space-y-1">
@@ -154,35 +277,225 @@ export default function AdminFinancesPage() {
         </div>
       </div>
 
+      {/* Supplier Settlements & Payouts Engine */}
+      <div className="p-6 bg-zinc-950/60 border border-zinc-800 rounded space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold tracking-wide text-zinc-100 font-mono uppercase flex items-center gap-2">
+              <Banknote className="w-4 h-4 text-emerald-400" /> Supplier Settlements & Disbursals
+            </h2>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              Review escrow releases and disburse verified bank payouts with mandatory transaction/UTR references.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            {[
+              { id: "ALL", label: "All Payouts" },
+              { id: "ELIGIBLE_FOR_PAYOUT", label: "Eligible for Settlement" },
+              { id: "ESCROW_HOLD", label: "In Escrow" },
+              { id: "SETTLED", label: "Settled" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setPayoutStatusFilter(tab.id)}
+                className={`px-2.5 py-1 text-[11px] rounded transition-colors whitespace-nowrap ${
+                  payoutStatusFilter === tab.id
+                    ? "bg-zinc-200 text-zinc-950 font-medium"
+                    : "bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="border border-zinc-800 rounded overflow-hidden">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-zinc-900/60 border-b border-zinc-800 text-[10px] font-mono uppercase text-zinc-500">
+              <tr>
+                <th className="py-2.5 px-3">Studio / Artisan</th>
+                <th className="py-2.5 px-3">Piece / Order Line</th>
+                <th className="py-2.5 px-3">Gross Sales</th>
+                <th className="py-2.5 px-3">Platform 10%</th>
+                <th className="py-2.5 px-3">Net Payable</th>
+                <th className="py-2.5 px-3">Payout Status</th>
+                <th className="py-2.5 px-3">Settlement UTR</th>
+                <th className="py-2.5 px-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800/60 bg-zinc-950/40">
+              {payouts.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-zinc-500">
+                    No payouts match the filter.
+                  </td>
+                </tr>
+              ) : (
+                payouts.map((p) => (
+                  <tr key={p.id} className="hover:bg-zinc-900/30 transition-colors">
+                    <td className="py-2.5 px-3">
+                      <span className="font-medium text-zinc-200 block">{p.sellerName}</span>
+                      <span className="text-[10px] text-zinc-500 font-mono">ID: {p.sellerId.slice(-6)}</span>
+                    </td>
+                    <td className="py-2.5 px-3 text-zinc-300">
+                      {p.productTitle || "Order Fulfillment Line"}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono text-zinc-300">
+                      {formatCurrency(p.grossAmount)}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono text-emerald-400">
+                      -{formatCurrency(p.commission)}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono font-semibold text-zinc-100">
+                      {formatCurrency(p.netPayout)}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      {getPayoutStatusBadge(p.status)}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono text-[11px] text-zinc-400">
+                      {p.transactionRef ? (
+                        <span className="text-emerald-400 font-semibold">{p.transactionRef}</span>
+                      ) : (
+                        <span className="text-zinc-600 italic">Unsettled</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      {p.status !== "SETTLED" ? (
+                        <button
+                          onClick={() => {
+                            setSettlingPayout(p);
+                            setUtrRef("");
+                            setSettlementNote("");
+                          }}
+                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[10px] font-mono transition-colors"
+                        >
+                          Disburse & Settle
+                        </button>
+                      ) : (
+                        <span className="text-[10px] font-mono text-zinc-500">
+                          {p.settledAt ? new Date(p.settledAt).toLocaleDateString() : "Settled"}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Automated Gateway & Ledger Reconciliation Panel */}
       <ReconciliationAuditSection />
 
-      {/* Escrow Mechanism Explanatory Section */}
+      {/* Escrow Policy Explanatory Section */}
       <div className="p-6 bg-zinc-950/80 border border-zinc-800 rounded space-y-4">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-emerald-400" />
           <h3 className="text-sm font-semibold text-zinc-100 font-mono uppercase">
-            Escrow Holding & Payout Governance Policy
+            Escrow Holding & Disbursal Compliance
           </h3>
         </div>
         <p className="text-xs text-zinc-400 leading-relaxed max-w-4xl">
-          To protect patrons against transit defects while providing artisans transparent remittance, all patron purchase funds are locked in an automated escrow reserve upon order creation. Payout status progresses from <code className="text-zinc-200 font-mono">ESCROW_HOLD</code> to <code className="text-zinc-200 font-mono">ELIGIBLE_FOR_PAYOUT</code> once an item reaches <code className="text-zinc-200 font-mono">DELIVERED</code> and completes the mandatory 14-day inspection buffer.
+          To protect patrons against transit defects while providing artisans transparent remittance, all patron purchase funds are locked in an automated escrow reserve upon order creation. Payout status progresses from <code className="text-zinc-200 font-mono">ESCROW_HOLD</code> to <code className="text-zinc-200 font-mono">ELIGIBLE_FOR_PAYOUT</code> once an item reaches <code className="text-zinc-200 font-mono">DELIVERED</code>. Settling a payout requires a verified banking UTR reference to ensure double-entry integrity.
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-[11px] font-mono text-zinc-400">
-          <div className="p-2.5 bg-zinc-900/60 rounded border border-zinc-800/80">
-            <strong>1. Escrow Lock</strong>
-            <p className="text-zinc-500 mt-0.5">Funds locked in minor units (paise) upon checkout confirmation.</p>
-          </div>
-          <div className="p-2.5 bg-zinc-900/60 rounded border border-zinc-800/80">
-            <strong>2. Inspection Period</strong>
-            <p className="text-zinc-500 mt-0.5">14 days post-delivery to allow customer dispute or transit claims.</p>
-          </div>
-          <div className="p-2.5 bg-zinc-900/60 rounded border border-zinc-800/80">
-            <strong>3. Bank Remittance</strong>
-            <p className="text-zinc-500 mt-0.5">Eligible balances released to registered IFSC/NEFT studio account.</p>
-          </div>
-        </div>
       </div>
+
+      {/* Settle Payout Modal */}
+      {settlingPayout && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <form
+            onSubmit={handleSettlePayout}
+            className="bg-zinc-950 border border-zinc-800 rounded-lg max-w-md w-full p-6 space-y-4 shadow-2xl"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2">
+                <FileCheck className="w-4 h-4 text-emerald-400" />
+                <h3 className="text-sm font-semibold text-zinc-100">
+                  Record Bank Settlement
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSettlingPayout(null)}
+                className="text-zinc-500 hover:text-zinc-300"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="p-3 bg-zinc-900 border border-zinc-800 rounded space-y-1 font-mono">
+                <div className="flex justify-between text-zinc-400">
+                  <span>Artisan Studio:</span>
+                  <strong className="text-zinc-200">{settlingPayout.sellerName}</strong>
+                </div>
+                <div className="flex justify-between text-zinc-400">
+                  <span>Gross Order Item Total:</span>
+                  <span>{formatCurrency(settlingPayout.grossAmount)}</span>
+                </div>
+                <div className="flex justify-between text-emerald-400">
+                  <span>Platform Fee (10%):</span>
+                  <span>-{formatCurrency(settlingPayout.commission)}</span>
+                </div>
+                <div className="flex justify-between text-zinc-100 font-semibold pt-1 border-t border-zinc-800">
+                  <span>Net Disbursable Balance:</span>
+                  <span>{formatCurrency(settlingPayout.netPayout)}</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono uppercase text-zinc-400 block">
+                  Bank UTR / Transaction Reference <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={utrRef}
+                  onChange={(e) => setUtrRef(e.target.value)}
+                  placeholder="e.g. UTR-AXIS-20261030-994821"
+                  className="w-full p-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none font-mono"
+                />
+                <span className="text-[10px] text-zinc-500">Minimum 6 characters. Must match your NEFT/RTGS bank clearance slip.</span>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono uppercase text-zinc-400 block">
+                  Treasury Memo / Remarks
+                </label>
+                <textarea
+                  rows={2}
+                  value={settlementNote}
+                  onChange={(e) => setSettlementNote(e.target.value)}
+                  placeholder="Optional memo for auditor ledger..."
+                  className="w-full p-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSettlingPayout(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isSubmittingSettlement}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white"
+              >
+                {isSubmittingSettlement ? "Disbursing..." : "Confirm Settlement"}
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
@@ -298,17 +611,6 @@ function ReconciliationAuditSection() {
               </strong>
             </div>
           </div>
-
-          {report.discrepancies?.length > 0 && (
-            <div className="pt-2 border-t border-zinc-800 space-y-1">
-              <span className="text-[10px] text-rose-400 font-semibold uppercase">Discrepancy Alerts:</span>
-              {report.discrepancies.map((d: any, idx: number) => (
-                <div key={idx} className="p-2 bg-rose-500/10 border border-rose-500/20 rounded text-[11px] text-rose-300">
-                  {d.orderId}: {d.issue} (Δ {formatCurrency(d.amountPaiseDelta / 100)})
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
 

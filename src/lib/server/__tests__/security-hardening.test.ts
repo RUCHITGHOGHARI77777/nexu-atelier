@@ -27,8 +27,8 @@ describe("ZERO-TRUST E-COMMERCE SECURITY SUITE", () => {
     const attackerUser = await authService.register("Attacker User", attackerEmail, "AttackerPass123!");
     attackerCustomerId = attackerUser.user!.id;
 
-    // 3. Find a test product
-    const product = await prisma.product.findFirst({ where: { isPublished: true } });
+    // 3. Find an in-stock test product
+    const product = await prisma.product.findFirst({ where: { isPublished: true, stock: { gt: 5 } } });
     testProductId = product!.id;
 
     // 4. Create an order belonging to Victim

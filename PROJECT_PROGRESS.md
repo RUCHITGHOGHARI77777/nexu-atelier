@@ -1,6 +1,6 @@
 # NEXU ATELIER — Master Project Architecture, Safety & Progress Tracker
 
-**Document Version:** 1.1.0  
+**Document Version:** 1.2.0  
 **Date Updated:** October 30, 2026  
 **Repository Identity:** NEXU ATELIER Reusable E-Commerce Marketplace  
 **Architecture:** Next.js 14.2.18 (App Router), TypeScript, Prisma ORM, PostgreSQL 17.10  
@@ -52,29 +52,29 @@ NEXU ATELIER is a single reusable Next.js application that hosts three role-gate
 ## 2. Feature Implementation Status
 
 ### A. Completed & Verified Features
-1. **Database Schema:** 35 PostgreSQL Prisma models covering Users, Profiles, Sellers, Categories, Products, Images, Variants, Orders, Items, Payments, Payouts, Audit Events, Disputes, and Reviews. Additive fields (`brand`, `sku`, `productType`, `subcategory`, `searchKeywords`, `dispatchEstimate`, `packageDimensions`, `taxRatePercent`) and `CHANGES_REQUESTED` enum status added safely without data loss.
-2. **Automated Test Suite:** 176 passed out of 176 Vitest tests across 17 test suites with 100% pass rate.
+1. **Database Schema:** 35 PostgreSQL Prisma models covering Users, Profiles, Sellers, Categories, Products, Images, Variants, Orders, Items, Payments, Payouts, Audit Events, Disputes, and Reviews. Additive fields (`brand`, `sku`, `productType`, `subcategory`, `searchKeywords`, `dispatchEstimate`, `packageDimensions`, `taxRatePercent`, `isSuspended`, `suspensionReason`), `CHANGES_REQUESTED` enum status, `PENDING_PAYMENT`/`RETURNED` OrderStatus, and `RETURNED` FulfillmentStatus added safely without data loss.
+2. **Automated Test Suite:** 190 passed out of 190 Vitest tests across 18 test suites with 100% pass rate.
 3. **Multi-Tenant Seller Isolation:** `sellerService` strictly enforces `vendorId === seller.id` on all queries, updates, and order line fulfillment.
-4. **Admin Control Center Engine:** Full operations overview, seller management, central order control, dispute & refund resolution, coupons & vouchers, double-entry financial ledger, user account governance, immutable security audit trail, category & taxonomy engine (`/admin/categories`), automations & outbox health (`/admin/automations`), and financial intelligence reports with CSV export (`/admin/reports`).
-5. **Enhanced Product Moderation & Homepage Spotlight:** In-modal multi-image gallery preview, full specifications (materials, dimensions, weight, care), complete variant matrix (sizes, stock, colors, SKUs), "Request Changes", "Reject Piece" with required feedback, and instant "Homepage Featured" toggle.
-6. **Navigation, Cart & Order Flow Hardening (Part 2):** Eliminated all 27 invalid interactive HTML nesting points (`<button>` inside `<Link>`, `<Link>` inside `<Button>`), removed artificial 700ms cart drawer delay, guarded against duplicate rapid clicks, and enabled instant Next.js router synchronization on order placement.
-7. **Secure Media Uploads:** `/api/upload/image` validates file types via magic bytes (JPEG, PNG, WebP), enforces a 4.0 MB limit, uses cryptographically random filenames, and enforces rate limiting.
-8. **Destructive-Seed Protection:** Fail-closed circuit breaker in `prisma/seed.ts` blocking accidental execution unless `ALLOW_SEED_RESET=true` is explicitly provided.
-9. **Zero Secrets in Repository:** Strict `.gitignore` excluding all `.env*` files (preserving only `.env.example`), `.next`, `node_modules`, `dist`, and backups.
-10. **Full-Depth Supplier Product Engine (Part 3):**
-    - Full product creation & draft saving (`/seller/products/new`).
-    - Device file upload with cover image indicator, previews, and reordering.
-    - Zero auto-approval: unapproved items default to `DRAFT` or `PENDING_REVIEW` (`isPublished: false`).
-    - Full product editing (`/seller/products/[id]`), resubmission, and automatic unpublishing/re-moderation upon live product edit.
-    - Complete seller dashboard (`/seller/products`) with status tabs, filter by status, metrics strip, and inline admin moderation notes.
-11. **Storefront Database Integration (Part 5):**
-    - Connected `/catalog` to dynamic `/api/products` endpoint with category, price range, search, and stock filters.
-    - Connected `/product/[slug]` to PostgreSQL via `productRepository.getProductBySlug(slug)` and dynamic related products.
-    - Connected homepage `TrendingSection` to `/api/products?featured=true`.
-12. **Variant-Specific Inventory & Checkout Integrity (Part 6):**
-    - Atomic variant stock validation and decrementing during checkout in `order-service.ts`.
-    - Out-of-stock guards preventing checkout when variant stock is zero or insufficient.
-    - Variant stock restoration upon order cancellation.
+4. **Central Admin Control Engine (Part 4):**
+    - Live real-time dashboard (`/admin`) aggregating real PostgreSQL metrics: GMV, net revenue, total orders, pending orders, delivered orders, cancelled orders, pending payments, active sellers, total customers, low-stock inventory count, and pending payouts.
+    - Server-side date filtering (`today`, `7d`, `30d`, `all`).
+    - Customer 360° dossier, suspension/reactivation with mandatory recorded reasons, and audit logging.
+    - Studio dossier 360° modal viewing KYC data, bank accounts, complete product catalog with live variant stock, assigned discrete order lines, payouts, and audit trails.
+    - Central order operations: parent order status transitions and discrete line-item fulfillment with 3PL courier tracking and auto-parent rollup.
+    - Double-entry vendor payout settlements requiring verified banking UTR references (min 6 characters) and automatic escrow release on delivery.
+    - Website appearance & content control: dynamic database-backed `PlatformSetting` for branding, hero masthead, announcement banners, section visibility, marketplace policies, and footer taglines. Storefront `AnnouncementBar` and `HeroSection` dynamically hydrate from `/api/settings/public`.
+    - Server-side role-based administrative permissions (`VIEW_DASHBOARD`, `MANAGE_USERS`, `MODERATE_PRODUCTS`, `MANAGE_SELLERS`, `MANAGE_ORDERS`, `PROCESS_REFUNDS`, `MANAGE_PAYOUTS`, `MANAGE_SETTINGS`, `MANAGE_ADMINS`).
+5. **Category & Taxonomy Engine:** Created `/admin/categories` and `/api/admin/categories` with full CRUD, product-attachment safety checks, and audit logging.
+6. **Automations & Outbox Management:** Created `/admin/automations` and `/api/admin/automations` for monitoring transactional outbox events, failed jobs, and inventory low-stock scans.
+7. **Executive Financial Reports:** Created `/admin/reports` and `/api/admin/reports` with real PostgreSQL revenue metrics and RFC 4180 CSV export.
+8. **Enhanced Product Moderation & Homepage Spotlight:** In-modal multi-image gallery preview, full specifications, complete variant matrix, "Request Changes", "Reject Piece" with required feedback, and instant "Homepage Featured" toggle.
+9. **Navigation, Cart & Order Flow Hardening (Part 2):** Eliminated all 27 invalid interactive HTML nesting points (`<button>` inside `<Link>`, `<Link>` inside `<Button>`), removed artificial 700ms cart drawer delay, guarded against duplicate rapid clicks, and enabled instant Next.js router synchronization on order placement.
+10. **Secure Media Uploads:** `/api/upload/image` validates file types via magic bytes (JPEG, PNG, WebP), enforces a 4.0 MB limit, uses cryptographically random filenames, and enforces rate limiting.
+11. **Destructive-Seed Protection:** Fail-closed circuit breaker in `prisma/seed.ts` blocking accidental execution unless `ALLOW_SEED_RESET=true` is explicitly provided.
+12. **Zero Secrets in Repository:** Strict `.gitignore` excluding all `.env*` files (preserving only `.env.example`), `.next`, `node_modules`, `dist`, and backups.
+13. **Full-Depth Supplier Product Engine (Part 3):** Full product creation & draft saving (`/seller/products/new`), device file upload with cover indicator, zero auto-approval (`DRAFT`/`PENDING_REVIEW`), full product editing (`/seller/products/[id]`), automatic unpublishing/re-moderation upon live product edit, and seller dashboard (`/seller/products`) with status tabs and inline admin feedback.
+14. **Storefront Database Integration (Part 5):** Dynamic `/api/products` integration in `/catalog`, dynamic `/product/[slug]`, and homepage `TrendingSection`.
+15. **Variant-Specific Inventory & Checkout Integrity (Part 6):** Atomic variant stock validation and decrementing during checkout in `order-service.ts`, out-of-stock guards, and variant stock restoration upon cancellation.
 
 ### B. Incomplete Features (Queued for Resolution)
 1. **Complete Shopping & Supplier Fulfillment Journey (Part 7):**

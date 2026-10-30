@@ -5,6 +5,7 @@ import {
   FulfillmentStatus,
   OrderStatus,
   PaymentStatus,
+  PayoutStatus,
   DisputeStatus,
   CouponDiscountType,
   UserRole,
@@ -30,18 +31,37 @@ export class AdminService {
   /**
    * Calculates platform-wide operational and financial metrics derived strictly from authoritative database records.
    */
-  public async getDashboardMetrics(): Promise<AdminMetrics> {
+  public async getDashboardMetrics(options?: { period?: string }): Promise<AdminMetrics> {
+    const orderWhere: any = {};
+    if (options?.period === "today") {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      orderWhere.createdAt = { gte: startOfDay };
+    } else if (options?.period === "7d") {
+      const d = new Date();
+      d.setDate(d.getDate() - 7);
+      orderWhere.createdAt = { gte: d };
+    } else if (options?.period === "30d") {
+      const d = new Date();
+      d.setDate(d.getDate() - 30);
+      orderWhere.createdAt = { gte: d };
+    }
+
     const [
       orders,
       sellers,
       products,
       customersCount,
       openDisputesCount,
+      pendingPayoutsCount,
+      lowStockCount,
     ] = await Promise.all([
       prisma.order.findMany({
+        where: orderWhere,
         select: {
           id: true,
           status: true,
+          paymentStatus: true,
           subtotalPaise: true,
           shippingFeePaise: true,
           discountPaise: true,
@@ -64,6 +84,7 @@ export class AdminService {
       prisma.product.findMany({
         select: {
           id: true,
+          stock: true,
           isPublished: true,
           approvalStatus: true,
         },
@@ -73,6 +94,12 @@ export class AdminService {
       }),
       prisma.disputeCase.count({
         where: { status: { in: [DisputeStatus.OPEN, DisputeStatus.UNDER_REVIEW] } },
+      }),
+      prisma.vendorPayout.count({
+        where: { status: { in: [PayoutStatus.ELIGIBLE_FOR_PAYOUT, PayoutStatus.PROCESSING] } },
+      }),
+      prisma.product.count({
+        where: { stock: { lte: 5 } },
       }),
     ]);
 
@@ -89,12 +116,27 @@ export class AdminService {
 
     const netPlatformRevenuePaise = Math.max(0, totalCommissionPaise - totalRefundedPaise);
 
+    const pendingOrdersCount = orders.filter(
+      (o) =>
+        o.status === OrderStatus.CONFIRMED ||
+        o.status === OrderStatus.IN_PRODUCTION ||
+        (o.status as string) === "PENDING_PAYMENT"
+    ).length;
+
+    const deliveredOrdersCount = orders.filter((o) => o.status === OrderStatus.DELIVERED).length;
+
+    const pendingPaymentsCount = orders.filter(
+      (o) => o.paymentStatus === PaymentStatus.PENDING || o.paymentStatus === PaymentStatus.ESCROW_HOLD
+    ).length;
+
     return {
       grossMerchandiseValue: Math.round(grossMerchandiseValuePaise / 100),
       netPlatformRevenue: Math.round(netPlatformRevenuePaise / 100),
       totalCommission: Math.round(totalCommissionPaise / 100),
       totalOrders: orders.length,
-      completedOrders: orders.filter((o) => o.status === OrderStatus.DELIVERED).length,
+      completedOrders: deliveredOrdersCount,
+      deliveredOrders: deliveredOrdersCount,
+      pendingOrders: pendingOrdersCount,
       inTransitOrders: orders.filter(
         (o) =>
           o.status === OrderStatus.CONFIRMED ||
@@ -102,6 +144,9 @@ export class AdminService {
           o.status === OrderStatus.SHIPPED
       ).length,
       cancelledOrders: orders.filter((o) => o.status === OrderStatus.CANCELLED).length,
+      pendingPayments: pendingPaymentsCount,
+      pendingPayouts: pendingPayoutsCount,
+      lowStockProducts: lowStockCount,
       activeSellers: sellers.filter((s) => s.status === SellerStatus.APPROVED).length,
       pendingSellers: sellers.filter((s) => s.status === SellerStatus.PENDING).length,
       suspendedSellers: sellers.filter((s) => s.status === SellerStatus.SUSPENDED).length,
@@ -1111,10 +1156,208 @@ export class AdminService {
       name: u.profile?.name || "Anonymous Patron",
       role: u.role,
       phone: u.profile?.phone || null,
+      isSuspended: u.isSuspended,
+      suspensionReason: u.suspensionReason || null,
       createdAt: u.createdAt.toISOString(),
       orderCount: u._count.orders,
       sellerSlug: u.seller?.slug || null,
     }));
+  }
+
+  /**
+   * Retrieves full 360-degree customer profile, order history, addresses, and disputes.
+   */
+  public async getCustomerDetail(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        isSuspended: true,
+        suspensionReason: true,
+        createdAt: true,
+        profile: true,
+        addresses: {
+          select: {
+            id: true,
+            street: true,
+            city: true,
+            state: true,
+            pincode: true,
+            isDefault: true,
+          },
+        },
+        orders: {
+          include: {
+            items: true,
+            disputes: true,
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        reviews: {
+          select: {
+            id: true,
+            rating: true,
+            title: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    if (!user) return null;
+
+    const totalSpentPaise = user.orders
+      .filter((o) => o.status !== OrderStatus.CANCELLED)
+      .reduce((sum, o) => sum + o.totalPaise, 0);
+
+    const auditEvents = await prisma.auditEvent.findMany({
+      where: {
+        OR: [
+          { entityId: userId },
+          { orderId: { in: user.orders.map((o) => o.id) } },
+        ],
+      },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.profile?.name || "Anonymous Patron",
+      phone: user.profile?.phone || null,
+      role: user.role,
+      isSuspended: user.isSuspended,
+      suspensionReason: user.suspensionReason || null,
+      createdAt: user.createdAt.toISOString(),
+      totalSpent: Math.round(totalSpentPaise / 100),
+      addresses: user.addresses,
+      orders: user.orders.map((o) => {
+        let addr: any = {};
+        try {
+          addr = JSON.parse(o.shippingAddressSnapshot);
+        } catch {
+          addr = { street: o.shippingAddressSnapshot };
+        }
+        return {
+          id: o.id,
+          customerId: o.customerId,
+          customerName: o.customerName,
+          customerEmail: o.customerEmail,
+          shippingAddressSnapshot: addr,
+          deliveryMethodName: o.deliveryMethodName,
+          subtotal: Math.round(o.subtotalPaise / 100),
+          shippingFee: Math.round(o.shippingFeePaise / 100),
+          discount: Math.round(o.discountPaise / 100),
+          couponCode: o.couponCode,
+          total: Math.round(o.totalPaise / 100),
+          refundedAmount: Math.round(o.refundedPaise / 100),
+          status: o.status,
+          paymentStatus: o.paymentStatus,
+          createdAt: o.createdAt.toISOString(),
+          items: o.items.map((it) => ({
+            id: it.id,
+            productTitle: it.title,
+            vendorName: it.vendorName,
+            vendorId: it.vendorId,
+            sku: it.selectedSku,
+            unitPrice: Math.round(it.unitPricePaise / 100),
+            quantity: it.quantity,
+            lineTotal: Math.round(it.lineTotalPaise / 100),
+            fulfillmentStatus: it.fulfillmentStatus,
+            courierName: it.courierName,
+            trackingNumber: it.trackingNumber,
+          })),
+          disputes: o.disputes.map((d) => ({
+            id: d.id,
+            reason: d.reason,
+            status: d.status,
+            refundAmount: d.refundAmountPaise ? Math.round(d.refundAmountPaise / 100) : null,
+          })),
+        };
+      }),
+      disputes: user.orders.flatMap((o) =>
+        o.disputes.map((d) => ({
+          id: d.id,
+          orderId: o.id,
+          orderItemId: d.orderItemId,
+          customerId: user.id,
+          customerName: user.profile?.name || "Anonymous Patron",
+          customerEmail: user.email,
+          sellerId: null,
+          sellerName: null,
+          reason: d.reason,
+          evidence: d.evidence,
+          status: d.status,
+          refundAmount: d.refundAmountPaise ? Math.round(d.refundAmountPaise / 100) : null,
+          internalNotes: d.internalNotes,
+          resolutionReason: d.resolutionReason,
+          resolvedBy: d.resolvedBy,
+          resolvedAt: d.resolvedAt ? d.resolvedAt.toISOString() : null,
+          createdAt: d.createdAt.toISOString(),
+        }))
+      ),
+      auditEvents: auditEvents.map((a) => ({
+        id: a.id,
+        orderId: a.orderId,
+        entityType: a.entityType,
+        entityId: a.entityId,
+        action: a.action,
+        note: a.note || "",
+        performedBy: a.performedBy,
+        createdAt: a.createdAt.toISOString(),
+      })),
+    };
+  }
+
+  /**
+   * Suspends or reactivates a customer account with mandatory reason recording.
+   */
+  public async updateCustomerStatus(
+    targetUserId: string,
+    isSuspended: boolean,
+    reason: string | undefined,
+    adminUserId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    if (targetUserId === adminUserId && isSuspended) {
+      return { success: false, error: "You cannot suspend your own administrator account." };
+    }
+
+    if (isSuspended && (!reason || reason.trim().length < 5)) {
+      return {
+        success: false,
+        error: "A formal reason (minimum 5 characters) is required when suspending an account.",
+      };
+    }
+
+    try {
+      await prisma.user.update({
+        where: { id: targetUserId },
+        data: {
+          isSuspended,
+          suspensionReason: isSuspended ? (reason?.trim() || "Policy violation") : null,
+        },
+      });
+
+      await prisma.auditEvent.create({
+        data: {
+          entityType: "USER",
+          entityId: targetUserId,
+          action: isSuspended ? "ACCOUNT_SUSPENDED" : "ACCOUNT_REACTIVATED",
+          note: isSuspended
+            ? `Customer account suspended: ${reason?.trim()}`
+            : `Customer account reactivated by admin.`,
+          performedBy: adminUserId,
+        },
+      });
+
+      return { success: true };
+    } catch {
+      return { success: false, error: "Failed to update account status." };
+    }
   }
 
   /**
@@ -1647,6 +1890,444 @@ export class AdminService {
       `"${o.createdAt}"`,
     ]);
     return [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+  }
+
+  /**
+   * Retrieves comprehensive 360-degree supplier studio deep-dive.
+   */
+  public async getSellerDetail(sellerId: string) {
+    const seller = await prisma.seller.findUnique({
+      where: { id: sellerId },
+      include: {
+        user: { select: { id: true, email: true, createdAt: true, isSuspended: true } },
+        products: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            basePricePaise: true,
+            stock: true,
+            isPublished: true,
+            isFeatured: true,
+            approvalStatus: true,
+            category: { select: { name: true } },
+            images: { select: { url: true }, take: 1 },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        payouts: {
+          select: {
+            id: true,
+            orderItemId: true,
+            grossAmountPaise: true,
+            commissionPaise: true,
+            netPayoutPaise: true,
+            status: true,
+            settledAt: true,
+            transactionRef: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: "desc" },
+        },
+      },
+    });
+
+    if (!seller) return null;
+
+    // Fetch order lines assigned to this seller
+    const orderItems = await prisma.orderItem.findMany({
+      where: { vendorId: sellerId },
+      include: {
+        order: {
+          select: {
+            id: true,
+            status: true,
+            createdAt: true,
+            customerName: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const auditEvents = await prisma.auditEvent.findMany({
+      where: {
+        OR: [
+          { entityId: sellerId },
+          { entityType: "SELLER", entityId: sellerId },
+        ],
+      },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
+
+    const grossSalesPaise = seller.payouts.reduce((sum, p) => sum + p.grossAmountPaise, 0);
+    const commissionPaise = seller.payouts.reduce((sum, p) => sum + p.commissionPaise, 0);
+    const netEarningsPaise = seller.payouts.reduce((sum, p) => sum + p.netPayoutPaise, 0);
+
+    return {
+      id: seller.id,
+      userId: seller.userId,
+      name: seller.name,
+      slug: seller.slug,
+      originHub: seller.originHub,
+      story: seller.story,
+      heroImage: seller.heroImage,
+      verified: seller.verified,
+      rating: seller.rating,
+      leadTimeDays: seller.leadTimeDays,
+      status: seller.status,
+      businessEmail: seller.businessEmail,
+      businessPhone: seller.businessPhone,
+      taxIdentifier: seller.taxIdentifier,
+      commissionRatePercent: seller.commissionRatePercent,
+      bankAccountName: seller.bankAccountName,
+      bankAccountNumber: seller.bankAccountNumber,
+      bankIfsc: seller.bankIfsc,
+      rejectionReason: seller.rejectionReason,
+      approvedAt: seller.approvedAt ? seller.approvedAt.toISOString() : null,
+      createdAt: seller.createdAt.toISOString(),
+      user: seller.user,
+      grossSales: Math.round(grossSalesPaise / 100),
+      commissionPaid: Math.round(commissionPaise / 100),
+      netEarnings: Math.round(netEarningsPaise / 100),
+      products: seller.products.map((p) => ({
+        id: p.id,
+        title: p.title,
+        slug: p.slug,
+        basePrice: Math.round(p.basePricePaise / 100),
+        stock: p.stock,
+        isPublished: p.isPublished,
+        isFeatured: p.isFeatured,
+        approvalStatus: p.approvalStatus,
+        category: p.category.name,
+        thumbnail: p.images[0]?.url || "/images/placeholder.jpg",
+      })),
+      orderLines: orderItems.map((it) => ({
+        id: it.id,
+        orderId: it.orderId,
+        productTitle: it.title,
+        sku: it.selectedSku,
+        quantity: it.quantity,
+        unitPrice: Math.round(it.unitPricePaise / 100),
+        lineTotal: Math.round(it.lineTotalPaise / 100),
+        fulfillmentStatus: it.fulfillmentStatus,
+        courierName: it.courierName,
+        trackingNumber: it.trackingNumber,
+        dispatchedAt: it.dispatchedAt ? it.dispatchedAt.toISOString() : null,
+        deliveredAt: it.deliveredAt ? it.deliveredAt.toISOString() : null,
+        orderCreatedAt: it.order.createdAt.toISOString(),
+        customerName: it.order.customerName,
+      })),
+      payouts: seller.payouts.map((p) => ({
+        id: p.id,
+        grossAmount: Math.round(p.grossAmountPaise / 100),
+        commission: Math.round(p.commissionPaise / 100),
+        netPayout: Math.round(p.netPayoutPaise / 100),
+        status: p.status,
+        settledAt: p.settledAt ? p.settledAt.toISOString() : null,
+        transactionRef: p.transactionRef,
+        createdAt: p.createdAt.toISOString(),
+      })),
+      auditEvents: auditEvents.map((a) => ({
+        id: a.id,
+        action: a.action,
+        note: a.note || "",
+        performedBy: a.performedBy,
+        createdAt: a.createdAt.toISOString(),
+      })),
+    };
+  }
+
+  /**
+   * Updates parent order status and payment status with validated state machine transitions.
+   */
+  public async updateOrderStatus(
+    orderId: string,
+    payload: { status?: OrderStatus; paymentStatus?: PaymentStatus; note?: string },
+    adminUserId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true },
+    });
+
+    if (!order) return { success: false, error: "Order not found." };
+
+    // Prevent reviving a cancelled order arbitrarily
+    if (order.status === OrderStatus.CANCELLED && payload.status && payload.status !== OrderStatus.CANCELLED) {
+      return { success: false, error: "Cannot modify status of an already cancelled order." };
+    }
+
+    const updates: any = {};
+    if (payload.status) updates.status = payload.status;
+    if (payload.paymentStatus) updates.paymentStatus = payload.paymentStatus;
+
+    await prisma.$transaction(async (tx) => {
+      await tx.order.update({
+        where: { id: orderId },
+        data: updates,
+      });
+
+      // If order is marked DELIVERED, advance all uncancelled order items and linked vendor payouts
+      if (payload.status === OrderStatus.DELIVERED) {
+        await tx.orderItem.updateMany({
+          where: { orderId, fulfillmentStatus: { not: FulfillmentStatus.CANCELLED } },
+          data: {
+            fulfillmentStatus: FulfillmentStatus.DELIVERED,
+            deliveredAt: new Date(),
+          },
+        });
+
+        const itemIds = order.items.map((i) => i.id);
+        await tx.vendorPayout.updateMany({
+          where: { orderItemId: { in: itemIds }, status: PayoutStatus.ESCROW_HOLD },
+          data: { status: PayoutStatus.ELIGIBLE_FOR_PAYOUT },
+        });
+      }
+
+      await tx.auditEvent.create({
+        data: {
+          orderId,
+          entityType: "ORDER",
+          entityId: orderId,
+          action: "ORDER_STATUS_UPDATED",
+          note: `Admin updated order: ${payload.status ? `status=${payload.status} ` : ""}${payload.paymentStatus ? `paymentStatus=${payload.paymentStatus} ` : ""}${payload.note ? `Note: ${payload.note}` : ""}`,
+          performedBy: adminUserId,
+        },
+      });
+    });
+
+    return { success: true };
+  }
+
+  /**
+   * Updates discrete order line fulfillment, courier tracking, and performs parent status rollup.
+   */
+  public async updateOrderItemFulfillment(
+    orderItemId: string,
+    payload: {
+      fulfillmentStatus: FulfillmentStatus;
+      courierName?: string;
+      trackingNumber?: string;
+      note?: string;
+    },
+    adminUserId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const item = await prisma.orderItem.findUnique({
+      where: { id: orderItemId },
+      include: { order: { include: { items: true } } },
+    });
+
+    if (!item) return { success: false, error: "Order line item not found." };
+
+    if (item.fulfillmentStatus === FulfillmentStatus.CANCELLED) {
+      return { success: false, error: "Cannot modify fulfillment of a cancelled order line item." };
+    }
+
+    const itemUpdates: any = {
+      fulfillmentStatus: payload.fulfillmentStatus,
+    };
+    if (payload.courierName) itemUpdates.courierName = payload.courierName.trim();
+    if (payload.trackingNumber) itemUpdates.trackingNumber = payload.trackingNumber.trim();
+
+    if (payload.fulfillmentStatus === FulfillmentStatus.SHIPPED && !item.dispatchedAt) {
+      itemUpdates.dispatchedAt = new Date();
+    }
+    if (payload.fulfillmentStatus === FulfillmentStatus.DELIVERED && !item.deliveredAt) {
+      itemUpdates.deliveredAt = new Date();
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.orderItem.update({
+        where: { id: orderItemId },
+        data: itemUpdates,
+      });
+
+      // If delivered, transition linked payout to ELIGIBLE_FOR_PAYOUT
+      if (payload.fulfillmentStatus === FulfillmentStatus.DELIVERED) {
+        await tx.vendorPayout.updateMany({
+          where: { orderItemId, status: PayoutStatus.ESCROW_HOLD },
+          data: { status: PayoutStatus.ELIGIBLE_FOR_PAYOUT },
+        });
+      }
+
+      // Check parent order rollup
+      const allItems = await tx.orderItem.findMany({
+        where: { orderId: item.orderId },
+      });
+
+      const nonCancelled = allItems.filter((i) => i.fulfillmentStatus !== FulfillmentStatus.CANCELLED);
+      if (nonCancelled.length > 0) {
+        const allDelivered = nonCancelled.every((i) => i.fulfillmentStatus === FulfillmentStatus.DELIVERED);
+        const allShippedOrDelivered = nonCancelled.every(
+          (i) => i.fulfillmentStatus === FulfillmentStatus.SHIPPED || i.fulfillmentStatus === FulfillmentStatus.DELIVERED
+        );
+
+        if (allDelivered && item.order.status !== OrderStatus.DELIVERED) {
+          await tx.order.update({
+            where: { id: item.orderId },
+            data: { status: OrderStatus.DELIVERED },
+          });
+        } else if (allShippedOrDelivered && item.order.status !== OrderStatus.SHIPPED && item.order.status !== OrderStatus.DELIVERED) {
+          await tx.order.update({
+            where: { id: item.orderId },
+            data: { status: OrderStatus.SHIPPED },
+          });
+        }
+      }
+
+      await tx.auditEvent.create({
+        data: {
+          orderId: item.orderId,
+          entityType: "ORDER_ITEM",
+          entityId: orderItemId,
+          action: "ORDER_ITEM_FULFILLMENT_UPDATED",
+          note: `Fulfillment status changed to ${payload.fulfillmentStatus}${payload.trackingNumber ? ` (Courier: ${payload.courierName}, Tracking: ${payload.trackingNumber})` : ""}${payload.note ? ` Note: ${payload.note}` : ""}`,
+          performedBy: adminUserId,
+        },
+      });
+    });
+
+    return { success: true };
+  }
+
+  /**
+   * Retrieves paginated supplier payouts and settlement records.
+   */
+  public async getPayouts(options: {
+    status?: string;
+    sellerId?: string;
+    page?: number;
+    limit?: number;
+  } = {}): Promise<{ payouts: any[]; total: number; totalPages: number }> {
+    const page = Math.max(1, options.page || 1);
+    const limit = Math.min(50, Math.max(1, options.limit || 20));
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (options.status && options.status !== "ALL") {
+      where.status = options.status;
+    }
+    if (options.sellerId) {
+      where.sellerId = options.sellerId;
+    }
+
+    const [total, dbPayouts] = await prisma.$transaction([
+      prisma.vendorPayout.count({ where }),
+      prisma.vendorPayout.findMany({
+        where,
+        include: {
+          seller: { select: { id: true, name: true, slug: true } },
+          orderItem: { select: { title: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    const payouts = dbPayouts.map((p) => ({
+      id: p.id,
+      sellerId: p.sellerId,
+      sellerName: p.seller.name,
+      sellerSlug: p.seller.slug,
+      orderItemId: p.orderItemId,
+      productTitle: p.orderItem?.title || null,
+      grossAmount: Math.round(p.grossAmountPaise / 100),
+      commission: Math.round(p.commissionPaise / 100),
+      netPayout: Math.round(p.netPayoutPaise / 100),
+      status: p.status,
+      settledAt: p.settledAt ? p.settledAt.toISOString() : null,
+      transactionRef: p.transactionRef,
+      createdAt: p.createdAt.toISOString(),
+    }));
+
+    return {
+      payouts,
+      total,
+      totalPages: Math.ceil(total / limit) || 1,
+    };
+  }
+
+  /**
+   * Settles a vendor payout with mandatory banking transaction/UTR reference validation.
+   */
+  public async settlePayout(
+    payoutId: string,
+    payload: { transactionRef: string; note?: string },
+    adminUserId: string
+  ): Promise<{ success: boolean; payout?: any; error?: string }> {
+    if (!payload.transactionRef || payload.transactionRef.trim().length < 6) {
+      return {
+        success: false,
+        error: "A valid banking UTR or transaction settlement reference (minimum 6 characters) is required.",
+      };
+    }
+
+    const payout = await prisma.vendorPayout.findUnique({
+      where: { id: payoutId },
+      include: { seller: true },
+    });
+
+    if (!payout) return { success: false, error: "Payout record not found." };
+    if (payout.status === PayoutStatus.SETTLED) {
+      return { success: false, error: "This payout has already been marked SETTLED." };
+    }
+
+    const updated = await prisma.vendorPayout.update({
+      where: { id: payoutId },
+      data: {
+        status: PayoutStatus.SETTLED,
+        settledAt: new Date(),
+        transactionRef: payload.transactionRef.trim(),
+      },
+      include: {
+        seller: { select: { id: true, name: true, slug: true } },
+        orderItem: { select: { title: true } },
+      },
+    });
+
+    await prisma.auditEvent.create({
+      data: {
+        entityType: "VENDOR_PAYOUT",
+        entityId: payoutId,
+        action: "PAYOUT_SETTLED",
+        note: `Payout settled to studio "${payout.seller.name}" via UTR: ${payload.transactionRef.trim()}${payload.note ? `. Note: ${payload.note.trim()}` : ""}`,
+        performedBy: adminUserId,
+      },
+    });
+
+    return {
+      success: true,
+      payout: {
+        id: updated.id,
+        sellerId: updated.sellerId,
+        sellerName: updated.seller.name,
+        sellerSlug: updated.seller.slug,
+        orderItemId: updated.orderItemId,
+        productTitle: updated.orderItem?.title || null,
+        grossAmount: Math.round(updated.grossAmountPaise / 100),
+        commission: Math.round(updated.commissionPaise / 100),
+        netPayout: Math.round(updated.netPayoutPaise / 100),
+        status: updated.status,
+        settledAt: updated.settledAt?.toISOString() || null,
+        transactionRef: updated.transactionRef,
+        createdAt: updated.createdAt.toISOString(),
+      },
+    };
+  }
+
+  /**
+   * Retrieves public platform settings as a key-value dictionary.
+   */
+  public async getPublicSettings(): Promise<Record<string, string>> {
+    const list = await prisma.platformSetting.findMany();
+    const map: Record<string, string> = {};
+    for (const item of list) {
+      map[item.key] = item.value;
+    }
+    return map;
   }
 }
 

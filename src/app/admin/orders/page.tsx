@@ -18,8 +18,11 @@ import {
   Calendar,
   X,
   ShieldAlert,
+  Edit,
+  Send,
+  Package,
 } from "lucide-react";
-import { AdminOrderView, OrderStatus } from "@/types/admin";
+import { AdminOrderView, OrderStatus, FulfillmentStatus } from "@/types/admin";
 import { formatCurrency, formatDateTime } from "@/lib/formatters";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -35,6 +38,28 @@ export default function AdminOrdersPage() {
   const [cancellingOrder, setCancellingOrder] = useState<AdminOrderView | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
+
+  // Line item fulfillment modal state
+  const [editingItem, setEditingItem] = useState<{
+    orderId: string;
+    itemId: string;
+    productTitle: string;
+    currentStatus: FulfillmentStatus;
+    courierName: string;
+    trackingNumber: string;
+  } | null>(null);
+  const [fulfillmentTargetStatus, setFulfillmentTargetStatus] = useState<FulfillmentStatus>(FulfillmentStatus.SHIPPED);
+  const [courierInput, setCourierInput] = useState("Bluedart Express");
+  const [trackingInput, setTrackingInput] = useState("");
+  const [fulfillmentNote, setFulfillmentNote] = useState("");
+  const [isSubmittingFulfillment, setIsSubmittingFulfillment] = useState(false);
+
+  // Parent status update modal state
+  const [updatingOrderStatus, setUpdatingOrderStatus] = useState<AdminOrderView | null>(null);
+  const [targetOrderStatus, setTargetOrderStatus] = useState<OrderStatus>(OrderStatus.SHIPPED);
+  const [statusUpdateNote, setStatusUpdateNote] = useState("");
+  const [isSubmittingStatus, setIsSubmittingStatus] = useState(false);
+
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
@@ -103,6 +128,75 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleUpdateItemFulfillment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem) return;
+
+    setIsSubmittingFulfillment(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    try {
+      const res = await fetch(`/api/admin/orders/items/${editingItem.itemId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fulfillmentStatus: fulfillmentTargetStatus,
+          courierName: courierInput.trim() || undefined,
+          trackingNumber: trackingInput.trim() || undefined,
+          note: fulfillmentNote.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setActionSuccess(`Line item fulfillment updated to ${fulfillmentTargetStatus}.`);
+        setEditingItem(null);
+        fetchOrders();
+      } else {
+        setActionError(data.error || "Failed to update item fulfillment.");
+      }
+    } catch {
+      setActionError("Network error while updating item fulfillment.");
+    } finally {
+      setIsSubmittingFulfillment(false);
+    }
+  };
+
+  const handleUpdateOrderStatus = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!updatingOrderStatus) return;
+
+    setIsSubmittingStatus(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    try {
+      const res = await fetch(`/api/admin/orders/${updatingOrderStatus.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: targetOrderStatus,
+          note: statusUpdateNote.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setActionSuccess(`Order #${updatingOrderStatus.id.slice(-8).toUpperCase()} updated to ${targetOrderStatus}.`);
+        setUpdatingOrderStatus(null);
+        setStatusUpdateNote("");
+        fetchOrders();
+      } else {
+        setActionError(data.error || "Failed to update order status.");
+      }
+    } catch {
+      setActionError("Network error while updating order status.");
+    } finally {
+      setIsSubmittingStatus(false);
+    }
+  };
+
   const getOrderStatusBadge = (status: OrderStatus) => {
     switch (status) {
       case "CONFIRMED":
@@ -132,7 +226,7 @@ export default function AdminOrdersPage() {
             Platform Order Operations
           </h1>
           <p className="text-xs text-zinc-400 mt-1">
-            Global search across patron commissions, multi-vendor parcel timelines, courier assignments, and lifecycle management.
+            Global search across patron orders, multi-vendor parcel fulfillment, courier assignments, and lifecycle governance.
           </p>
         </div>
 
@@ -320,7 +414,10 @@ export default function AdminOrdersPage() {
 
                     {/* Order Line Items */}
                     <div className="space-y-2">
-                      <span className="text-[10px] font-mono uppercase text-zinc-500">Multi-Vendor Fulfillment Lines</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono uppercase text-zinc-500">Multi-Vendor Fulfillment Lines</span>
+                        <span className="text-[10px] text-zinc-500 font-mono">Assign tracking and update dispatches per studio</span>
+                      </div>
                       <div className="border border-zinc-800 rounded overflow-hidden">
                         <table className="w-full text-left text-xs">
                           <thead className="bg-zinc-900/60 border-b border-zinc-800 text-[10px] font-mono uppercase text-zinc-500">
@@ -332,6 +429,7 @@ export default function AdminOrdersPage() {
                               <th className="py-2.5 px-3">Line Total</th>
                               <th className="py-2.5 px-3">Fulfillment Status</th>
                               <th className="py-2.5 px-3">Courier Tracking</th>
+                              <th className="py-2.5 px-3 text-right">Fulfillment</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-zinc-800/60 bg-zinc-950/40">
@@ -367,6 +465,28 @@ export default function AdminOrdersPage() {
                                     <span className="text-zinc-600 italic">Not Dispatched</span>
                                   )}
                                 </td>
+                                <td className="py-2.5 px-3 text-right">
+                                  {ord.status !== "CANCELLED" && (
+                                    <button
+                                      onClick={() => {
+                                        setEditingItem({
+                                          orderId: ord.id,
+                                          itemId: it.id,
+                                          productTitle: it.productTitle,
+                                          currentStatus: it.fulfillmentStatus,
+                                          courierName: it.courierName || "Bluedart Air",
+                                          trackingNumber: it.trackingNumber || "",
+                                        });
+                                        setFulfillmentTargetStatus(it.fulfillmentStatus);
+                                        setCourierInput(it.courierName || "Bluedart Air");
+                                        setTrackingInput(it.trackingNumber || "");
+                                      }}
+                                      className="px-2 py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded text-[10px] text-zinc-300 font-mono"
+                                    >
+                                      Update
+                                    </button>
+                                  )}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -375,27 +495,232 @@ export default function AdminOrdersPage() {
                     </div>
 
                     {/* Admin Actions Strip */}
-                    <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-800">
                       <div className="text-[11px] font-mono text-zinc-500">
-                        Payment Reference: {ord.paymentStatus}
+                        Payment Reference: <strong className="text-zinc-300">{ord.paymentStatus}</strong>
                       </div>
 
-                      {ord.status !== "CANCELLED" && ord.status !== "DELIVERED" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCancellingOrder(ord)}
-                          className="border-rose-500/30 text-rose-400 hover:bg-rose-500/10 text-xs"
-                        >
-                          Administrative Cancellation
-                        </Button>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {ord.status !== "CANCELLED" && ord.status !== "DELIVERED" && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setUpdatingOrderStatus(ord);
+                                setTargetOrderStatus(ord.status);
+                              }}
+                              className="text-xs text-zinc-200 hover:bg-zinc-900"
+                            >
+                              Transition Order Status
+                            </Button>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCancellingOrder(ord)}
+                              className="border-rose-500/30 text-rose-400 hover:bg-rose-500/10 text-xs"
+                            >
+                              Administrative Cancellation
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Line Item Fulfillment Modal */}
+      {editingItem && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <form
+            onSubmit={handleUpdateItemFulfillment}
+            className="bg-zinc-950 border border-zinc-800 rounded-lg max-w-md w-full p-6 space-y-4 shadow-2xl"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Truck className="w-4 h-4 text-amber-400" />
+                <h3 className="text-sm font-semibold text-zinc-100">
+                  Update Item Fulfillment & Dispatch
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingItem(null)}
+                className="text-zinc-500 hover:text-zinc-300"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <span className="text-[10px] font-mono uppercase text-zinc-500 block">Item</span>
+                <p className="text-zinc-200 font-medium">{editingItem.productTitle}</p>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono uppercase text-zinc-400 block">
+                  Fulfillment Status
+                </label>
+                <select
+                  value={fulfillmentTargetStatus}
+                  onChange={(e) => setFulfillmentTargetStatus(e.target.value as FulfillmentStatus)}
+                  className="w-full p-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none font-mono"
+                >
+                  <option value="NEW">NEW</option>
+                  <option value="PROCESSING">PROCESSING</option>
+                  <option value="PACKED">PACKED</option>
+                  <option value="SHIPPED">SHIPPED</option>
+                  <option value="DELIVERED">DELIVERED</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono uppercase text-zinc-400 block">
+                  Courier Partner
+                </label>
+                <input
+                  type="text"
+                  value={courierInput}
+                  onChange={(e) => setCourierInput(e.target.value)}
+                  placeholder="e.g. Bluedart Express, Delhivery, DTDC, FedEx"
+                  className="w-full p-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono uppercase text-zinc-400 block">
+                  Tracking Number / AWB
+                </label>
+                <input
+                  type="text"
+                  value={trackingInput}
+                  onChange={(e) => setTrackingInput(e.target.value)}
+                  placeholder="e.g. BD-8839210IN"
+                  className="w-full p-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none font-mono"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono uppercase text-zinc-400 block">
+                  Internal Operations Note
+                </label>
+                <textarea
+                  rows={2}
+                  value={fulfillmentNote}
+                  onChange={(e) => setFulfillmentNote(e.target.value)}
+                  placeholder="Optional fulfillment note for audit log..."
+                  className="w-full p-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setEditingItem(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isSubmittingFulfillment}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white"
+              >
+                {isSubmittingFulfillment ? "Updating..." : "Save Fulfillment"}
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Parent Order Status Update Modal */}
+      {updatingOrderStatus && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <form
+            onSubmit={handleUpdateOrderStatus}
+            className="bg-zinc-950 border border-zinc-800 rounded-lg max-w-md w-full p-6 space-y-4 shadow-2xl"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Package className="w-4 h-4 text-blue-400" />
+                <h3 className="text-sm font-semibold text-zinc-100">
+                  Transition Parent Order Lifecycle
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setUpdatingOrderStatus(null)}
+                className="text-zinc-500 hover:text-zinc-300"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <p className="text-zinc-400">
+                Updating order <strong className="text-zinc-200 font-mono">#{updatingOrderStatus.id.slice(-8).toUpperCase()}</strong>.
+                If setting to <code className="text-zinc-200 font-mono">DELIVERED</code>, all active items are marked delivered and artisan escrow funds are released to eligible payout status.
+              </p>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono uppercase text-zinc-400 block">
+                  Target Status
+                </label>
+                <select
+                  value={targetOrderStatus}
+                  onChange={(e) => setTargetOrderStatus(e.target.value as OrderStatus)}
+                  className="w-full p-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none font-mono"
+                >
+                  <option value="CONFIRMED">CONFIRMED</option>
+                  <option value="IN_PRODUCTION">IN_PRODUCTION</option>
+                  <option value="SHIPPED">SHIPPED</option>
+                  <option value="DELIVERED">DELIVERED</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono uppercase text-zinc-400 block">
+                  Audit Note
+                </label>
+                <textarea
+                  rows={2}
+                  value={statusUpdateNote}
+                  onChange={(e) => setStatusUpdateNote(e.target.value)}
+                  placeholder="Reason or operational context for audit record..."
+                  className="w-full p-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setUpdatingOrderStatus(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isSubmittingStatus}
+                className="bg-blue-600 hover:bg-blue-500 text-white"
+              >
+                {isSubmittingStatus ? "Updating..." : "Confirm Status"}
+              </Button>
+            </div>
+          </form>
         </div>
       )}
 
@@ -409,7 +734,7 @@ export default function AdminOrdersPage() {
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <div className="flex items-center gap-2">
                 <ShieldAlert className="w-5 h-5 text-rose-400" />
-                <h3 className="text-sm font-semibold text-rose-200">
+                <h3 className="text-sm font-semibold text-zinc-100">
                   Cancel Order #{cancellingOrder.id.slice(-8).toUpperCase()}
                 </h3>
               </div>
@@ -422,38 +747,39 @@ export default function AdminOrdersPage() {
               </button>
             </div>
 
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Administrative cancellation will atomically restock all inventory lines across artisan studios and log an official audit entry.
-            </p>
+            <div className="space-y-3">
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Cancelling this order will restore reserved product & variant inventory back to PostgreSQL, void pending vendor escrows, and record an immutable cancellation audit event.
+              </p>
 
-            <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Mandatory Operational Reason <span className="text-rose-400">*</span>
-              </label>
-              <textarea
-                rows={3}
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                placeholder="e.g. Courier logistics breach, customer safety request, or fraudulent transaction detected."
-                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
-                required
-              />
+              <div>
+                <label className="block text-[11px] font-mono text-zinc-400 mb-1">
+                  Cancellation Reason <span className="text-rose-400">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder="e.g. Patron requested cancellation prior to production dispatch, or verification failed."
+                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+                  required
+                />
+              </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-800">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setCancellingOrder(null)}
               >
-                Keep Order
+                Dismiss
               </Button>
               <Button
-                type="submit"
                 size="sm"
                 disabled={isSubmittingCancel}
-                className="bg-rose-600 text-white hover:bg-rose-500"
+                className="bg-rose-600 hover:bg-rose-500 text-white text-xs"
               >
                 {isSubmittingCancel ? "Cancelling..." : "Confirm Cancellation"}
               </Button>
