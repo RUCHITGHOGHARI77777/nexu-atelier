@@ -63,10 +63,22 @@ export interface AdminSellerView {
   approvedAt: string | null;
 }
 
+export interface AdminProductVariantView {
+  id: string;
+  sku: string;
+  title: string;
+  price: number;
+  stock: number;
+  size: string | null;
+  colorName: string | null;
+  colorHex: string | null;
+}
+
 export interface AdminProductView {
   id: string;
   title: string;
   subtitle: string;
+  description?: string;
   slug: string;
   category: string;
   categoryId: string;
@@ -76,10 +88,16 @@ export interface AdminProductView {
   compareAtPrice: number | null;
   stock: number;
   isPublished: boolean;
+  isFeatured?: boolean;
+  material?: string | null;
+  dimensions?: string | null;
+  weight?: string | null;
+  careInstructions?: string | null;
   approvalStatus: ProductApprovalStatus;
   moderationNotes: string | null;
   variantsCount: number;
   images: string[];
+  variants?: AdminProductVariantView[];
   createdAt: string;
 }
 
@@ -201,4 +219,75 @@ export interface AdminUserView {
   createdAt: string;
   orderCount: number;
   sellerSlug?: string | null;
+}
+
+export interface AdminCategoryView {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  image: string;
+  productCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AutomationStatsView {
+  notifications: {
+    total: number;
+    queued: number;
+    sent: number;
+    failed: number;
+  };
+  recentOutbox: {
+    id: string;
+    channel: string;
+    recipient: string;
+    template: string;
+    status: string;
+    attempts: number;
+    lastError: string | null;
+    createdAt: string;
+    sentAt: string | null;
+  }[];
+  webhooks: {
+    total: number;
+    received: number;
+    processed: number;
+    failed: number;
+  };
+  lowStockAlertsCount: number;
+  pendingRefundsCount: number;
+}
+
+export interface FinancialReportView {
+  summary: {
+    totalOrders: number;
+    completedOrders: number;
+    cancelledOrders: number;
+    grossMerchandiseValue: number;
+    totalDiscount: number;
+    totalShippingRevenue: number;
+    totalRefunded: number;
+    netSales: number;
+    platformCommissionRevenue: number;
+    estimatedGstPayable: number;
+  };
+  vendorSettlements: {
+    sellerId: string;
+    sellerName: string;
+    sellerSlug: string;
+    orderCount: number;
+    grossSales: number;
+    commissionPaid: number;
+    netEarnings: number;
+  }[];
+  recentOrdersSnapshot: {
+    id: string;
+    customerEmail: string;
+    total: number;
+    status: string;
+    paymentStatus: string;
+    createdAt: string;
+  }[];
 }

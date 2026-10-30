@@ -8,6 +8,7 @@ import {
   DisputeStatus,
   CouponDiscountType,
   UserRole,
+  NotificationStatus,
 } from "@prisma/client";
 import {
   AdminMetrics,
@@ -20,6 +21,9 @@ import {
   PlatformSettingView,
   AuditEventView,
   AdminUserView,
+  AdminCategoryView,
+  AutomationStatsView,
+  FinancialReportView,
 } from "@/types/admin";
 
 export class AdminService {
@@ -307,6 +311,7 @@ export class AdminService {
       id: p.id,
       title: p.title,
       subtitle: p.subtitle,
+      description: p.description,
       slug: p.slug,
       category: p.category.name,
       categoryId: p.categoryId,
@@ -316,10 +321,25 @@ export class AdminService {
       compareAtPrice: p.compareAtPricePaise ? Math.round(p.compareAtPricePaise / 100) : null,
       stock: p.stock,
       isPublished: p.isPublished,
+      isFeatured: p.isFeatured,
+      material: p.material,
+      dimensions: p.dimensions,
+      weight: p.weight,
+      careInstructions: p.careInstructions,
       approvalStatus: p.approvalStatus,
       moderationNotes: p.moderationNotes,
       variantsCount: p.variants.length,
       images: p.images.map((img) => img.url),
+      variants: p.variants.map((v) => ({
+        id: v.id,
+        sku: v.sku,
+        title: v.name,
+        price: Math.round((p.basePricePaise + v.additionalPricePaise) / 100),
+        stock: v.stock,
+        size: v.variantType.toUpperCase() === "SIZE" ? v.value : null,
+        colorName: v.variantType.toUpperCase() === "COLOR" ? v.name : null,
+        colorHex: v.hexCode,
+      })),
       createdAt: p.createdAt.toISOString(),
     }));
 
@@ -379,6 +399,46 @@ export class AdminService {
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || "Failed to moderate product." };
+    }
+  }
+
+  /**
+   * Toggles homepage featured placement for an approved product.
+   */
+  public async toggleProductFeatured(
+    productId: string,
+    isFeatured: boolean,
+    adminUserId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!product) {
+      return { success: false, error: "Product not found." };
+    }
+
+    try {
+      await prisma.$transaction(async (tx) => {
+        await tx.product.update({
+          where: { id: productId },
+          data: { isFeatured },
+        });
+
+        await tx.auditEvent.create({
+          data: {
+            entityType: "PRODUCT",
+            entityId: productId,
+            action: isFeatured ? "PRODUCT_FEATURED_ON_HOMEPAGE" : "PRODUCT_UNFEATURED_FROM_HOMEPAGE",
+            note: `Product "${product.title}" ${isFeatured ? "featured on" : "removed from"} homepage showcase.`,
+            performedBy: adminUserId,
+          },
+        });
+      });
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || "Failed to update featured placement." };
     }
   }
 
@@ -1110,6 +1170,474 @@ export class AdminService {
       performedBy: e.performedBy,
       createdAt: e.createdAt.toISOString(),
     }));
+  }
+
+  /**
+   * Retrieves all categories with associated product counts.
+   */
+  public async getCategories(): Promise<AdminCategoryView[]> {
+    const categories = await prisma.category.findMany({
+      include: {
+        _count: {
+          select: { products: true },
+        },
+      },
+      orderBy: { name: "asc" },
+    });
+
+    return categories.map((c) => ({
+      id: c.id,
+      slug: c.slug,
+      name: c.name,
+      description: c.description,
+      image: c.image,
+      productCount: c._count.products,
+      createdAt: c.createdAt.toISOString(),
+      updatedAt: c.updatedAt.toISOString(),
+    }));
+  }
+
+  /**
+   * Creates a new product category taxonomy.
+   */
+  public async createCategory(
+    data: { name: string; slug?: string; description: string; image: string },
+    adminUserId: string
+  ): Promise<{ success: boolean; category?: AdminCategoryView; error?: string }> {
+    const name = data.name.trim();
+    if (!name) {
+      return { success: false, error: "Category name is required." };
+    }
+
+    const slug = (data.slug?.trim() || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")) || "category";
+
+    const existing = await prisma.category.findUnique({
+      where: { slug },
+    });
+
+    if (existing) {
+      return { success: false, error: `Category with slug "${slug}" already exists.` };
+    }
+
+    try {
+      const created = await prisma.$transaction(async (tx) => {
+        const cat = await tx.category.create({
+          data: {
+            name,
+            slug,
+            description: data.description.trim() || `${name} artisan creations and studio pieces.`,
+            image: data.image.trim() || "/images/categories/living.jpg",
+          },
+        });
+
+        await tx.auditEvent.create({
+          data: {
+            entityType: "CATEGORY",
+            entityId: cat.id,
+            action: "CATEGORY_CREATED",
+            note: `Category "${cat.name}" created with slug "${cat.slug}".`,
+            performedBy: adminUserId,
+          },
+        });
+
+        return cat;
+      });
+
+      return {
+        success: true,
+        category: {
+          id: created.id,
+          slug: created.slug,
+          name: created.name,
+          description: created.description,
+          image: created.image,
+          productCount: 0,
+          createdAt: created.createdAt.toISOString(),
+          updatedAt: created.updatedAt.toISOString(),
+        },
+      };
+    } catch (err: any) {
+      return { success: false, error: err.message || "Failed to create category." };
+    }
+  }
+
+  /**
+   * Updates an existing category taxonomy.
+   */
+  public async updateCategory(
+    id: string,
+    data: { name?: string; slug?: string; description?: string; image?: string },
+    adminUserId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const existing = await prisma.category.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      return { success: false, error: "Category not found." };
+    }
+
+    try {
+      await prisma.$transaction(async (tx) => {
+        await tx.category.update({
+          where: { id },
+          data: {
+            name: data.name?.trim() || undefined,
+            slug: data.slug?.trim() || undefined,
+            description: data.description?.trim() || undefined,
+            image: data.image?.trim() || undefined,
+          },
+        });
+
+        await tx.auditEvent.create({
+          data: {
+            entityType: "CATEGORY",
+            entityId: id,
+            action: "CATEGORY_UPDATED",
+            note: `Category "${existing.name}" metadata updated.`,
+            performedBy: adminUserId,
+          },
+        });
+      });
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || "Failed to update category." };
+    }
+  }
+
+  /**
+   * Deletes a category if no products are associated with it.
+   */
+  public async deleteCategory(
+    id: string,
+    adminUserId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const category = await prisma.category.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { products: true },
+        },
+      },
+    });
+
+    if (!category) {
+      return { success: false, error: "Category not found." };
+    }
+
+    if (category._count.products > 0) {
+      return {
+        success: false,
+        error: `Cannot delete category "${category.name}" because ${category._count.products} products are associated with it. Reassign or archive the products first.`,
+      };
+    }
+
+    try {
+      await prisma.$transaction(async (tx) => {
+        await tx.category.delete({
+          where: { id },
+        });
+
+        await tx.auditEvent.create({
+          data: {
+            entityType: "CATEGORY",
+            entityId: id,
+            action: "CATEGORY_DELETED",
+            note: `Category "${category.name}" deleted.`,
+            performedBy: adminUserId,
+          },
+        });
+      });
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || "Failed to delete category." };
+    }
+  }
+
+  /**
+   * Retrieves system-wide automations, notification outbox, and webhook health statistics.
+   */
+  public async getAutomationsOverview(): Promise<AutomationStatsView> {
+    const [notifCounts, recentOutbox, webhookCounts, lowStockCount, pendingRefundsCount] =
+      await Promise.all([
+        prisma.notificationEvent.groupBy({
+          by: ["status"],
+          _count: true,
+        }),
+        prisma.notificationEvent.findMany({
+          orderBy: { createdAt: "desc" },
+          take: 25,
+        }),
+        prisma.webhookEvent.groupBy({
+          by: ["status"],
+          _count: true,
+        }),
+        prisma.product.count({
+          where: { stock: { lte: 5 } },
+        }),
+        prisma.refundRecord.count({
+          where: { status: "PENDING" },
+        }),
+      ]);
+
+    const notifMap: Record<string, number> = {};
+    let notifTotal = 0;
+    notifCounts.forEach((c) => {
+      notifMap[c.status] = c._count;
+      notifTotal += c._count;
+    });
+
+    const webhookMap: Record<string, number> = {};
+    let webhookTotal = 0;
+    webhookCounts.forEach((c) => {
+      webhookMap[c.status] = c._count;
+      webhookTotal += c._count;
+    });
+
+    return {
+      notifications: {
+        total: notifTotal,
+        queued: notifMap[NotificationStatus.QUEUED] || 0,
+        sent: notifMap[NotificationStatus.SENT] || 0,
+        failed: notifMap[NotificationStatus.FAILED] || 0,
+      },
+      recentOutbox: recentOutbox.map((n) => ({
+        id: n.id,
+        channel: n.channel,
+        recipient: n.recipient,
+        template: n.template,
+        status: n.status,
+        attempts: n.attempts,
+        lastError: n.lastError,
+        createdAt: n.createdAt.toISOString(),
+        sentAt: n.sentAt ? n.sentAt.toISOString() : null,
+      })),
+      webhooks: {
+        total: webhookTotal,
+        received: webhookMap["RECEIVED"] || 0,
+        processed: webhookMap["PROCESSED"] || 0,
+        failed: webhookMap["FAILED"] || 0,
+      },
+      lowStockAlertsCount: lowStockCount,
+      pendingRefundsCount,
+    };
+  }
+
+  /**
+   * Requeues all failed notifications for retry processing.
+   */
+  public async retryFailedNotifications(
+    adminUserId: string
+  ): Promise<{ success: boolean; retriedCount: number; error?: string }> {
+    try {
+      const updateResult = await prisma.notificationEvent.updateMany({
+        where: { status: NotificationStatus.FAILED },
+        data: {
+          status: NotificationStatus.QUEUED,
+          lastError: null,
+        },
+      });
+
+      await prisma.auditEvent.create({
+        data: {
+          entityType: "AUTOMATION",
+          entityId: "OUTBOX_RETRY",
+          action: "NOTIFICATIONS_RETRIED",
+          note: `Admin queued retry for ${updateResult.count} failed outbox notifications.`,
+          performedBy: adminUserId,
+        },
+      });
+
+      return { success: true, retriedCount: updateResult.count };
+    } catch (err: any) {
+      return { success: false, retriedCount: 0, error: err.message || "Failed to retry notifications." };
+    }
+  }
+
+  /**
+   * Scans catalog inventory for low stock alerts.
+   */
+  public async triggerLowStockScan(
+    adminUserId: string
+  ): Promise<{ success: boolean; alertedCount: number; products: { id: string; title: string; stock: number }[] }> {
+    const products = await prisma.product.findMany({
+      where: { stock: { lte: 5 } },
+      select: { id: true, title: true, stock: true },
+      take: 50,
+    });
+
+    await prisma.auditEvent.create({
+      data: {
+        entityType: "AUTOMATION",
+        entityId: "INVENTORY_SCAN",
+        action: "LOW_STOCK_AUDITED",
+        note: `Automated inventory audit identified ${products.length} pieces at or below reorder threshold.`,
+        performedBy: adminUserId,
+      },
+    });
+
+    return {
+      success: true,
+      alertedCount: products.length,
+      products,
+    };
+  }
+
+  /**
+   * Generates authoritative financial, tax, and vendor payout reports.
+   */
+  public async getFinancialReports(): Promise<FinancialReportView> {
+    const [orders, sellers, orderItems] = await Promise.all([
+      prisma.order.findMany({
+        select: {
+          id: true,
+          status: true,
+          paymentStatus: true,
+          subtotalPaise: true,
+          shippingFeePaise: true,
+          discountPaise: true,
+          totalPaise: true,
+          refundedPaise: true,
+          customer: { select: { email: true } },
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.seller.findMany({
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          commissionRatePercent: true,
+        },
+      }),
+      prisma.orderItem.findMany({
+        select: {
+          vendorId: true,
+          lineTotalPaise: true,
+          order: { select: { status: true } },
+        },
+      }),
+    ]);
+
+    const nonCancelled = orders.filter((o) => o.status !== OrderStatus.CANCELLED);
+    const completed = orders.filter((o) => o.status === OrderStatus.DELIVERED);
+    const cancelled = orders.filter((o) => o.status === OrderStatus.CANCELLED);
+
+    const grossMerchandiseValue = nonCancelled.reduce((acc, o) => acc + o.totalPaise, 0);
+    const totalDiscount = nonCancelled.reduce((acc, o) => acc + o.discountPaise, 0);
+    const totalShippingRevenue = nonCancelled.reduce((acc, o) => acc + o.shippingFeePaise, 0);
+    const totalRefunded = orders.reduce((acc, o) => acc + o.refundedPaise, 0);
+    const netSales = grossMerchandiseValue - totalRefunded;
+
+    // Platform commission is 10% on gross item totals
+    const platformCommissionRevenue = Math.round(netSales * 0.1);
+    // 12% GST included in net sales
+    const estimatedGstPayable = Math.round((netSales * 12) / 112);
+
+    // Vendor breakdown
+    const vendorMap: Record<
+      string,
+      { count: number; grossPaise: number }
+    > = {};
+
+    orderItems.forEach((item) => {
+      if (item.order.status !== OrderStatus.CANCELLED) {
+        if (!vendorMap[item.vendorId]) {
+          vendorMap[item.vendorId] = { count: 0, grossPaise: 0 };
+        }
+        vendorMap[item.vendorId].count += 1;
+        vendorMap[item.vendorId].grossPaise += item.lineTotalPaise;
+      }
+    });
+
+    const vendorSettlements = sellers.map((s) => {
+      const vData = vendorMap[s.id] || { count: 0, grossPaise: 0 };
+      const grossINR = Math.round(vData.grossPaise / 100);
+      const commissionINR = Math.round((grossINR * s.commissionRatePercent) / 100);
+      const netEarnings = grossINR - commissionINR;
+      return {
+        sellerId: s.id,
+        sellerName: s.name,
+        sellerSlug: s.slug,
+        orderCount: vData.count,
+        grossSales: grossINR,
+        commissionPaid: commissionINR,
+        netEarnings,
+      };
+    });
+
+    return {
+      summary: {
+        totalOrders: orders.length,
+        completedOrders: completed.length,
+        cancelledOrders: cancelled.length,
+        grossMerchandiseValue: Math.round(grossMerchandiseValue / 100),
+        totalDiscount: Math.round(totalDiscount / 100),
+        totalShippingRevenue: Math.round(totalShippingRevenue / 100),
+        totalRefunded: Math.round(totalRefunded / 100),
+        netSales: Math.round(netSales / 100),
+        platformCommissionRevenue: Math.round(platformCommissionRevenue / 100),
+        estimatedGstPayable: Math.round(estimatedGstPayable / 100),
+      },
+      vendorSettlements,
+      recentOrdersSnapshot: orders.slice(0, 20).map((o) => ({
+        id: o.id,
+        customerEmail: o.customer.email,
+        total: Math.round(o.totalPaise / 100),
+        status: o.status,
+        paymentStatus: o.paymentStatus,
+        createdAt: o.createdAt.toISOString(),
+      })),
+    };
+  }
+
+  /**
+   * Generates CSV format financial ledger reports.
+   */
+  public async generateReportsCsv(
+    type: "sales" | "vendors" | "taxes"
+  ): Promise<string> {
+    const report = await this.getFinancialReports();
+
+    if (type === "vendors") {
+      const headers = ["Seller ID", "Workshop Name", "Slug", "Orders Fulfilled", "Gross Sales (INR)", "Commission Paid (INR)", "Net Earnings (INR)"];
+      const rows = report.vendorSettlements.map((v) => [
+        `"${v.sellerId}"`,
+        `"${v.sellerName.replace(/"/g, '""')}"`,
+        `"${v.sellerSlug}"`,
+        v.orderCount,
+        v.grossSales,
+        v.commissionPaid,
+        v.netEarnings,
+      ]);
+      return [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    }
+
+    if (type === "taxes") {
+      const headers = ["Metric", "Amount (INR)", "GST Rate", "Notes"];
+      const rows = [
+        ["Gross Merchandise Value", report.summary.grossMerchandiseValue, "12%", "All non-cancelled orders"],
+        ["Net Taxable Turnover", report.summary.netSales, "12%", "GMV less customer returns and refunds"],
+        ["Estimated Output GST (12%)", report.summary.estimatedGstPayable, "12%", "Applicable composite tax reserve"],
+        ["Platform Fee GST (18%)", Math.round(report.summary.platformCommissionRevenue * 0.18), "18%", "Tax on platform brokerage commission"],
+      ];
+      return [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    }
+
+    // Default: sales
+    const headers = ["Order ID", "Customer Email", "Status", "Payment", "Total (INR)", "Date"];
+    const rows = report.recentOrdersSnapshot.map((o) => [
+      `"${o.id}"`,
+      `"${o.customerEmail}"`,
+      `"${o.status}"`,
+      `"${o.paymentStatus}"`,
+      o.total,
+      `"${o.createdAt}"`,
+    ]);
+    return [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
   }
 }
 

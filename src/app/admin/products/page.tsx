@@ -28,9 +28,11 @@ export default function AdminProductsPage() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<AdminProductView | null>(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isTogglingFeatured, setIsTogglingFeatured] = useState(false);
 
   // Moderation state
-  const [moderationAction, setModerationAction] = useState<"APPROVED" | "REJECTED" | "ARCHIVED" | null>(null);
+  const [moderationAction, setModerationAction] = useState<"APPROVED" | "REJECTED" | "ARCHIVED" | "CHANGES_REQUESTED" | null>(null);
   const [moderationNotes, setModerationNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -66,11 +68,36 @@ export default function AdminProductsPage() {
     fetchProducts();
   };
 
+  const handleToggleFeatured = async () => {
+    if (!selectedProduct) return;
+    const newFeatured = !selectedProduct.isFeatured;
+    setIsTogglingFeatured(true);
+    try {
+      const res = await fetch(`/api/admin/products/${selectedProduct.id}/featured`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFeatured: newFeatured }),
+      });
+      if (res.ok) {
+        setSelectedProduct({ ...selectedProduct, isFeatured: newFeatured });
+        setProducts((prev) =>
+          prev.map((p) => (p.id === selectedProduct.id ? { ...p, isFeatured: newFeatured } : p))
+        );
+        setActionSuccess(`Homepage featured showcase ${newFeatured ? "Enabled" : "Disabled"}.`);
+      }
+    } finally {
+      setIsTogglingFeatured(false);
+    }
+  };
+
   const handleExecuteModeration = async () => {
     if (!selectedProduct || !moderationAction) return;
 
-    if (moderationAction === "REJECTED" && (!moderationNotes || moderationNotes.trim().length < 5)) {
-      setActionError("A formal explanation (minimum 5 characters) is required when rejecting a creation.");
+    if (
+      (moderationAction === "REJECTED" || moderationAction === "CHANGES_REQUESTED") &&
+      (!moderationNotes || moderationNotes.trim().length < 5)
+    ) {
+      setActionError("A formal explanation (minimum 5 characters) is required when rejecting or requesting changes.");
       return;
     }
 
@@ -79,18 +106,24 @@ export default function AdminProductsPage() {
     setActionSuccess(null);
 
     try {
+      const targetStatus = moderationAction === "CHANGES_REQUESTED" ? "DRAFT" : moderationAction;
+      const formattedNotes =
+        moderationAction === "CHANGES_REQUESTED"
+          ? `[CHANGES_REQUESTED]: ${moderationNotes.trim()}`
+          : moderationNotes.trim() || undefined;
+
       const res = await fetch(`/api/admin/products/${selectedProduct.id}/moderation`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          status: moderationAction,
-          notes: moderationNotes.trim() || undefined,
+          status: targetStatus,
+          notes: formattedNotes,
         }),
       });
 
       const data = await res.json();
       if (res.ok) {
-        setActionSuccess(`Piece "${selectedProduct.title}" marked as ${moderationAction}.`);
+        setActionSuccess(`Piece "${selectedProduct.title}" verdict recorded (${moderationAction}).`);
         setSelectedProduct(null);
         setModerationAction(null);
         setModerationNotes("");
@@ -304,10 +337,13 @@ export default function AdminProductsPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setSelectedProduct(p)}
+                          onClick={() => {
+                            setSelectedProduct(p);
+                            setActiveImageIndex(0);
+                          }}
                           className="text-xs"
                         >
-                          Moderate
+                          Moderate / Inspect
                         </Button>
                       </div>
                     </td>
@@ -319,68 +355,238 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      {/* Moderation Verdict Modal */}
+      {/* Moderation In-Depth Preview & Verdict Modal */}
       {selectedProduct && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-zinc-800 rounded-lg max-w-xl w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-zinc-300" />
-                <h3 className="text-sm font-semibold text-zinc-100">
-                  Moderate: {selectedProduct.title}
-                </h3>
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#09090b] border border-zinc-800 rounded-2xl max-w-4xl w-full p-6 space-y-6 shadow-2xl my-8">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-amber-500">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+                    <span>{selectedProduct.title}</span>
+                    {getApprovalBadge(selectedProduct.approvalStatus, selectedProduct.isPublished)}
+                  </h3>
+                  <p className="text-xs text-zinc-400 font-mono">
+                    By {selectedProduct.vendorName} • Department: {selectedProduct.category} • Slug: /{selectedProduct.slug}
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => {
                   setSelectedProduct(null);
                   setModerationAction(null);
                 }}
-                className="p-1 text-zinc-500 hover:text-zinc-300 rounded"
+                className="p-1.5 text-zinc-500 hover:text-zinc-200 rounded-lg hover:bg-zinc-900 transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="flex gap-4">
-              <div className="w-20 h-24 bg-zinc-900 rounded overflow-hidden relative shrink-0 border border-zinc-800">
-                <ImageWithFallback
-                  src={selectedProduct.images?.[0] || ""}
-                  alt={selectedProduct.title}
-                  fill
-                  className="object-cover"
-                />
+            {/* Modal Body: Two-Column Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+              {/* Left Column: Visual Showcase & Gallery */}
+              <div className="md:col-span-5 space-y-4">
+                <div className="relative aspect-[4/5] w-full bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800">
+                  <ImageWithFallback
+                    src={selectedProduct.images?.[activeImageIndex] || selectedProduct.images?.[0] || ""}
+                    alt={selectedProduct.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 40vw"
+                    className="object-cover"
+                  />
+                  {selectedProduct.isFeatured && (
+                    <div className="absolute top-3 left-3 bg-amber-500 text-zinc-950 font-bold text-[10px] uppercase font-mono px-2 py-0.5 rounded shadow">
+                      Homepage Featured
+                    </div>
+                  )}
+                </div>
+
+                {/* Thumbnails Strip */}
+                {selectedProduct.images && selectedProduct.images.length > 1 && (
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    {selectedProduct.images.map((img, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActiveImageIndex(idx)}
+                        className={`relative w-14 h-14 rounded-lg overflow-hidden shrink-0 border transition-all cursor-pointer ${
+                          activeImageIndex === idx
+                            ? "border-amber-500 ring-2 ring-amber-500/20"
+                            : "border-zinc-800 opacity-60 hover:opacity-100"
+                        }`}
+                      >
+                        <ImageWithFallback
+                          src={img}
+                          alt=""
+                          fill
+                          sizes="60px"
+                          className="object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Homepage Featured Switcher */}
+                <div className="p-3.5 bg-zinc-900/60 border border-zinc-800 rounded-xl flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-semibold text-zinc-200 block">
+                      Homepage Spotlight
+                    </span>
+                    <p className="text-[11px] text-zinc-400">
+                      Promote to storefront curated showcase
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={selectedProduct.isFeatured ? "primary" : "outline"}
+                    disabled={isTogglingFeatured}
+                    onClick={handleToggleFeatured}
+                    className="text-xs"
+                  >
+                    {selectedProduct.isFeatured ? "Featured Active" : "Set Featured"}
+                  </Button>
+                </div>
               </div>
-              <div className="space-y-1 text-xs">
-                <h4 className="font-semibold text-zinc-200">{selectedProduct.title}</h4>
-                <p className="text-zinc-400 font-mono">By {selectedProduct.vendorName} • {selectedProduct.category}</p>
-                <p className="text-zinc-300 font-mono font-medium">Valuation: {formatCurrency(selectedProduct.basePrice)} ({selectedProduct.stock} ready units)</p>
-                <p className="text-[11px] text-zinc-500">Current Standing: {selectedProduct.approvalStatus}</p>
+
+              {/* Right Column: In-Depth Specifications & Variants */}
+              <div className="md:col-span-7 space-y-4">
+                {/* Pricing & Stock Card */}
+                <div className="p-4 bg-zinc-900/40 border border-zinc-800 rounded-xl grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase text-zinc-500 block">Selling Price</span>
+                    <span className="text-base font-bold font-mono text-zinc-100">
+                      {formatCurrency(selectedProduct.basePrice)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono uppercase text-zinc-500 block">MRP / Compare</span>
+                    <span className="text-base font-mono text-zinc-400 line-through">
+                      {selectedProduct.compareAtPrice ? formatCurrency(selectedProduct.compareAtPrice) : "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono uppercase text-zinc-500 block">Stock Available</span>
+                    <span className="text-base font-bold font-mono text-emerald-400">
+                      {selectedProduct.stock} units
+                    </span>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono uppercase text-zinc-400 block font-semibold">
+                    Editorial Description
+                  </span>
+                  <p className="text-xs text-zinc-300 leading-relaxed max-h-28 overflow-y-auto pr-1">
+                    {selectedProduct.description || selectedProduct.subtitle || "No full description provided."}
+                  </p>
+                </div>
+
+                {/* Craft Specifications */}
+                {(selectedProduct.material || selectedProduct.dimensions || selectedProduct.weight) && (
+                  <div className="p-3 bg-zinc-900/30 border border-zinc-800 rounded-xl space-y-1 text-xs">
+                    <span className="text-[10px] font-mono uppercase text-zinc-400 block font-semibold">
+                      Architectural & Material Specifications
+                    </span>
+                    <div className="grid grid-cols-2 gap-2 text-[11px] text-zinc-300">
+                      {selectedProduct.material && (
+                        <div><strong className="text-zinc-500">Material:</strong> {selectedProduct.material}</div>
+                      )}
+                      {selectedProduct.dimensions && (
+                        <div><strong className="text-zinc-500">Dimensions:</strong> {selectedProduct.dimensions}</div>
+                      )}
+                      {selectedProduct.weight && (
+                        <div><strong className="text-zinc-500">Weight:</strong> {selectedProduct.weight}</div>
+                      )}
+                      {selectedProduct.careInstructions && (
+                        <div><strong className="text-zinc-500">Care:</strong> {selectedProduct.careInstructions}</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Variants Matrix */}
+                {selectedProduct.variants && selectedProduct.variants.length > 0 && (
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-mono uppercase text-zinc-400 block font-semibold">
+                      Configured Product Variants ({selectedProduct.variants.length})
+                    </span>
+                    <div className="max-h-32 overflow-y-auto border border-zinc-800 rounded-lg">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-zinc-900/80 border-b border-zinc-800 text-[10px] font-mono uppercase text-zinc-500 sticky top-0">
+                          <tr>
+                            <th className="py-2 px-3">SKU</th>
+                            <th className="py-2 px-3">Size</th>
+                            <th className="py-2 px-3">Color</th>
+                            <th className="py-2 px-3">Price</th>
+                            <th className="py-2 px-3">Stock</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
+                          {selectedProduct.variants.map((v) => (
+                            <tr key={v.id}>
+                              <td className="py-2 px-3 font-mono text-[11px] text-zinc-400">{v.sku}</td>
+                              <td className="py-2 px-3">{v.size || "—"}</td>
+                              <td className="py-2 px-3">
+                                {v.colorName ? (
+                                  <span className="flex items-center gap-1.5">
+                                    {v.colorHex && (
+                                      <span
+                                        className="w-2.5 h-2.5 rounded-full border border-zinc-700"
+                                        style={{ backgroundColor: v.colorHex }}
+                                      />
+                                    )}
+                                    {v.colorName}
+                                  </span>
+                                ) : (
+                                  "—"
+                                )}
+                              </td>
+                              <td className="py-2 px-3 font-mono">{formatCurrency(v.price)}</td>
+                              <td className="py-2 px-3 font-mono font-semibold text-emerald-400">{v.stock}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Existing Notes */}
+                {selectedProduct.moderationNotes && (
+                  <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg text-xs text-zinc-300 space-y-1">
+                    <span className="font-mono text-[10px] uppercase text-zinc-500 block">Existing Moderation Notes:</span>
+                    <p>{selectedProduct.moderationNotes}</p>
+                  </div>
+                )}
               </div>
             </div>
 
-            {selectedProduct.moderationNotes && (
-              <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded text-xs text-zinc-300 space-y-1">
-                <span className="font-mono text-[10px] uppercase text-zinc-500 block">Existing Moderation Notes:</span>
-                <p>{selectedProduct.moderationNotes}</p>
-              </div>
-            )}
-
+            {/* Action / Verdict Controls */}
             {moderationAction ? (
-              <div className="p-4 bg-zinc-900 border border-zinc-800 rounded space-y-3">
+              <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-3">
                 <h4 className="text-xs font-semibold text-zinc-200 uppercase font-mono">
-                  Confirm {moderationAction} Decision
+                  Confirm {moderationAction.replace("_", " ")} Decision
                 </h4>
 
-                {moderationAction === "REJECTED" && (
+                {(moderationAction === "REJECTED" || moderationAction === "CHANGES_REQUESTED") && (
                   <div>
                     <label className="block text-[11px] font-mono text-zinc-400 mb-1">
-                      Editorial Rejection Feedback <span className="text-rose-400">*</span>
+                      Feedback for Maker / Workshop <span className="text-rose-400">*</span>
                     </label>
                     <textarea
                       rows={3}
                       value={moderationNotes}
                       onChange={(e) => setModerationNotes(e.target.value)}
-                      placeholder="e.g. Imagery does not meet resolution standards or craft technique requires verification."
+                      placeholder={
+                        moderationAction === "CHANGES_REQUESTED"
+                          ? "Specify required modifications (e.g. please upload higher resolution imagery or update dimensions)."
+                          : "Specify reasons for listing rejection."
+                      }
                       className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
                       required
                     />
@@ -403,17 +609,28 @@ export default function AdminProductsPage() {
                     className={
                       moderationAction === "APPROVED"
                         ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                        : moderationAction === "CHANGES_REQUESTED"
+                        ? "bg-amber-600 hover:bg-amber-500 text-white"
                         : "bg-rose-600 hover:bg-rose-500 text-white"
                     }
                   >
-                    {isSubmitting ? "Applying..." : `Confirm ${moderationAction}`}
+                    {isSubmitting ? "Applying..." : `Confirm ${moderationAction.replace("_", " ")}`}
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-800">
-                <div className="text-xs text-zinc-500 font-mono">
-                  Select Action:
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    href={`/product/${selectedProduct.slug}`}
+                    target="_blank"
+                    className="text-xs flex items-center gap-1.5"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Storefront Page
+                  </Button>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -427,6 +644,14 @@ export default function AdminProductsPage() {
                       Approve & Publish
                     </Button>
                   )}
+
+                  <Button
+                    size="sm"
+                    onClick={() => setModerationAction("CHANGES_REQUESTED")}
+                    className="bg-amber-600 hover:bg-amber-500 text-white text-xs flex items-center gap-1.5"
+                  >
+                    Request Changes
+                  </Button>
 
                   {selectedProduct.approvalStatus !== "REJECTED" && (
                     <Button

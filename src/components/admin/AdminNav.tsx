@@ -17,6 +17,9 @@ import {
   ArrowUpRight,
   ShieldCheck,
   Star,
+  Layers,
+  Cpu,
+  BarChart3,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 
@@ -24,11 +27,14 @@ const ADMIN_NAV_LINKS = [
   { href: "/admin", label: "Operations Overview", icon: LayoutDashboard },
   { href: "/admin/sellers", label: "Seller Management", icon: Store },
   { href: "/admin/products", label: "Catalog Moderation", icon: Sparkles },
+  { href: "/admin/categories", label: "Category Taxonomy", icon: Layers },
   { href: "/admin/reviews", label: "Reviews & Moderation", icon: Star },
   { href: "/admin/orders", label: "Order Operations", icon: ShoppingBag },
   { href: "/admin/disputes", label: "Disputes & Refunds", icon: Scale },
   { href: "/admin/coupons", label: "Coupons & Offers", icon: TicketPercent },
   { href: "/admin/finances", label: "Financial Ledger", icon: Landmark },
+  { href: "/admin/reports", label: "Reports & Analytics", icon: BarChart3 },
+  { href: "/admin/automations", label: "Automations & Outbox", icon: Cpu },
   { href: "/admin/users", label: "User Accounts", icon: Users },
   { href: "/admin/audit-logs", label: "Security Audit Trail", icon: ShieldAlert },
   { href: "/admin/settings", label: "Platform Policies", icon: Settings },
