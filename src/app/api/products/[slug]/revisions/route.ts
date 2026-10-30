@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { slug: string } }
 ) {
   // Check either seller ownership or admin access
   const sellerAuth = await getAuthenticatedSeller();
@@ -19,8 +19,10 @@ export async function GET(
   }
 
   try {
-    const product = await prisma.product.findUnique({
-      where: { id: params.id },
+    const product = await prisma.product.findFirst({
+      where: {
+        OR: [{ id: params.slug }, { slug: params.slug }],
+      },
     });
 
     if (!product) {
@@ -32,7 +34,7 @@ export async function GET(
       return NextResponse.json({ error: "Access denied." }, { status: 403 });
     }
 
-    const revisions = await productRevisionService.getRevisions(params.id);
+    const revisions = await productRevisionService.getRevisions(product.id);
     return NextResponse.json({ success: true, revisions });
   } catch (err: any) {
     return NextResponse.json(

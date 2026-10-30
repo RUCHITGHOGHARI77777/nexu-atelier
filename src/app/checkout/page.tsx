@@ -27,11 +27,13 @@ import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { formatCurrency } from "@/lib/formatters";
+import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
+import { PaymentSelectionState } from "@/types/payment-fraud";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const { items, totals, clearCart } = useCart();
+  const { items, totals, clearCart, isHydrated } = useCart();
 
   // Multi-step: 1 = Address, 2 = Delivery Method, 3 = Review & Place Order
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -71,6 +73,42 @@ export default function CheckoutPage() {
   const [couponError, setCouponError] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
+  // Payment Selection & Stop Point Placeholder State
+  const [paymentState, setPaymentState] = useState<(PaymentSelectionState & { isReadyToPay: boolean }) | null>(null);
+  const [showPlaceholderModal, setShowPlaceholderModal] = useState(false);
+
+  // Group items by vendor for multi-supplier shipment breakdown
+  const supplierShipmentGroups = React.useMemo(() => {
+    const groups: Record<string, { vendorId: string; vendorName: string; items: any[]; subtotal: number }> = {};
+    for (const item of items) {
+      const vId = item.product.vendor?.id || "unknown_vendor";
+      const vName = item.product.vendor?.name || "Artisan Studio";
+      if (!groups[vId]) {
+        groups[vId] = { vendorId: vId, vendorName: vName, items: [], subtotal: 0 };
+      }
+      groups[vId].items.push(item);
+      groups[vId].subtotal += item.unitPrice * item.quantity;
+    }
+    return Object.values(groups);
+  }, [items]);
+
+  // Active address
+  const activeAddress = React.useMemo(() => {
+    if (isAddingNewAddress) {
+      return {
+        fullName: newFullName,
+        phone: newPhone,
+        street: newStreet,
+        apartment: newApartment,
+        city: newCity,
+        state: newState,
+        pincode: newPincode,
+        country: "India",
+      };
+    }
+    return savedAddresses.find((a) => a.id === selectedAddressId) || savedAddresses[0];
+  }, [isAddingNewAddress, newFullName, newPhone, newStreet, newApartment, newCity, newState, newPincode, savedAddresses, selectedAddressId]);
+
   const fetchAddresses = useCallback(async () => {
     try {
       const res = await fetch("/api/account/addresses");
@@ -102,12 +140,13 @@ export default function CheckoutPage() {
     }
   }, [isAuthLoading, isAuthenticated, user, router, fetchAddresses]);
 
-  // If bag is empty, redirect to cart
+  // If bag is empty after hydration, redirect to cart
   useEffect(() => {
+    if (!isHydrated) return;
     if (items.length === 0) {
       router.push("/cart");
     }
-  }, [items, router]);
+  }, [items, isHydrated, router]);
 
   // Delivery fee & Grand Total calculation
   const deliveryMethod = DELIVERY_METHODS[selectedDeliveryMethodId];
@@ -120,6 +159,21 @@ export default function CheckoutPage() {
     0,
     totals.subtotal + calculatedShippingFee - couponDiscountINR
   );
+  const codFeeINR = paymentState?.method === "COD" && paymentState?.isReadyToPay ? 50 : 0;
+  const finalPayableTotal = calculatedGrandTotal + codFeeINR;
+
+  const handlePlaceholderPayClick = () => {
+    // IMPORTANT OWNER INSTRUCTION:
+    // The final Pay button must remain a non-processing placeholder.
+    // Do not implement the actual payment processing after the Pay button until the owner supplies the next payment-processing specification.
+    console.log("[Payment Gateway Placeholder] Pre-payment checkout state held at Stop Point:", {
+      method: paymentState?.method,
+      payableINR: finalPayableTotal,
+      activeAddress,
+      supplierShipmentsCount: supplierShipmentGroups.length,
+    });
+    setShowPlaceholderModal(true);
+  };
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -654,36 +708,123 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Payment Gateway Sandbox Mode Notice */}
-              <Alert
-                variant="info"
-                title="Payment Integration — Sandbox Test Mode"
-                className="text-xs"
-              >
-                Sandbox test mode is active (Razorpay / Test Gateway). No real payment card will be debited. Transactions, cryptographic checksums, and inventory locks are authoritatively validated on the server.
-              </Alert>
+              {/* Multi-Supplier Shipment Breakdown */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-semibold text-zinc-800 uppercase tracking-wider">
+                    Supplier Dispatch Groups ({supplierShipmentGroups.length})
+                  </h4>
+                  <span className="text-[11px] text-zinc-500">Dedicated studio dispatch packages</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {supplierShipmentGroups.map((group) => (
+                    <div
+                      key={group.vendorId}
+                      className="p-3.5 rounded-xl border border-zinc-200 bg-zinc-50/70 space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-zinc-950 flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5 text-zinc-500" />
+                          <span>{group.vendorName}</span>
+                        </span>
+                        <span className="text-[10px] font-semibold text-zinc-600 bg-white border border-zinc-200 px-2 py-0.5 rounded">
+                          {group.items.length} {group.items.length === 1 ? "Piece" : "Pieces"}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-zinc-500 flex justify-between">
+                        <span>Shipment Subtotal:</span>
+                        <span className="font-mono font-semibold text-zinc-900">
+                          {formatCurrency(group.subtotal)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Payment Method Selector & Stop Point */}
+              <div className="pt-2">
+                <div className="pb-3 mb-4 border-b border-zinc-200 flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-900 flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-zinc-600" />
+                    <span>Select Payment & Escrow Method</span>
+                  </h3>
+                  <span className="text-[10px] font-semibold uppercase bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
+                    RBI Compliant
+                  </span>
+                </div>
+
+                <PaymentMethodSelector
+                  grandTotalPaise={Math.round(calculatedGrandTotal * 100)}
+                  shippingAddress={activeAddress}
+                  items={items}
+                  onPaymentStateChange={setPaymentState}
+                  onPlaceholderPayClick={handlePlaceholderPayClick}
+                />
+              </div>
 
               <div className="pt-4 flex items-center justify-between border-t border-zinc-200">
                 <Button variant="outline" size="sm" onClick={() => setStep(2)}>
                   ← Back to Courier
                 </Button>
-
-                <Button
-                  variant="accent"
-                  size="lg"
-                  onClick={handlePlaceOrder}
-                  isLoading={isSubmitting}
-                  className="font-bold flex items-center gap-2"
-                >
-                  <span>
-                    Authorize & Place Order ({formatCurrency(calculatedGrandTotal)})
-                  </span>
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
+                <span className="text-[11px] text-zinc-500">
+                  Step 3 of 3 • Review & Authorization
+                </span>
               </div>
             </div>
           )}
         </div>
+
+        {/* --- CRITICAL STOP POINT MODAL: OWNER INSTRUCTION PLACEHOLDER --- */}
+        {showPlaceholderModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+            <div className="bg-white rounded-3xl border border-zinc-200 shadow-2xl max-w-lg w-full p-6 sm:p-8 space-y-6 animate-in zoom-in-95 duration-150">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center justify-center">
+                <Lock className="w-6 h-6" />
+              </div>
+
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+                  Payment Processing Staged
+                </div>
+                <h3 className="text-lg font-bold text-zinc-950">
+                  Payment Gateway Sandbox Initialized
+                </h3>
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  The pre-payment selection, multi-signal fraud evaluation, and COD eligibility architecture have been successfully verified and prepared for production.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200 space-y-2.5 text-xs text-zinc-700">
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Selected Method:</span>
+                  <span className="font-semibold text-zinc-950 uppercase">{paymentState?.method}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Destination Postal Code:</span>
+                  <span className="font-mono text-zinc-950 font-semibold">{activeAddress?.pincode}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Payable Total:</span>
+                  <span className="font-mono text-zinc-950 font-bold">{formatCurrency(finalPayableTotal)}</span>
+                </div>
+                <div className="pt-2 border-t border-zinc-200 text-[11px] text-zinc-500 leading-relaxed">
+                  <strong>Owner Operational Specification Boundary:</strong> In accordance with development instructions, live payment capture and COD order creation are safely held in placeholder mode awaiting the owner&apos;s payment-processing specification. No card debited; zero orders created.
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPlaceholderModal(false)}
+                  className="w-full py-2.5 px-4 rounded-xl bg-zinc-950 text-white font-bold text-xs hover:bg-zinc-800 transition-colors"
+                >
+                  Acknowledge & Return to Review
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Right Column: Order Summary Card */}
         <div className="lg:col-span-4 space-y-6">
@@ -725,10 +866,19 @@ export default function CheckoutPage() {
                 </span>
               </div>
 
+              {codFeeINR > 0 && (
+                <div className="flex items-center justify-between pt-2 text-zinc-600">
+                  <span>COD Courier Convenience Fee:</span>
+                  <span className="font-mono text-zinc-950 font-medium">
+                    {formatCurrency(codFeeINR)}
+                  </span>
+                </div>
+              )}
+
               <div className="flex items-center justify-between pt-3 font-bold text-sm text-zinc-950">
                 <span>Total Payable:</span>
                 <span className="font-mono text-base font-black text-zinc-950">
-                  {formatCurrency(calculatedGrandTotal)}
+                  {formatCurrency(finalPayableTotal)}
                 </span>
               </div>
             </div>

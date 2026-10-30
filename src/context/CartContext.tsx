@@ -51,6 +51,7 @@ interface CartContextType {
   moveToCart: (savedItemId: string) => void;
   removeFromSaved: (savedItemId: string) => void;
   clearCart: () => void;
+  isHydrated: boolean;
   toasts: Toast[];
   dismissToast: (id: string) => void;
 }
@@ -318,6 +319,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
         moveToCart,
         removeFromSaved,
         clearCart,
+        isHydrated,
         toasts,
         dismissToast,
       }}

@@ -143,6 +143,36 @@ enum ReportReasonCode {
   SUSPECTED_FRAUD_OR_MANIPULATION
 }
 
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RiskAction {
+  ALLOW
+  REQUIRE_OTP
+  REQUIRE_ADDITIONAL_CONFIRMATION
+  RESTRICT_COD
+  MANUAL_REVIEW
+  BLOCK
+}
+
+enum RiskReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  OVERRIDDEN
+}
+
+enum CodCollectionStatus {
+  PENDING
+  COLLECTED
+  REMITTED
+  FAILED
+  RTO
+}
+
 model User {
   id               String           @id @default(cuid())
   email            String           @unique
@@ -162,18 +192,23 @@ model User {
   reactions       ReviewReaction[]
   reports         ReviewReport[]
   sellerFeedbacks SellerFeedback[]
+  riskAssessments OrderRiskAssessment[]
 
   @@index([email])
 }
 
 model CustomerProfile {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
-  phone     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String
+  phone            String?
+  isPhoneVerified  Boolean   @default(false)
+  phoneVerifiedAt  DateTime?
+  codRefusalCount  Int       @default(0)
+  rtoCount         Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 model Session {
@@ -433,9 +468,9 @@ model CartItem {
 }
 
 model Order {
-  id                      String          @id
+  id                      String               @id
   customerId              String
-  customer                User            @relation(fields: [customerId], references: [id])
+  customer                User                 @relation(fields: [customerId], references: [id])
   customerEmail           String
   customerName            String
   shippingAddressSnapshot String
@@ -447,14 +482,22 @@ model Order {
   subtotalPaise           Int
   totalPaise              Int
   couponCode              String?
-  discountPaise           Int             @default(0)
-  refundedPaise           Int             @default(0)
-  status                  OrderStatus     @default(CONFIRMED)
-  paymentStatus           PaymentStatus   @default(ESCROW_HOLD)
-  idempotencyKey          String?         @unique
+  discountPaise           Int                  @default(0)
+  refundedPaise           Int                  @default(0)
+  status                  OrderStatus          @default(CONFIRMED)
+  paymentStatus           PaymentStatus        @default(ESCROW_HOLD)
+  idempotencyKey          String?              @unique
   estimatedDeliveryDate   DateTime
-  createdAt               DateTime        @default(now())
-  updatedAt               DateTime        @updatedAt
+  isCod                   Boolean              @default(false)
+  codFeePaise             Int                  @default(0)
+  codCollectionStatus     CodCollectionStatus?
+  riskScore               Int?
+  riskLevel               RiskLevel?
+  riskAction              RiskAction?
+  riskAssessmentId        String?
+  riskAssessment          OrderRiskAssessment? @relation(fields: [riskAssessmentId], references: [id])
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
   items                   OrderItem[]
   payments                PaymentRecord[]
   auditEvents             AuditEvent[]
@@ -507,19 +550,50 @@ model OrderItem {
 }
 
 model PaymentRecord {
-  id                 String          @id @default(cuid())
-  orderId            String
-  order              Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  provider           PaymentProvider @default(ESCROW_INTERNAL)
-  transactionRef     String          @unique
-  amountPaise        Int
-  currency           String          @default("INR")
-  status             PaymentStatus   @default(ESCROW_HOLD)
-  rawGatewayResponse String?
-  createdAt          DateTime        @default(now())
+  id                  String               @id @default(cuid())
+  orderId             String
+  order               Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider            PaymentProvider      @default(ESCROW_INTERNAL)
+  transactionRef      String               @unique
+  amountPaise         Int
+  currency            String               @default("INR")
+  status              PaymentStatus        @default(ESCROW_HOLD)
+  method              String?
+  maskedDetails       String?
+  isCod               Boolean              @default(false)
+  codCollectionStatus CodCollectionStatus?
+  codCollectedAt      DateTime?
+  codRemittedAt       DateTime?
+  courierRemittanceRef String?
+  rawGatewayResponse  String?
+  createdAt           DateTime             @default(now())
 
   @@index([orderId])
   @@index([transactionRef])
+}
+
+model OrderRiskAssessment {
+  id                   String           @id @default(cuid())
+  orderId              String?
+  customerId           String
+  customer             User             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  riskScore            Int
+  riskLevel            RiskLevel
+  triggeredReasonsJson String
+  recommendedAction    RiskAction
+  reviewStatus         RiskReviewStatus @default(PENDING)
+  reviewedByAdminId    String?
+  overrideReason       String?
+  isFalsePositive      Boolean          @default(false)
+  signalsJson          String?
+  assessedAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  orders               Order[]
+
+  @@index([customerId])
+  @@index([riskLevel])
+  @@index([reviewStatus])
+  @@index([assessedAt])
 }
 
 model VendorPayout {

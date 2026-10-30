@@ -90,6 +90,15 @@ NEXU ATELIER is a single reusable Next.js application that hosts three role-gate
     - Real listing quality evaluation engine (`listing-quality-checker.ts`) checking title spam, attributes, unit consistency, prohibited claims, pricing sanity, and providing 0-100 score with direct navigation hooks.
     - Supplier Correction Assistant (`CorrectionAssistantBanner`) for `CHANGES_REQUESTED` products with targeted field rejections, administrative feedback, and snapshot history (`ProductRevision`).
     - Admin Review SLA Engine with configurable thresholds, background scanning, breach notifications, and strict non-auto-approval safety rule.
+17. **Fraud Detection, COD & Razorpay-Ready Checkout Payment UI:**
+    - 10-signal order fraud evaluation engine (`fraud-detection-service.ts`) producing 0-100 risk score, risk level (`LOW`, `MEDIUM`, `HIGH`), and recommended action (`ALLOW`, `REQUIRE_OTP`, `RESTRICT_COD`, `MANUAL_REVIEW`, `BLOCK`).
+    - Admin Fraud Review Dashboard (`/admin/fraud`) with customer verification status, RTO/refusal metrics, and manual override modal with mandatory explanatory reason and false-positive tracking.
+    - Multi-factor Cash on Delivery (COD) engine (`cod-service.ts`) with min/max thresholds, serviceable PIN codes, multi-supplier consistency, mobile OTP confirmation, and ₹50 convenience fee.
+    - Admin COD & Courier Remittance Reconciliation Dashboard (`/admin/cod`) with status tracking (`PENDING`, `COLLECTED`, `REMITTED`, `FAILED`, `RTO`) and UTR reference recording.
+    - Razorpay payment provider architecture (`IPaymentAdapter`, `RazorpayPaymentAdapter`) and hosted gateway compliance documentation (`docs/razorpay-integration-architecture.md`).
+    - Responsive customer payment method selector (`PaymentMethodSelector.tsx`) supporting Instant UPI, Hosted Cards, Net Banking, Wallets, and COD.
+    - **Critical Stop Point Honored:** The Final Pay button displays selected method and authoritative amount but remains a non-processing placeholder modal, holding live charges and COD order creation in staging mode until the owner supplies the next processing specification.
+    - Database-backed payment reporting (`payment-report-service.ts`) analyzing volume, methods, failed transactions, and courier remittances directly from PostgreSQL.
 
 ### B. Incomplete Features (Queued for Resolution)
 1. **Complete Shopping & Supplier Fulfillment Journey (Part 7):**

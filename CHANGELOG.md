@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - 2026-10-30 (Fraud Detection, COD & Razorpay-Ready Checkout Payment UI)
+- **Order Fraud Detection Engine:**
+  - Multi-signal risk assessment service (`fraud-detection-service.ts`) evaluating 10 distinct operational signals: verified mobile status, rapid duplicate order patterns (<15m), repeated failed/cancelled orders (7 days), previous COD refusal count, previous RTO occurrences, address completeness with 6-digit Indian postal code check, high order values (>₹50,000 / >₹100,000), order velocity (24h), session signature integrity, and gateway payment failure rate.
+  - Generates authoritative `riskScore` (0-100), `riskLevel` (`LOW`, `MEDIUM`, `HIGH`), itemized `triggeredReasons`, and `recommendedAction` (`ALLOW`, `REQUIRE_OTP`, `REQUIRE_ADDITIONAL_CONFIRMATION`, `RESTRICT_COD`, `MANUAL_REVIEW`, `BLOCK`).
+  - Persists all assessments to PostgreSQL `OrderRiskAssessment` table with full telemetry snapshots (`signalsJson`).
+- **Admin Fraud Review Dashboard (`/admin/fraud`):**
+  - Dedicated operations console for inspecting flagged checkouts, customer phone verification badges, prior order histories, and RTO counts.
+  - Manual review and override modal with mandatory explanatory reason (min 5 characters) and false-positive correction flags that mitigate historical customer penalties.
+  - Audit logging of all administrative decisions in `AuditEvent`.
+- **Cash on Delivery (COD) Engine & Courier Reconciliation (`/admin/cod`):**
+  - Multi-factor eligibility evaluator (`cod-service.ts`) enforcing global toggles, min/max thresholds (₹500 to ₹15,000), serviceable PIN codes, multi-supplier shipment consistency, customer risk profile, and mobile OTP verification for medium-risk checkouts.
+  - Configurable COD courier convenience fee (₹50) automatically reflected in final checkout totals.
+  - Administrative courier remittance reconciliation tool supporting UTR/bank reference tracking, notes, and collection status transitions (`PENDING`, `COLLECTED`, `REMITTED`, `FAILED`, `RTO`).
+  - Strict privacy and security enforcement: suppliers see only assigned order lines and cannot mark COD money as received without authorized courier remittance.
+- **Razorpay-Ready Payment Architecture:**
+  - Comprehensive architectural specification (`docs/razorpay-integration-architecture.md`) detailing environment variable placeholders, `IPaymentAdapter` provider pattern, gateway status mapping, official sandbox credentials, webhook signature verification (`HMAC-SHA256`), and idempotency design.
+  - Zero hardcoded secrets; strict adherence to PCI-DSS Level 1 hosted model.
+- **Customer Payment Page & Critical Stop Point (`/checkout`):**
+  - Responsive gallery white payment method selection experience (`PaymentMethodSelector.tsx`) supporting Instant UPI (GPay, PhonePe, Paytm, BHIM, Custom VPA), Hosted Credit/Debit Cards, Net Banking (50+ banks), Digital Wallets, and Cash on Delivery.
+  - Multi-supplier shipment breakdown and dynamic order summary calculations.
+  - **CRITICAL STOP POINT CONTRACT:** The Final Pay button displays the selected method and authoritative payable total but acts strictly as a non-processing placeholder. Clicking the button activates an informational modal ("Payment Gateway Sandbox Initialized: Ready for Owner Payment Processing Specification"), holding payment processing and COD order creation in staging mode without debiting cards or creating paid orders.
+- **Database-Backed Financial Reporting:**
+  - `PaymentReportService` computing monthly summaries, payment method distribution, COD collection, courier remittance status, and RTO metrics directly from PostgreSQL records with zero fabricated data.
+- **Automated Test Coverage:**
+  - 16 new automated tests in `src/lib/server/__tests__/fraud-and-cod-engine.test.ts` verifying all risk signals, COD rules, OTP logic, manual override, customer/supplier privacy, and Stop Point placeholder behavior.
+  - 235 passed out of 235 tests across all 21 test suites in the repository.
+  - 0 TypeScript compilation errors, 0 ESLint errors.
+  - 4 visual browser verification screenshots in `screenshots/`.
+
 ### Added - 2026-10-30 (Smart Listing, Auto-Draft, Category Attribute & Quality Engine)
 - **Auto-Draft & Recovery Engine:**
   - Multi-tier draft persistence: immediate LocalStorage metadata, IndexedDB-ready client manager, and debounced (2.5s) background synchronization to PostgreSQL `SupplierDraft` table.

@@ -20,6 +20,7 @@ import {
   Layers,
   Cpu,
   BarChart3,
+  Truck,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 
@@ -30,6 +31,8 @@ const ADMIN_NAV_LINKS = [
   { href: "/admin/categories", label: "Category Taxonomy", icon: Layers },
   { href: "/admin/reviews", label: "Reviews & Moderation", icon: Star },
   { href: "/admin/orders", label: "Order Operations", icon: ShoppingBag },
+  { href: "/admin/fraud", label: "Fraud & Order Risk", icon: ShieldAlert },
+  { href: "/admin/cod", label: "COD & Remittance", icon: Truck },
   { href: "/admin/disputes", label: "Disputes & Refunds", icon: Scale },
   { href: "/admin/coupons", label: "Coupons & Offers", icon: TicketPercent },
   { href: "/admin/finances", label: "Financial Ledger", icon: Landmark },
