@@ -5,6 +5,7 @@ import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 import { CompareProvider } from "@/context/CompareContext";
 import { RecentlyViewedProvider } from "@/context/RecentlyViewedContext";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -83,10 +84,11 @@ export default function RootLayout({
       </head>
       <body className="bg-[#fafafa] text-zinc-900 antialiased selection:bg-amber-100 selection:text-amber-900 min-h-screen flex flex-col font-sans">
         <AuthProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <CompareProvider>
-                <RecentlyViewedProvider>
+          <CurrencyProvider>
+            <CartProvider>
+              <WishlistProvider>
+                <CompareProvider>
+                  <RecentlyViewedProvider>
                   {/* Top architectural announcement strip */}
                   <AnnouncementBar />
 
@@ -112,7 +114,8 @@ export default function RootLayout({
               </CompareProvider>
             </WishlistProvider>
           </CartProvider>
-        </AuthProvider>
+        </CurrencyProvider>
+      </AuthProvider>
       </body>
     </html>
   );

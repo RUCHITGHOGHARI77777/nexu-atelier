@@ -13,9 +13,9 @@ import {
   Building2,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { Button } from "@/components/ui/Button";
-import { formatCurrency } from "@/lib/formatters";
 
 export const CartDrawer: React.FC = () => {
   const {
@@ -28,6 +28,7 @@ export const CartDrawer: React.FC = () => {
     removeFromCart,
     clearCart,
   } = useCart();
+  const { formatPrice } = useCurrency();
 
   // Close on Escape key
   useEffect(() => {
@@ -105,7 +106,7 @@ export const CartDrawer: React.FC = () => {
                     <span>
                       Add{" "}
                       <strong className="text-zinc-950">
-                        {formatCurrency(totals.amountNeededForFreeShipping)}
+                        {formatPrice(totals.amountNeededForFreeShipping)}
                       </strong>{" "}
                       for free delivery
                     </span>
@@ -163,7 +164,7 @@ export const CartDrawer: React.FC = () => {
                       <span>{group.vendor.name}</span>
                     </div>
                     <span className="font-mono text-[11px] text-zinc-950 font-bold">
-                      {formatCurrency(group.subtotal)}
+                      {formatPrice(group.subtotal)}
                     </span>
                   </div>
 
@@ -221,7 +222,7 @@ export const CartDrawer: React.FC = () => {
 
                           <div className="flex items-center justify-between pt-1.5">
                             <span className="font-mono text-xs font-bold text-zinc-950">
-                              {formatCurrency(item.unitPrice * item.quantity)}
+                              {formatPrice(item.unitPrice * item.quantity)}
                             </span>
 
                             {/* Stepper */}
@@ -265,19 +266,19 @@ export const CartDrawer: React.FC = () => {
                 <div className="flex items-center justify-between text-zinc-600">
                   <span>Subtotal:</span>
                   <span className="font-mono text-zinc-950 font-bold">
-                    {formatCurrency(totals.subtotal)}
+                    {formatPrice(totals.subtotal)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-zinc-600">
                   <span>Estimated Courier:</span>
                   <span className="font-mono text-zinc-950 font-bold">
-                    {totals.shippingFee === 0 ? "Complimentary" : formatCurrency(totals.shippingFee)}
+                    {totals.shippingFee === 0 ? "Complimentary" : formatPrice(totals.shippingFee)}
                   </span>
                 </div>
                 <div className="pt-2 border-t border-zinc-200 flex items-center justify-between font-bold text-sm text-zinc-950">
                   <span>Total Payable:</span>
                   <span className="font-mono text-base font-black text-zinc-950">
-                    {formatCurrency(totals.total)}
+                    {formatPrice(totals.total)}
                   </span>
                 </div>
               </div>

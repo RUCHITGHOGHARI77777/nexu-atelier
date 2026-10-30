@@ -2,12 +2,23 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { CATEGORIES_METADATA } from "@/data/seedCatalog";
+import { ArrowRight, Layers } from "lucide-react";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 
+interface LiveCategory {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  image: string;
+  _count?: {
+    products: number;
+  };
+}
+
 export const FeaturedCategories: React.FC = () => {
-  const [categories, setCategories] = useState(CATEGORIES_METADATA);
+  const [categories, setCategories] = useState<LiveCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadLiveCategories() {
@@ -20,11 +31,17 @@ export const FeaturedCategories: React.FC = () => {
           }
         }
       } catch {
-        // Fallback to initial metadata
+        // silence network error
+      } finally {
+        setIsLoading(false);
       }
     }
     loadLiveCategories();
   }, []);
+
+  if (categories.length === 0 && !isLoading) {
+    return null;
+  }
 
   const [heroCategory, ...gridCategories] = categories;
 
@@ -40,10 +57,10 @@ export const FeaturedCategories: React.FC = () => {
           </h2>
         </div>
         <Link
-          href="/catalog"
+          href="/categories"
           className="text-xs font-semibold text-zinc-600 hover:text-zinc-950 flex items-center gap-1.5 transition-colors"
         >
-          <span>Explore All 12 Pieces</span>
+          <span>Explore All Disciplines</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
@@ -52,7 +69,7 @@ export const FeaturedCategories: React.FC = () => {
         {/* Left Column: Hero Category Tile */}
         {heroCategory && (
           <Link
-            href={`/catalog?category=${encodeURIComponent(heroCategory.name)}`}
+            href={`/category/${heroCategory.slug}`}
             className="group relative lg:col-span-5 rounded-2xl border border-zinc-200 bg-white overflow-hidden hover:border-zinc-300 shadow-sm hover:shadow-lg transition-all flex flex-col justify-end min-h-[380px] lg:min-h-[460px]"
           >
             <div className="absolute inset-0 bg-zinc-100">
@@ -67,9 +84,16 @@ export const FeaturedCategories: React.FC = () => {
             </div>
 
             <div className="relative z-10 p-6 sm:p-8 space-y-2">
-              <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest block font-bold">
-                FLAGSHIP DISCIPLINE
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest block font-bold">
+                  FLAGSHIP DISCIPLINE
+                </span>
+                {heroCategory._count && (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-xs">
+                    {heroCategory._count.products} pieces
+                  </span>
+                )}
+              </div>
               <h3 className="text-2xl font-bold text-white group-hover:text-amber-200 transition-colors">
                 {heroCategory.name}
               </h3>
@@ -77,19 +101,19 @@ export const FeaturedCategories: React.FC = () => {
                 {heroCategory.description}
               </p>
               <div className="pt-2 inline-flex items-center gap-2 text-xs font-semibold text-white">
-                <span>View Collection</span>
+                <span>View Discipline Collection</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           </Link>
         )}
 
-        {/* Right Column: 4 Sub-Categories in 2x2 Grid */}
+        {/* Right Column: Sub-Categories Grid */}
         <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {gridCategories.map((cat) => (
+          {gridCategories.slice(0, 4).map((cat) => (
             <Link
-              key={cat.name}
-              href={`/catalog?category=${encodeURIComponent(cat.name)}`}
+              key={cat.id}
+              href={`/category/${cat.slug}`}
               className="group relative rounded-2xl border border-zinc-200 bg-white overflow-hidden hover:border-zinc-300 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between min-h-[220px]"
             >
               <div className="relative aspect-[16/9] w-full bg-zinc-100 overflow-hidden">
@@ -100,6 +124,11 @@ export const FeaturedCategories: React.FC = () => {
                   sizes="(max-width: 640px) 100vw, 300px"
                   className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                 />
+                {cat._count && (
+                  <span className="absolute top-3 right-3 text-[10px] font-mono px-2 py-0.5 rounded-full bg-black/60 text-white backdrop-blur-xs">
+                    {cat._count.products} pieces
+                  </span>
+                )}
               </div>
 
               <div className="p-4 flex items-center justify-between bg-white border-t border-zinc-100">

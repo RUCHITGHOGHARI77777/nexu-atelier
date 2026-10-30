@@ -13,6 +13,16 @@ export async function GET() {
         name: true,
         description: true,
         image: true,
+        _count: {
+          select: {
+            products: {
+              where: {
+                isPublished: true,
+                approvalStatus: "APPROVED",
+              },
+            },
+          },
+        },
       },
     });
 

@@ -14,6 +14,8 @@ export const HeroSection: React.FC = () => {
   const [heroImage, setHeroImage] = useState(
     "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1200&q=85"
   );
+  const [studioCount, setStudioCount] = useState(5);
+  const [piecesCount, setPiecesCount] = useState(12);
 
   useEffect(() => {
     fetch("/api/settings/public")
@@ -31,9 +33,16 @@ export const HeroSection: React.FC = () => {
           }
         }
       })
-      .catch(() => {
-        // Fallback to default
-      });
+      .catch(() => {});
+
+    fetch("/api/products?limit=1")
+      .then((res) => res.json())
+      .then((data) => {
+        if (typeof data.total === "number" && data.total > 0) {
+          setPiecesCount(data.total);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   return (
@@ -78,7 +87,7 @@ export const HeroSection: React.FC = () => {
             <div className="pt-8 border-t border-zinc-200 grid grid-cols-3 gap-6 text-left">
               <div>
                 <span className="font-mono text-xl sm:text-2xl font-bold text-zinc-950 block">
-                  5
+                  {studioCount}
                 </span>
                 <span className="text-[11px] text-zinc-500 uppercase tracking-wider block mt-0.5">
                   Verified Studios
@@ -86,7 +95,7 @@ export const HeroSection: React.FC = () => {
               </div>
               <div>
                 <span className="font-mono text-xl sm:text-2xl font-bold text-zinc-950 block">
-                  12
+                  {piecesCount}
                 </span>
                 <span className="text-[11px] text-zinc-500 uppercase tracking-wider block mt-0.5">
                   Curated Pieces

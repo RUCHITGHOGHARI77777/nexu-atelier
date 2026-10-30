@@ -24,6 +24,7 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useCompare } from "@/context/CompareContext";
 import { useRecentlyViewed } from "@/context/RecentlyViewedContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency, calculateDiscountPercentage } from "@/lib/formatters";
@@ -40,6 +41,7 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
   const { isWishlisted, toggleWishlist } = useWishlist();
   const { addToCompare, removeFromCompare, isInCompare } = useCompare();
   const { recordView } = useRecentlyViewed();
+  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     recordView({
@@ -169,13 +171,19 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
           >
             {product.category}
           </Link>
-          <div className="flex items-center gap-1.5 text-zinc-800 font-mono">
-            <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-            <span className="font-bold">{product.rating}</span>
-            <span className="text-zinc-400 text-[11px]">
-              ({product.reviewCount} verified reviews)
+          {product.reviewCount > 0 ? (
+            <div className="flex items-center gap-1.5 text-zinc-800 font-mono">
+              <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+              <span className="font-bold">{product.rating.toFixed(1)}</span>
+              <span className="text-zinc-400 text-[11px]">
+                ({product.reviewCount} verified reviews)
+              </span>
+            </div>
+          ) : (
+            <span className="text-[11px] font-mono text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/80 font-medium">
+              New Atelier Piece
             </span>
-          </div>
+          )}
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 leading-snug">
@@ -203,11 +211,11 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
       <div className="space-y-1">
         <div className="flex items-baseline gap-3">
           <span className="font-mono text-2xl sm:text-3xl font-black text-zinc-950">
-            {formatCurrency(activePrice)}
+            {formatPrice(activePrice)}
           </span>
           {product.compareAtPrice && product.compareAtPrice > activePrice && (
             <span className="font-mono text-sm text-zinc-400 line-through">
-              {formatCurrency(product.compareAtPrice)}
+              {formatPrice(product.compareAtPrice)}
             </span>
           )}
           {discountPercentage > 0 && (

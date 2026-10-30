@@ -1,12 +1,66 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { SEED_VENDORS } from "@/data/seedCatalog";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
-import { ArrowRight, MapPin, ShieldCheck, Clock } from "lucide-react";
+import { ArrowRight, MapPin, ShieldCheck, Clock, Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
+interface SpotlightSeller {
+  id: string;
+  slug: string;
+  name: string;
+  originHub: string;
+  story: string;
+  heroImage: string;
+  verified: boolean;
+  rating: number;
+  leadTimeDays: number;
+  _count?: {
+    products: number;
+  };
+}
+
 export const ArtisanSpotlight: React.FC = () => {
-  const vendor = SEED_VENDORS.solTextiles;
+  const [seller, setSeller] = useState<SpotlightSeller | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadSpotlight() {
+      try {
+        const res = await fetch("/api/sellers/spotlight");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.seller) {
+            setSeller(data.seller);
+          }
+        }
+      } catch {
+        // silence
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadSpotlight();
+  }, []);
+
+  if (!seller && !isLoading) {
+    return null;
+  }
+
+  // Graceful initial display while loading
+  const displaySeller = seller || {
+    id: "vnd_sol_textiles",
+    slug: "solstice-loom-studio",
+    name: "Solstice Loom Studio",
+    originHub: "Surat & Ahmedabad, India",
+    story: "A collective of second-generation textile engineers and loom weavers preserving slow-cloth traditions with sustainable closed-loop natural dyeing.",
+    heroImage: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80",
+    verified: true,
+    rating: 4.9,
+    leadTimeDays: 2,
+    _count: { products: 2 },
+  };
 
   return (
     <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -21,48 +75,47 @@ export const ArtisanSpotlight: React.FC = () => {
 
             <div className="space-y-2">
               <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-950 tracking-tight">
-                {vendor.name}
+                {displaySeller.name}
               </h2>
-              <div className="flex items-center gap-3 text-xs text-zinc-600">
+              <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-600">
                 <span className="flex items-center gap-1 text-zinc-800 font-medium">
                   <MapPin className="w-3.5 h-3.5 text-zinc-500" />
-                  {vendor.location}
+                  {displaySeller.originHub}
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1 font-mono text-zinc-600">
                   <Clock className="w-3.5 h-3.5 text-zinc-500" />
-                  {vendor.dispatchTime}
+                  {displaySeller.leadTimeDays} days dispatch
                 </span>
                 <span>•</span>
-                <span className="font-mono text-zinc-900 font-bold">
-                  ★ {vendor.rating} ({vendor.totalSales.toLocaleString()} orders)
+                <span className="flex items-center gap-1 font-mono text-zinc-900 font-bold">
+                  <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                  {displaySeller.rating.toFixed(1)} rating
                 </span>
               </div>
             </div>
 
             <p className="text-xs sm:text-sm text-zinc-700 leading-relaxed max-w-xl">
-              &ldquo;{vendor.story}&rdquo;
+              &ldquo;{displaySeller.story}&rdquo;
             </p>
 
             <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200 text-xs text-zinc-600 max-w-xl space-y-1">
               <div className="font-bold text-zinc-950">
-                Ethical Sourcing & Zero Middleman Cut:
+                Ethical Direct Guild Model & Provenance Guarantee:
               </div>
               <p className="text-[11px] text-zinc-600 leading-normal">
-                Orders placed for Solstice Loom Studio are routed straight to their Ring Road weaving facilities with direct courier dispatch and verified GST invoices.
+                Orders for {displaySeller.name} are routed straight to their verified artisan workshops with direct courier dispatch, authentic craft certifications, and audited GST invoices.
               </p>
             </div>
 
             <div>
-              <Button
-                variant="primary"
-                size="md"
-                href="/catalog?category=Apparel"
-                className="flex items-center gap-2"
+              <Link
+                href={`/catalog?maker=${encodeURIComponent(displaySeller.name)}`}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs sm:text-sm transition-colors shadow-xs"
               >
-                <span>Explore Solstice Studio Pieces</span>
+                <span>Explore {displaySeller.name} Pieces</span>
                 <ArrowRight className="w-4 h-4" />
-              </Button>
+              </Link>
             </div>
           </div>
 
@@ -71,7 +124,7 @@ export const ArtisanSpotlight: React.FC = () => {
             <div className="relative aspect-[4/3] sm:aspect-[16/10] rounded-xl overflow-hidden border border-zinc-200 shadow-sm bg-zinc-100">
               <ImageWithFallback
                 src="https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=1200&q=85"
-                alt="Solstice Loom Studio craft"
+                alt={`${displaySeller.name} craft`}
                 fill
                 sizes="(max-width: 768px) 100vw, 500px"
                 className="object-cover"

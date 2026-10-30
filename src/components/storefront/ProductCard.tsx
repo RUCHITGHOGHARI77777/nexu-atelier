@@ -7,9 +7,10 @@ import { Product } from "@/types/marketplace";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useCompare } from "@/context/CompareContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { Badge } from "@/components/ui/Badge";
-import { formatCurrency, calculateDiscountPercentage } from "@/lib/formatters";
+import { calculateDiscountPercentage } from "@/lib/formatters";
 
 export interface ProductCardProps {
   product: Product;
@@ -19,6 +20,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
   const { isWishlisted, toggleWishlist } = useWishlist();
   const { addToCompare, removeFromCompare, isInCompare } = useCompare();
+  const { formatPrice } = useCurrency();
   const [selectedColor, setSelectedColor] = useState(product.availableColors?.[0]);
   const [isAdded, setIsAdded] = useState(false);
 
@@ -157,13 +159,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <span className="truncate max-w-[170px] text-zinc-500 font-medium">
               {product.vendor.name}
             </span>
-            <div className="flex items-center gap-1 font-mono text-zinc-800">
-              <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-              <span className="font-semibold">{product.rating}</span>
-              <span className="text-zinc-400 text-[10px]">
-                ({product.reviewCount})
+            {product.reviewCount > 0 ? (
+              <div className="flex items-center gap-1 font-mono text-zinc-800">
+                <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                <span className="font-semibold">{product.rating.toFixed(1)}</span>
+                <span className="text-zinc-400 text-[10px]">
+                  ({product.reviewCount})
+                </span>
+              </div>
+            ) : (
+              <span className="text-[10px] font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/60 font-medium">
+                New Atelier
               </span>
-            </div>
+            )}
           </div>
 
           {/* Product Title */}
@@ -202,11 +210,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="pt-2 border-t border-zinc-100 flex items-baseline justify-between">
           <div className="flex items-baseline gap-2">
             <span className="font-mono text-sm sm:text-base font-bold text-zinc-950">
-              {formatCurrency(product.basePrice)}
+              {formatPrice(product.basePrice)}
             </span>
             {product.compareAtPrice && product.compareAtPrice > product.basePrice && (
               <span className="font-mono text-xs text-zinc-400 line-through">
-                {formatCurrency(product.compareAtPrice)}
+                {formatPrice(product.compareAtPrice)}
               </span>
             )}
           </div>

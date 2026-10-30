@@ -15,27 +15,57 @@ import {
   MapPin,
   LogOut,
   ChevronDown,
+  Globe,
+  Truck,
+  Sparkles,
+  Layers,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import { Product } from "@/types/marketplace";
+import { CurrencyCode, SUPPORTED_CURRENCIES } from "@/types/international";
+
+interface NavCategory {
+  id: string;
+  slug: string;
+  name: string;
+  _count?: { products: number };
+}
 
 export const Header: React.FC = () => {
   const router = useRouter();
   const { totals, openCartDrawer } = useCart();
   const { wishlistCount } = useWishlist();
   const { user, isAuthenticated, logout } = useAuth();
+  const { currency, setCurrency, activeMarket, setMarket, formatPrice, availableMarkets } = useCurrency();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const [isCurrencyMenuOpen, setIsCurrencyMenuOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number>(-1);
+  const [categories, setCategories] = useState<NavCategory[]>([]);
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const accountMenuRef = useRef<HTMLDivElement>(null);
+  const currencyMenuRef = useRef<HTMLDivElement>(null);
+
+  // Fetch real database categories for navigation
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.categories)) {
+          setCategories(data.categories);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Live search suggestion filter querying real database
   useEffect(() => {
@@ -67,22 +97,29 @@ export const Header: React.FC = () => {
     };
   }, [searchQuery]);
 
-  // Click outside to close search & account dropdown
+  // Click outside to close dropdowns
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node) &&
+        !dropdownRef.current.contains(target) &&
         searchInputRef.current &&
-        !searchInputRef.current.contains(event.target as Node)
+        !searchInputRef.current.contains(target)
       ) {
         setIsSearchOpen(false);
       }
       if (
         accountMenuRef.current &&
-        !accountMenuRef.current.contains(event.target as Node)
+        !accountMenuRef.current.contains(target)
       ) {
         setIsAccountMenuOpen(false);
+      }
+      if (
+        currencyMenuRef.current &&
+        !currencyMenuRef.current.contains(target)
+      ) {
+        setIsCurrencyMenuOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -106,7 +143,7 @@ export const Header: React.FC = () => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     setIsSearchOpen(false);
-    router.push(`/catalog?q=${encodeURIComponent(searchQuery.trim())}`);
+    router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
   };
 
   const handleSelectSuggestion = (slug: string) => {
@@ -155,12 +192,79 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-zinc-200 transition-all shadow-xs text-zinc-900">
+      {/* Top Utility Banner: Market & Direct Track links */}
+      <div className="hidden sm:block border-b border-zinc-100 bg-zinc-50/70 text-[11px] text-zinc-500 py-1.5 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="font-mono text-zinc-700 font-medium">
+              VERIFIED ATELIER DIRECT COLLECTIVE
+            </span>
+            <span className="text-zinc-300">•</span>
+            <span className="text-zinc-500">100% Escrow Protection</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Link
+              href="/track-order"
+              className="hover:text-zinc-950 transition-colors flex items-center gap-1.5 text-zinc-600 font-medium"
+            >
+              <Truck className="w-3.5 h-3.5 text-amber-600" />
+              <span>Track Consignment</span>
+            </Link>
+
+            <span className="text-zinc-300">•</span>
+
+            {/* Currency & Region Selector */}
+            <div className="relative" ref={currencyMenuRef}>
+              <button
+                onClick={() => setIsCurrencyMenuOpen((prev) => !prev)}
+                className="flex items-center gap-1.5 font-mono text-zinc-700 hover:text-zinc-950 font-semibold cursor-pointer"
+                aria-label="Select currency and region"
+              >
+                <span>{activeMarket.flagEmoji}</span>
+                <span>{currency}</span>
+                <ChevronDown className="w-3 h-3 text-zinc-400" />
+              </button>
+
+              {isCurrencyMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-zinc-200 rounded-xl shadow-xl py-1 z-50 text-xs">
+                  <div className="px-3 py-1.5 font-mono text-[10px] text-zinc-400 uppercase tracking-wider border-b border-zinc-100">
+                    Select Market
+                  </div>
+                  {availableMarkets.map((m) => (
+                    <button
+                      key={m.code}
+                      onClick={() => {
+                        setMarket(m.code);
+                        setIsCurrencyMenuOpen(false);
+                      }}
+                      className={`w-full px-3 py-2 text-left flex items-center justify-between hover:bg-zinc-50 transition-colors cursor-pointer ${
+                        activeMarket.code === m.code ? "bg-amber-50/60 font-semibold text-zinc-950" : "text-zinc-700"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span>{m.flagEmoji}</span>
+                        <span>{m.name}</span>
+                      </span>
+                      <span className="font-mono text-[11px] text-zinc-500">
+                        {m.defaultCurrency}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Navigation Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-18 gap-4 py-3">
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(true)}
-            className="md:hidden p-2 text-zinc-700 hover:text-zinc-950 rounded-lg hover:bg-zinc-100 transition-colors"
+            className="lg:hidden p-2 text-zinc-700 hover:text-zinc-950 rounded-lg hover:bg-zinc-100 transition-colors"
             aria-label="Open navigation menu"
           >
             <Menu className="w-5 h-5" />
@@ -182,37 +286,34 @@ export const Header: React.FC = () => {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-zinc-600">
+          <nav className="hidden lg:flex items-center gap-5 text-xs font-semibold text-zinc-600">
             <Link
               href="/catalog"
               className="hover:text-zinc-950 transition-colors py-1"
             >
-              All Catalog
+              All Pieces
             </Link>
             <Link
-              href="/catalog?category=Apparel"
+              href="/categories"
               className="hover:text-zinc-950 transition-colors py-1"
             >
-              Apparel
+              Disciplines
             </Link>
             <Link
-              href="/catalog?category=Audio%20%26%20Tech"
+              href="/collections"
               className="hover:text-zinc-950 transition-colors py-1"
             >
-              Audio & Tech
+              Collections
             </Link>
-            <Link
-              href="/catalog?category=Footwear"
-              className="hover:text-zinc-950 transition-colors py-1"
-            >
-              Footwear
-            </Link>
-            <Link
-              href="/catalog?category=Objects%20%26%20Living"
-              className="hover:text-zinc-950 transition-colors py-1"
-            >
-              Objects & Living
-            </Link>
+            {categories.slice(0, 3).map((cat) => (
+              <Link
+                key={cat.id}
+                href={`/category/${cat.slug}`}
+                className="hover:text-zinc-950 transition-colors py-1"
+              >
+                {cat.name}
+              </Link>
+            ))}
           </nav>
 
           {/* Functional Search Bar */}
@@ -262,14 +363,14 @@ export const Header: React.FC = () => {
                       </div>
                     </div>
                     <span className="font-mono text-xs text-zinc-950 font-bold">
-                      ₹{product.basePrice.toLocaleString("en-IN")}
+                      {formatPrice(product.basePrice)}
                     </span>
                   </button>
                 ))}
                 <div className="p-2 border-t border-zinc-100 bg-zinc-50">
                   <button
                     onClick={handleSearchSubmit}
-                    className="w-full py-1 text-center text-xs text-zinc-600 hover:text-zinc-950 font-medium flex items-center justify-center gap-1"
+                    className="w-full py-1 text-center text-xs text-zinc-600 hover:text-zinc-950 font-medium flex items-center justify-center gap-1 cursor-pointer"
                   >
                     <span>View all matching results</span>
                     <ArrowRight className="w-3 h-3" />
@@ -290,7 +391,7 @@ export const Header: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSearchSubmit}
-                  className="w-full py-1.5 px-3 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                  className="w-full py-1.5 px-3 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <span>Search full studio catalog</span>
                   <ArrowRight className="w-3 h-3" />
@@ -425,9 +526,33 @@ export const Header: React.FC = () => {
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="p-1 text-zinc-500 hover:text-zinc-950 cursor-pointer"
+                  aria-label="Close menu"
                 >
                   <X className="w-5 h-5" />
                 </button>
+              </div>
+
+              {/* Mobile Market / Currency Switcher */}
+              <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200 space-y-2">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 block">
+                  Market & Currency
+                </span>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {availableMarkets.map((m) => (
+                    <button
+                      key={m.code}
+                      onClick={() => setMarket(m.code)}
+                      className={`px-2 py-1.5 rounded-lg text-left text-xs font-medium flex items-center justify-between transition-colors ${
+                        activeMarket.code === m.code
+                          ? "bg-zinc-900 text-white font-bold"
+                          : "bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-100"
+                      }`}
+                    >
+                      <span>{m.flagEmoji} {m.code}</span>
+                      <span className="font-mono text-[10px] opacity-80">{m.defaultCurrency}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Customer Account Strip in Mobile */}
@@ -477,11 +602,11 @@ export const Header: React.FC = () => {
                 )}
               </div>
 
-              <nav className="flex flex-col gap-3 text-sm">
+              <nav className="flex flex-col gap-2.5 text-sm">
                 <Link
                   href="/"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="py-1 text-zinc-900 font-semibold"
+                  className="py-1 text-zinc-950 font-semibold"
                 >
                   Home
                 </Link>
@@ -490,60 +615,73 @@ export const Header: React.FC = () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="py-1 text-zinc-700 hover:text-zinc-950 font-medium"
                 >
-                  All Catalog
+                  All Catalog Pieces
                 </Link>
                 <Link
-                  href="/catalog?category=Apparel"
+                  href="/categories"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="py-1 text-zinc-600 hover:text-zinc-950"
+                  className="py-1 text-zinc-700 hover:text-zinc-950 font-medium"
                 >
-                  Apparel
+                  All Disciplines
                 </Link>
                 <Link
-                  href="/catalog?category=Audio%20%26%20Tech"
+                  href="/collections"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="py-1 text-zinc-400 hover:text-white"
+                  className="py-1 text-zinc-700 hover:text-zinc-950 font-medium"
                 >
-                  Audio & Tech
+                  Curated Collections
                 </Link>
                 <Link
-                  href="/catalog?category=Footwear"
+                  href="/track-order"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="py-1 text-zinc-400 hover:text-white"
+                  className="py-1 text-amber-700 hover:text-amber-800 font-medium flex items-center gap-1.5"
                 >
-                  Footwear
+                  <Truck className="w-4 h-4" />
+                  <span>Track Consignment</span>
                 </Link>
-                <Link
-                  href="/catalog?category=Objects%20%26%20Living"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="py-1 text-zinc-400 hover:text-white"
-                >
-                  Objects & Living
-                </Link>
-                <Link
-                  href="/cart"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="py-1 text-zinc-300 hover:text-white font-medium flex items-center justify-between"
-                >
-                  <span>Shopping Bag</span>
-                  <span className="font-mono text-xs text-zinc-400">
-                    {totals.itemCount} items
+
+                <div className="pt-2 border-t border-zinc-200">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block mb-1.5">
+                    Disciplines
                   </span>
-                </Link>
-                <Link
-                  href="/wishlist"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="py-1 text-zinc-300 hover:text-white font-medium flex items-center justify-between"
-                >
-                  <span>Saved Wishlist</span>
-                  <span className="font-mono text-xs text-zinc-400">
-                    {wishlistCount} saved
-                  </span>
-                </Link>
+                  {categories.map((cat) => (
+                    <Link
+                      key={cat.id}
+                      href={`/category/${cat.slug}`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="py-1 text-xs text-zinc-600 hover:text-zinc-950 block"
+                    >
+                      {cat.name}
+                    </Link>
+                  ))}
+                </div>
+
+                <div className="pt-2 border-t border-zinc-200 space-y-1">
+                  <Link
+                    href="/cart"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="py-1 text-xs text-zinc-700 hover:text-zinc-950 font-medium flex items-center justify-between"
+                  >
+                    <span>Shopping Bag</span>
+                    <span className="font-mono text-xs text-zinc-500">
+                      {totals.itemCount} items
+                    </span>
+                  </Link>
+                  <Link
+                    href="/wishlist"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="py-1 text-xs text-zinc-700 hover:text-zinc-950 font-medium flex items-center justify-between"
+                  >
+                    <span>Saved Pieces</span>
+                    <span className="font-mono text-xs text-zinc-500">
+                      {wishlistCount} saved
+                    </span>
+                  </Link>
+                </div>
               </nav>
             </div>
 
-            <div className="pt-6 border-t border-zinc-800 text-[11px] text-zinc-500 font-mono">
+            <div className="pt-6 border-t border-zinc-200 text-[11px] text-zinc-500 font-mono">
               Nexu Atelier • Verified Guild Studios
             </div>
           </div>
