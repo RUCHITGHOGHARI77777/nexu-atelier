@@ -41,6 +41,7 @@ yarn-error.log*
 *.tar.gz
 *.tgz
 *.bak
+/backups/
 
 # vercel
 .vercel

@@ -85,6 +85,7 @@ export interface Order {
 export interface CheckoutRequestPayload {
   items: {
     productId: string;
+    selectedSku?: string;
     selectedColorName?: string;
     selectedSize?: string;
     quantity: number;

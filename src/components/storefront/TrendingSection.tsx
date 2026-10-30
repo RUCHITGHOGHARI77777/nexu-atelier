@@ -1,16 +1,51 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, Flame, Sparkles } from "lucide-react";
+import { Product } from "@/types/marketplace";
 import { SEED_PRODUCTS } from "@/data/seedCatalog";
 import { ProductCard } from "./ProductCard";
 
 export const TrendingSection: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"trending" | "arrivals">("trending");
+  const [dbFeatured, setDbFeatured] = useState<Product[]>([]);
+  const [dbArrivals, setDbArrivals] = useState<Product[]>([]);
 
-  const trendingProducts = SEED_PRODUCTS.filter((p) => p.isTrending).slice(0, 4);
-  const newArrivals = SEED_PRODUCTS.filter((p) => p.isNewArrival).slice(0, 4);
+  useEffect(() => {
+    async function loadLiveProducts() {
+      try {
+        const [featRes, arrRes] = await Promise.all([
+          fetch("/api/products?featured=true&limit=8"),
+          fetch("/api/products?sort=newest&limit=8"),
+        ]);
+
+        if (featRes.ok) {
+          const data = await featRes.json();
+          if (Array.isArray(data.products) && data.products.length > 0) {
+            setDbFeatured(data.products);
+          }
+        }
+
+        if (arrRes.ok) {
+          const data = await arrRes.json();
+          if (Array.isArray(data.products) && data.products.length > 0) {
+            setDbArrivals(data.products);
+          }
+        }
+      } catch {
+        // graceful fallback to seed
+      }
+    }
+
+    loadLiveProducts();
+  }, []);
+
+  const seedTrending = SEED_PRODUCTS.filter((p) => p.isTrending).slice(0, 4);
+  const seedArrivals = SEED_PRODUCTS.filter((p) => p.isNewArrival).slice(0, 4);
+
+  const trendingProducts = dbFeatured.length > 0 ? dbFeatured.slice(0, 4) : seedTrending;
+  const newArrivals = dbArrivals.length > 0 ? dbArrivals.slice(0, 4) : seedArrivals;
 
   const displayed = activeTab === "trending" ? trendingProducts : newArrivals;
 

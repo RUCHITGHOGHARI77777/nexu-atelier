@@ -300,12 +300,48 @@ export class PrismaOrderService implements IOrderService {
             throw new Error(`Race condition: "${product.title}" ran out of stock.`);
           }
 
-          // Resolve Variant details
+          // Resolve & Validate Variant details
           let selectedColorHex: string | undefined = undefined;
           let selectedColorImage: string | undefined = undefined;
           let selectedSku: string | undefined = undefined;
 
-          if (itemReq.selectedColorName) {
+          let matchedVariant = null;
+          if (itemReq.selectedSku) {
+            matchedVariant = product.variants.find((v) => v.sku === itemReq.selectedSku);
+          }
+          if (!matchedVariant && itemReq.selectedSize) {
+            matchedVariant = product.variants.find(
+              (v) => v.variantType === "SIZE" && v.value.toLowerCase() === itemReq.selectedSize?.toLowerCase()
+            );
+          }
+          if (!matchedVariant && itemReq.selectedColorName) {
+            matchedVariant = product.variants.find(
+              (v) => v.variantType === "COLOR" && v.value.toLowerCase() === itemReq.selectedColorName?.toLowerCase()
+            );
+          }
+
+          if (matchedVariant) {
+            if (matchedVariant.stock <= 0) {
+              throw new Error(`Selected variant "${matchedVariant.name} (${matchedVariant.value})" of "${product.title}" is out of stock.`);
+            }
+            if (qty > matchedVariant.stock) {
+              throw new Error(
+                `Requested quantity for variant "${matchedVariant.name} (${matchedVariant.value})" exceeds available stock (${matchedVariant.stock} available).`
+              );
+            }
+            const decrementedVariant = await tx.productVariant.update({
+              where: { id: matchedVariant.id },
+              data: { stock: { decrement: qty } },
+            });
+            if (decrementedVariant.stock < 0) {
+              throw new Error(`Race condition: Variant "${matchedVariant.name}" ran out of stock.`);
+            }
+            selectedSku = matchedVariant.sku;
+            if (matchedVariant.variantType === "COLOR") {
+              selectedColorHex = matchedVariant.hexCode || undefined;
+              selectedColorImage = matchedVariant.imageUrl || undefined;
+            }
+          } else if (itemReq.selectedColorName) {
             const variant = product.variants.find(
               (v) =>
                 v.variantType === "COLOR" &&
@@ -532,6 +568,12 @@ export class PrismaOrderService implements IOrderService {
               where: { id: item.productId },
               data: { stock: { increment: item.quantity } },
             });
+            if (item.selectedSku) {
+              await tx.productVariant.updateMany({
+                where: { sku: item.selectedSku },
+                data: { stock: { increment: item.quantity } },
+              });
+            }
           }
         }
 

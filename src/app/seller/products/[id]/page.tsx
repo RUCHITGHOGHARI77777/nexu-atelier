@@ -52,11 +52,19 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   const [stock, setStock] = useState<number>(0);
   const [lowStockThreshold, setLowStockThreshold] = useState<number>(5);
 
-  // Specifications
+  // Specifications & Logistics
   const [material, setMaterial] = useState("");
   const [dimensions, setDimensions] = useState("");
   const [weight, setWeight] = useState("");
   const [careInstructions, setCareInstructions] = useState("");
+  const [brand, setBrand] = useState("");
+  const [sku, setSku] = useState("");
+  const [productType, setProductType] = useState("Physical Craft");
+  const [subcategory, setSubcategory] = useState("");
+  const [searchKeywords, setSearchKeywords] = useState("");
+  const [dispatchEstimate, setDispatchEstimate] = useState("Ships in 2-3 business days");
+  const [packageDimensions, setPackageDimensions] = useState("");
+  const [taxRatePercent, setTaxRatePercent] = useState<number>(12.0);
 
   // Imagery & Variants
   const [images, setImages] = useState<string[]>([]);
@@ -96,6 +104,14 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           setDimensions(p.dimensions || "");
           setWeight(p.weight || "");
           setCareInstructions(p.careInstructions || "");
+          setBrand(p.brand || "");
+          setSku(p.sku || "");
+          setProductType(p.productType || "Physical Craft");
+          setSubcategory(p.subcategory || "");
+          setSearchKeywords(p.searchKeywords || "");
+          setDispatchEstimate(p.dispatchEstimate || "Ships in 2-3 business days");
+          setPackageDimensions(p.packageDimensions || "");
+          setTaxRatePercent(p.taxRatePercent || 12.0);
           setImages(p.images || []);
           setVariants(
             p.variants.map((v) => ({
@@ -207,6 +223,14 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
       stock: Number(stock),
       lowStockThreshold: Number(lowStockThreshold),
       action,
+      brand: brand.trim() || undefined,
+      sku: sku.trim() || undefined,
+      productType: productType.trim() || undefined,
+      subcategory: subcategory.trim() || undefined,
+      searchKeywords: searchKeywords.trim() || undefined,
+      dispatchEstimate: dispatchEstimate.trim() || undefined,
+      packageDimensions: packageDimensions.trim() || undefined,
+      taxRatePercent: Number(taxRatePercent) || 12.0,
       material: material.trim(),
       dimensions: dimensions.trim(),
       weight: weight.trim(),
@@ -390,7 +414,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
                 Marketplace Category <span className="text-rose-400">*</span>
@@ -410,9 +434,59 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
 
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Permanent Slug Identifier
+                Brand / Studio Maker
               </label>
-              <Input value={initialProduct.slug} disabled className="opacity-60 font-mono" />
+              <Input
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+                placeholder="e.g. Solstice Studio"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Primary Master SKU
+              </label>
+              <Input
+                value={sku}
+                onChange={(e) => setSku(e.target.value.toUpperCase())}
+                placeholder="e.g. SLS-IND-01"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Product Type
+              </label>
+              <Input
+                value={productType}
+                onChange={(e) => setProductType(e.target.value)}
+                placeholder="e.g. Physical Craft"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Subcategory / Discipline
+              </label>
+              <Input
+                value={subcategory}
+                onChange={(e) => setSubcategory(e.target.value)}
+                placeholder="e.g. Handloom Textiles"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Search Keywords &amp; Tags
+              </label>
+              <Input
+                value={searchKeywords}
+                onChange={(e) => setSearchKeywords(e.target.value)}
+                placeholder="e.g. organic, indigo, linen"
+              />
             </div>
           </div>
 
@@ -442,7 +516,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             3. Commercial Valuation & Inventory Balance
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
                 Selling Price (INR) <span className="text-rose-400">*</span>
@@ -494,6 +568,19 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                 step="1"
                 value={lowStockThreshold}
                 onChange={(e) => setLowStockThreshold(Number(e.target.value))}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                GST / Tax Rate (%)
+              </label>
+              <Input
+                type="number"
+                min="0"
+                step="0.5"
+                value={taxRatePercent}
+                onChange={(e) => setTaxRatePercent(Number(e.target.value))}
               />
             </div>
           </div>
@@ -549,14 +636,37 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Weight
+                Item Weight (g / kg)
               </label>
               <Input
                 value={weight}
                 onChange={(e) => setWeight(e.target.value)}
+                placeholder="e.g. 350g"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Package Box Dimensions
+              </label>
+              <Input
+                value={packageDimensions}
+                onChange={(e) => setPackageDimensions(e.target.value)}
+                placeholder="e.g. 30cm x 20cm x 5cm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Dispatch / Lead Time
+              </label>
+              <Input
+                value={dispatchEstimate}
+                onChange={(e) => setDispatchEstimate(e.target.value)}
+                placeholder="e.g. Ships in 2-3 business days"
               />
             </div>
 
@@ -567,6 +677,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
               <Input
                 value={careInstructions}
                 onChange={(e) => setCareInstructions(e.target.value)}
+                placeholder="e.g. Dry clean only"
               />
             </div>
           </div>

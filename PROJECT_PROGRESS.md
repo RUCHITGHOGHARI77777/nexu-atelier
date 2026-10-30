@@ -52,8 +52,8 @@ NEXU ATELIER is a single reusable Next.js application that hosts three role-gate
 ## 2. Feature Implementation Status
 
 ### A. Completed & Verified Features
-1. **Database Schema:** 35 PostgreSQL Prisma models covering Users, Profiles, Sellers, Categories, Products, Images, Variants, Orders, Items, Payments, Payouts, Audit Events, Disputes, and Reviews.
-2. **Automated Test Suite:** 165 passed out of 165 Vitest tests across 16 test suites with 100% pass rate.
+1. **Database Schema:** 35 PostgreSQL Prisma models covering Users, Profiles, Sellers, Categories, Products, Images, Variants, Orders, Items, Payments, Payouts, Audit Events, Disputes, and Reviews. Additive fields (`brand`, `sku`, `productType`, `subcategory`, `searchKeywords`, `dispatchEstimate`, `packageDimensions`, `taxRatePercent`) and `CHANGES_REQUESTED` enum status added safely without data loss.
+2. **Automated Test Suite:** 176 passed out of 176 Vitest tests across 17 test suites with 100% pass rate.
 3. **Multi-Tenant Seller Isolation:** `sellerService` strictly enforces `vendorId === seller.id` on all queries, updates, and order line fulfillment.
 4. **Admin Control Center Engine:** Full operations overview, seller management, central order control, dispute & refund resolution, coupons & vouchers, double-entry financial ledger, user account governance, immutable security audit trail, category & taxonomy engine (`/admin/categories`), automations & outbox health (`/admin/automations`), and financial intelligence reports with CSV export (`/admin/reports`).
 5. **Enhanced Product Moderation & Homepage Spotlight:** In-modal multi-image gallery preview, full specifications (materials, dimensions, weight, care), complete variant matrix (sizes, stock, colors, SKUs), "Request Changes", "Reject Piece" with required feedback, and instant "Homepage Featured" toggle.
@@ -61,18 +61,29 @@ NEXU ATELIER is a single reusable Next.js application that hosts three role-gate
 7. **Secure Media Uploads:** `/api/upload/image` validates file types via magic bytes (JPEG, PNG, WebP), enforces a 4.0 MB limit, uses cryptographically random filenames, and enforces rate limiting.
 8. **Destructive-Seed Protection:** Fail-closed circuit breaker in `prisma/seed.ts` blocking accidental execution unless `ALLOW_SEED_RESET=true` is explicitly provided.
 9. **Zero Secrets in Repository:** Strict `.gitignore` excluding all `.env*` files (preserving only `.env.example`), `.next`, `node_modules`, `dist`, and backups.
+10. **Full-Depth Supplier Product Engine (Part 3):**
+    - Full product creation & draft saving (`/seller/products/new`).
+    - Device file upload with cover image indicator, previews, and reordering.
+    - Zero auto-approval: unapproved items default to `DRAFT` or `PENDING_REVIEW` (`isPublished: false`).
+    - Full product editing (`/seller/products/[id]`), resubmission, and automatic unpublishing/re-moderation upon live product edit.
+    - Complete seller dashboard (`/seller/products`) with status tabs, filter by status, metrics strip, and inline admin moderation notes.
+11. **Storefront Database Integration (Part 5):**
+    - Connected `/catalog` to dynamic `/api/products` endpoint with category, price range, search, and stock filters.
+    - Connected `/product/[slug]` to PostgreSQL via `productRepository.getProductBySlug(slug)` and dynamic related products.
+    - Connected homepage `TrendingSection` to `/api/products?featured=true`.
+12. **Variant-Specific Inventory & Checkout Integrity (Part 6):**
+    - Atomic variant stock validation and decrementing during checkout in `order-service.ts`.
+    - Out-of-stock guards preventing checkout when variant stock is zero or insufficient.
+    - Variant stock restoration upon order cancellation.
 
 ### B. Incomplete Features (Queued for Resolution)
-1. **Storefront Database Disconnect (Part 5):**
-   Public `/catalog`, category filters, and `/product/[slug]` currently filter `SEED_PRODUCTS` from memory. Must be rewired to `productRepository` live queries.
-2. **Supplier Product Creation & Edit Lifecycle (Part 3):**
-   - Form at `/seller/products/new` accepts URLs; needs direct file upload integration.
-   - Form currently auto-approves new products; needs default `PENDING_REVIEW` / `DRAFT`.
-   - Edit page `/seller/products/[id]` and `GET /api/seller/products/[id]` are missing.
-   - Seller table lacks status badges (`Draft`, `Under Review`, `Approved`, `Rejected`).
-3. **Variant-Specific Inventory Enforcement (Part 6):**
-   - `ProductInfo.tsx` must enforce stock per selected size/color variant.
-   - `order-service.ts` must atomically decrement `ProductVariant.stock` alongside root `Product.stock`.
+1. **Complete Shopping & Supplier Fulfillment Journey (Part 7):**
+    - Customer end-to-end checkout to seller order line dispatch status progression (PENDING -> PROCESSING -> SHIPPED -> DELIVERED).
+    - Supplier shipping label / tracking number input.
+2. **Security, Reliability & Legal Readiness (Part 8):**
+    - Comprehensive rate limiting, CSRF protections, terms of service and privacy policy pages.
+3. **Reusable GitHub Release & QA Handover (Parts 9 & 10):**
+    - Docker compose setup, clean onboarding documentation, and end-to-end user acceptance signoff.
 
 ---
 
@@ -82,7 +93,8 @@ NEXU ATELIER is a single reusable Next.js application that hosts three role-gate
 | :--- | :---: | :---: | :---: | :--- |
 | `nexu-ecommerce-platform.zip` | 3.45 MB | Oct 30, 2026 09:18 | Verified (0 secrets) | Initial safe platform archive |
 | `nexu_part1_baseline_20261030.zip` | 3.44 MB | Oct 30, 2026 11:17 | Verified (0 secrets) | Part 1 baseline archive |
-| `nexu_safety_backup_20261030_112515.zip` | 3.48 MB | Oct 30, 2026 11:25 | Verified (0 secrets, 427 entries) | New timestamped safety backup |
+| `nexu_safety_backup_20261030_112515.zip` | 3.48 MB | Oct 30, 2026 11:25 | Verified (0 secrets, 427 entries) | Timestamped safety backup |
+| `db_snapshot_2026-10-30T06-41-39-369Z.json` | 275 KB | Oct 30, 2026 12:11 | Verified (53 users, 7 sellers, 12 products, 167 orders) | Pre-migration PostgreSQL JSON snapshot |
 
 ---
 
@@ -90,10 +102,10 @@ NEXU ATELIER is a single reusable Next.js application that hosts three role-gate
 
 1. **PART 1: Protect Project & Establish Baseline** *(COMPLETED)*
 2. **PART 2: Fix Navigation, Cart & Live Order Refresh** *(COMPLETED)*
-3. **PART 3: Complete Supplier Product Creation, Drafts, Upload & Editing** *(QUEUED)*
+3. **PART 3: Complete Supplier Product Creation, Drafts, Upload & Editing** *(COMPLETED)*
 4. **PART 4: Admin Moderation & Controlled Website Settings** *(COMPLETED)*
-5. **PART 5: Connect Public Storefront to PostgreSQL Products** *(QUEUED)*
-6. **PART 6: Correct Variant Inventory, Cart & Checkout** *(QUEUED)*
+5. **PART 5: Connect Public Storefront to PostgreSQL Products** *(COMPLETED)*
+6. **PART 6: Correct Variant Inventory, Cart & Checkout** *(COMPLETED)*
 7. **PART 7: Complete Shopping & Supplier Fulfillment Journey** *(QUEUED)*
 8. **PART 8: Security, Reliability, Legal & Operational Readiness** *(QUEUED)*
 9. **PART 9: Reusable GitHub Release & Deployment Handover** *(QUEUED)*

@@ -8,6 +8,8 @@ export interface CatalogQueryOptions {
   minPrice?: number;
   maxPrice?: number;
   inStockOnly?: boolean;
+  featured?: boolean;
+  trending?: boolean;
   sortBy?: "price-asc" | "price-desc" | "rating" | "newest";
   page?: number;
   limit?: number;
@@ -80,6 +82,9 @@ export function mapDbProductToFrontend(p: any): Product {
       { label: "Dimensions", value: p.dimensions || "Custom studio proportion" },
       { label: "Weight", value: p.weight || "Calibrated studio density" },
       { label: "Care", value: p.careInstructions || "Professional care recommended" },
+      ...(p.brand ? [{ label: "Brand", value: p.brand }] : []),
+      ...(p.sku ? [{ label: "SKU", value: p.sku }] : []),
+      ...(p.dispatchEstimate ? [{ label: "Dispatch", value: p.dispatchEstimate }] : []),
     ],
     highlights: [
       "Master artisan craftsmanship with verifiable provenance",
@@ -129,6 +134,14 @@ export class PrismaProductRepository {
 
     if (options.inStockOnly) {
       where.stock = { gt: 0 };
+    }
+
+    if (options.featured) {
+      where.isFeatured = true;
+    }
+
+    if (options.trending) {
+      where.isBestseller = true;
     }
 
     if (options.minPrice !== undefined || options.maxPrice !== undefined) {

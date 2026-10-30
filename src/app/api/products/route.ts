@@ -11,6 +11,8 @@ export async function GET(request: Request) {
     const minPriceStr = searchParams.get("minPrice");
     const maxPriceStr = searchParams.get("maxPrice");
     const inStockOnly = searchParams.get("inStock") === "true";
+    const featured = searchParams.get("featured") === "true" ? true : undefined;
+    const trending = searchParams.get("trending") === "true" ? true : undefined;
     const sortBy = (searchParams.get("sort") as any) || "newest";
     const pageStr = searchParams.get("page");
     const limitStr = searchParams.get("limit");
@@ -27,6 +29,8 @@ export async function GET(request: Request) {
       minPrice,
       maxPrice,
       inStockOnly,
+      featured,
+      trending,
       sortBy,
       page,
       limit,

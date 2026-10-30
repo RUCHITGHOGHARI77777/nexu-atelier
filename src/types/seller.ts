@@ -1,5 +1,5 @@
 export type SellerStatus = "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
-export type ProductApprovalStatus = "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED" | "ARCHIVED";
+export type ProductApprovalStatus = "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED" | "CHANGES_REQUESTED" | "ARCHIVED";
 export type FulfillmentStatus = "NEW" | "PROCESSING" | "PACKED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 export type PayoutStatus = "ESCROW_HOLD" | "ELIGIBLE_FOR_PAYOUT" | "PROCESSING" | "SETTLED" | "WITHHELD";
 
@@ -60,7 +60,13 @@ export interface SellerProductInput {
   isPublished?: boolean;
   action?: "DRAFT" | "SUBMIT";
   brand?: string;
+  sku?: string;
+  productType?: string;
+  subcategory?: string;
+  searchKeywords?: string;
   dispatchEstimate?: string;
+  packageDimensions?: string;
+  taxRatePercent?: number;
   material?: string;
   dimensions?: string;
   weight?: string;
@@ -85,6 +91,14 @@ export interface SellerProductDetailView {
   isPublished: boolean;
   approvalStatus: ProductApprovalStatus;
   moderationNotes: string | null;
+  brand: string | null;
+  sku: string | null;
+  productType: string | null;
+  subcategory: string | null;
+  searchKeywords: string | null;
+  dispatchEstimate: string | null;
+  packageDimensions: string | null;
+  taxRatePercent: number | null;
   material: string | null;
   dimensions: string | null;
   weight: string | null;

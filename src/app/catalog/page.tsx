@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { SEED_PRODUCTS } from "@/data/seedCatalog";
-import { FilterState, ProductCategory, SortOption } from "@/types/marketplace";
+import { FilterState, ProductCategory, SortOption, Product } from "@/types/marketplace";
 import { filterCatalog } from "@/lib/catalog-filters";
 import { CatalogFilterSidebar } from "@/components/catalog/CatalogFilterSidebar";
 import { CatalogSortBar } from "@/components/catalog/CatalogSortBar";
@@ -31,6 +31,10 @@ function CatalogContent() {
 
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
+  // Live Database Products State
+  const [dbProducts, setDbProducts] = useState<Product[] | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
+
   // Sync state if query params change externally
   useEffect(() => {
     const cat = (searchParams.get("category") as ProductCategory) || "All";
@@ -44,10 +48,63 @@ function CatalogContent() {
     }));
   }, [searchParams]);
 
-  // Compute filtered catalog using pure filter utility
-  const filteredProducts = useMemo(() => {
-    return filterCatalog(SEED_PRODUCTS, filters);
+  // Fetch real approved products from PostgreSQL
+  useEffect(() => {
+    let active = true;
+    async function fetchCatalog() {
+      setIsFetching(true);
+      try {
+        const queryParams = new URLSearchParams();
+        if (filters.category && filters.category !== "All") {
+          queryParams.set("category", filters.category);
+        }
+        if (filters.searchQuery && filters.searchQuery.trim()) {
+          queryParams.set("q", filters.searchQuery.trim());
+        }
+        if (filters.inStockOnly) {
+          queryParams.set("inStock", "true");
+        }
+        if (filters.minPrice !== undefined) {
+          queryParams.set("minPrice", filters.minPrice.toString());
+        }
+        if (filters.maxPrice !== undefined) {
+          queryParams.set("maxPrice", filters.maxPrice.toString());
+        }
+        if (filters.vendorId) {
+          queryParams.set("vendor", filters.vendorId);
+        }
+        if (filters.sortBy) {
+          queryParams.set("sort", filters.sortBy);
+        }
+        queryParams.set("limit", "100");
+
+        const res = await fetch(`/api/products?${queryParams.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (active && Array.isArray(data.products)) {
+            setDbProducts(data.products);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to query live catalog:", err);
+      } finally {
+        if (active) setIsFetching(false);
+      }
+    }
+
+    fetchCatalog();
+    return () => {
+      active = false;
+    };
   }, [filters]);
+
+  // Use live database products if loaded, fallback to pure filter utility
+  const filteredProducts = useMemo(() => {
+    if (dbProducts !== null) {
+      return dbProducts;
+    }
+    return filterCatalog(SEED_PRODUCTS, filters);
+  }, [dbProducts, filters]);
 
   const handleFilterChange = (partial: Partial<FilterState>) => {
     setFilters((prev) => {

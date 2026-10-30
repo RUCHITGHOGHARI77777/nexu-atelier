@@ -106,11 +106,8 @@ export default function AdminProductsPage() {
     setActionSuccess(null);
 
     try {
-      const targetStatus = moderationAction === "CHANGES_REQUESTED" ? "DRAFT" : moderationAction;
-      const formattedNotes =
-        moderationAction === "CHANGES_REQUESTED"
-          ? `[CHANGES_REQUESTED]: ${moderationNotes.trim()}`
-          : moderationNotes.trim() || undefined;
+      const targetStatus = moderationAction;
+      const formattedNotes = moderationNotes.trim() || undefined;
 
       const res = await fetch(`/api/admin/products/${selectedProduct.id}/moderation`, {
         method: "PATCH",
@@ -148,6 +145,8 @@ export default function AdminProductsPage() {
         );
       case "PENDING_REVIEW":
         return <Badge variant="warning">In Review</Badge>;
+      case "CHANGES_REQUESTED":
+        return <Badge variant="warning" className="border-amber-500/40 text-amber-300">Changes Requested</Badge>;
       case "DRAFT":
         return <Badge variant="neutral">Draft</Badge>;
       case "REJECTED":
@@ -239,7 +238,9 @@ export default function AdminProductsPage() {
               { id: "ALL", label: "All Pieces" },
               { id: "PENDING_REVIEW", label: "Awaiting Review" },
               { id: "APPROVED", label: "Approved" },
+              { id: "CHANGES_REQUESTED", label: "Changes Requested" },
               { id: "REJECTED", label: "Rejected" },
+              { id: "DRAFT", label: "Drafts" },
               { id: "ARCHIVED", label: "Archived" },
             ].map((tab) => (
               <button

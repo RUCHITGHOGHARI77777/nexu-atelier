@@ -338,6 +338,14 @@ export class SellerService {
             dimensions: input.dimensions,
             weight: input.weight,
             careInstructions: input.careInstructions,
+            brand: input.brand?.trim() || null,
+            sku: input.sku?.trim() || null,
+            productType: input.productType?.trim() || null,
+            subcategory: input.subcategory?.trim() || null,
+            searchKeywords: input.searchKeywords?.trim() || null,
+            dispatchEstimate: input.dispatchEstimate?.trim() || null,
+            packageDimensions: input.packageDimensions?.trim() || null,
+            taxRatePercent: input.taxRatePercent !== undefined ? input.taxRatePercent : 12.0,
             images: {
               create: (input.images || []).map((url, idx) => ({
                 url,
@@ -453,6 +461,14 @@ export class SellerService {
         dimensions: product.dimensions,
         weight: product.weight,
         careInstructions: product.careInstructions,
+        brand: product.brand,
+        sku: product.sku,
+        productType: product.productType,
+        subcategory: product.subcategory,
+        searchKeywords: product.searchKeywords,
+        dispatchEstimate: product.dispatchEstimate,
+        packageDimensions: product.packageDimensions,
+        taxRatePercent: product.taxRatePercent,
         images: product.images.map((img) => img.url),
         variants: product.variants.map((v) => ({
           id: v.id,
@@ -513,6 +529,14 @@ export class SellerService {
         if (input.dimensions !== undefined) updateData.dimensions = input.dimensions;
         if (input.weight !== undefined) updateData.weight = input.weight;
         if (input.careInstructions !== undefined) updateData.careInstructions = input.careInstructions;
+        if (input.brand !== undefined) updateData.brand = input.brand ? input.brand.trim() : null;
+        if (input.sku !== undefined) updateData.sku = input.sku ? input.sku.trim() : null;
+        if (input.productType !== undefined) updateData.productType = input.productType ? input.productType.trim() : null;
+        if (input.subcategory !== undefined) updateData.subcategory = input.subcategory ? input.subcategory.trim() : null;
+        if (input.searchKeywords !== undefined) updateData.searchKeywords = input.searchKeywords ? input.searchKeywords.trim() : null;
+        if (input.dispatchEstimate !== undefined) updateData.dispatchEstimate = input.dispatchEstimate ? input.dispatchEstimate.trim() : null;
+        if (input.packageDimensions !== undefined) updateData.packageDimensions = input.packageDimensions ? input.packageDimensions.trim() : null;
+        if (input.taxRatePercent !== undefined) updateData.taxRatePercent = input.taxRatePercent;
 
         // Workflow Status Transitions:
         let auditAction = "PRODUCT_UPDATED";

@@ -25,6 +25,7 @@ enum ProductApprovalStatus {
   PENDING_REVIEW
   APPROVED
   REJECTED
+  CHANGES_REQUESTED
   ARCHIVED
 }
 
@@ -276,6 +277,14 @@ model Product {
   dimensions          String?
   weight              String?
   careInstructions    String?
+  brand               String?
+  sku                 String?
+  productType         String?
+  subcategory         String?
+  searchKeywords      String?
+  dispatchEstimate    String?
+  packageDimensions   String?
+  taxRatePercent      Float?                @default(12.0)
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
   images              ProductImage[]

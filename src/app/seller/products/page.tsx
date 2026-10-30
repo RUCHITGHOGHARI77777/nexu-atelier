@@ -35,7 +35,7 @@ interface SellerProduct {
   compareAtPrice?: number | null;
   stock: number;
   images: string[];
-  approvalStatus: "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";
+  approvalStatus: "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED" | "CHANGES_REQUESTED";
   isPublished: boolean;
   moderationNotes?: string | null;
   createdAt?: string;
@@ -48,7 +48,7 @@ export default function SellerProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED">("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "CHANGES_REQUESTED" | "REJECTED">("ALL");
   const [stockFilter, setStockFilter] = useState<"ALL" | "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK">("ALL");
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -114,6 +114,7 @@ export default function SellerProductsPage() {
   const pendingCount = products.filter((p) => p.approvalStatus === "PENDING_REVIEW").length;
   const approvedCount = products.filter((p) => p.approvalStatus === "APPROVED").length;
   const liveCount = products.filter((p) => p.approvalStatus === "APPROVED" && p.isPublished).length;
+  const changesCount = products.filter((p) => p.approvalStatus === "CHANGES_REQUESTED").length;
   const rejectedCount = products.filter((p) => p.approvalStatus === "REJECTED").length;
 
   // Filtering
@@ -182,7 +183,7 @@ export default function SellerProductsPage() {
       );
     }
 
-    if (isChangesRequested) {
+    if (p.approvalStatus === "CHANGES_REQUESTED" || isChangesRequested) {
       return (
         <Badge variant="warning" className="gap-1 text-[10px] font-mono bg-amber-500/15 text-amber-300 border border-amber-500/40">
           <AlertTriangle className="w-3 h-3 text-amber-400" />
@@ -334,6 +335,17 @@ export default function SellerProductsPage() {
           Approved &amp; Live ({approvedCount})
         </button>
         <button
+          onClick={() => setStatusFilter("CHANGES_REQUESTED")}
+          className={`px-3 py-1.5 rounded-md font-mono text-xs transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+            statusFilter === "CHANGES_REQUESTED"
+              ? "bg-amber-500/20 text-amber-300 font-medium border border-amber-500/30"
+              : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
+          }`}
+        >
+          <AlertTriangle className="w-3 h-3 text-amber-400" />
+          Changes Requested ({changesCount})
+        </button>
+        <button
           onClick={() => setStatusFilter("REJECTED")}
           className={`px-3 py-1.5 rounded-md font-mono text-xs transition-colors flex items-center gap-1.5 whitespace-nowrap ${
             statusFilter === "REJECTED"
@@ -342,7 +354,7 @@ export default function SellerProductsPage() {
           }`}
         >
           <Ban className="w-3 h-3 text-rose-400" />
-          Action Needed ({rejectedCount})
+          Rejected ({rejectedCount})
         </button>
       </div>
 
@@ -508,7 +520,7 @@ export default function SellerProductsPage() {
                         </div>
 
                         {/* Admin Feedback Box if rejection / changes requested */}
-                        {p.moderationNotes && (p.approvalStatus === "REJECTED" || p.approvalStatus === "DRAFT") && (
+                        {p.moderationNotes && (p.approvalStatus === "REJECTED" || p.approvalStatus === "CHANGES_REQUESTED" || p.approvalStatus === "DRAFT") && (
                           <div className="mt-2.5 p-2 bg-amber-500/10 border border-amber-500/30 rounded text-[11px] text-amber-300 flex items-start gap-2">
                             <MessageSquare className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                             <div>

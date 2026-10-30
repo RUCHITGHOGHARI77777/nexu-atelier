@@ -46,12 +46,17 @@ export default function NewProductPage() {
   const [stock, setStock] = useState<number>(20);
   const [lowStockThreshold, setLowStockThreshold] = useState<number>(5);
 
-  // Specifications
+  // Specifications & Shipping
   const [material, setMaterial] = useState("Handwoven Organic Mulmul Cotton");
   const [dimensions, setDimensions] = useState("180cm x 70cm");
   const [weight, setWeight] = useState("240g");
   const [careInstructions, setCareInstructions] = useState("Dry clean only or delicate cold hand wash");
   const [dispatchEstimate, setDispatchEstimate] = useState("Ships in 2-3 business days");
+  const [packageDimensions, setPackageDimensions] = useState("30cm x 20cm x 5cm");
+  const [productType, setProductType] = useState("Physical Craft");
+  const [subcategory, setSubcategory] = useState("Handloom Textiles");
+  const [searchKeywords, setSearchKeywords] = useState("handcrafted, artisan, organic, heritage");
+  const [taxRatePercent, setTaxRatePercent] = useState<number>(12.0);
 
   // Imagery (default to empty or demo image)
   const [images, setImages] = useState<string[]>([
@@ -204,7 +209,13 @@ export default function NewProductPage() {
       lowStockThreshold: Number(lowStockThreshold),
       action,
       brand: brand.trim() || undefined,
+      sku: sku.trim() || undefined,
+      productType: productType.trim() || undefined,
+      subcategory: subcategory.trim() || undefined,
+      searchKeywords: searchKeywords.trim() || undefined,
       dispatchEstimate: dispatchEstimate.trim() || undefined,
+      packageDimensions: packageDimensions.trim() || undefined,
+      taxRatePercent: Number(taxRatePercent) || 12.0,
       material: material.trim(),
       dimensions: dimensions.trim(),
       weight: weight.trim(),
@@ -355,6 +366,39 @@ export default function NewProductPage() {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Product Type
+              </label>
+              <Input
+                value={productType}
+                onChange={(e) => setProductType(e.target.value)}
+                placeholder="e.g. Physical Craft, Made to Order"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Subcategory / Discipline
+              </label>
+              <Input
+                value={subcategory}
+                onChange={(e) => setSubcategory(e.target.value)}
+                placeholder="e.g. Handloom Textiles, Ceramic Ware"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Search Keywords &amp; Tags
+              </label>
+              <Input
+                value={searchKeywords}
+                onChange={(e) => setSearchKeywords(e.target.value)}
+                placeholder="e.g. organic, indigo, linen, sustainable"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-xs font-mono text-zinc-400 mb-1">
               Curatorial Narrative & Details <span className="text-rose-400">*</span>
@@ -382,7 +426,7 @@ export default function NewProductPage() {
             3. Commercial Valuation & Inventory Balance
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
                 Selling Price (INR) <span className="text-rose-400">*</span>
@@ -399,7 +443,7 @@ export default function NewProductPage() {
 
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Maximum Retail Price / MRP (INR)
+                MRP Benchmark (INR)
               </label>
               <Input
                 type="number"
@@ -413,7 +457,7 @@ export default function NewProductPage() {
 
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Total Units Ready to Ship <span className="text-rose-400">*</span>
+                Ready Units <span className="text-rose-400">*</span>
               </label>
               <Input
                 type="number"
@@ -427,7 +471,7 @@ export default function NewProductPage() {
 
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Low Stock Threshold
+                Low Stock Alert
               </label>
               <Input
                 type="number"
@@ -435,6 +479,19 @@ export default function NewProductPage() {
                 step="1"
                 value={lowStockThreshold}
                 onChange={(e) => setLowStockThreshold(Number(e.target.value))}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                GST / Tax Rate (%)
+              </label>
+              <Input
+                type="number"
+                min="0"
+                step="0.5"
+                value={taxRatePercent}
+                onChange={(e) => setTaxRatePercent(Number(e.target.value))}
               />
             </div>
           </div>
@@ -475,7 +532,7 @@ export default function NewProductPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Fiber Composition & Material
+                Fiber Composition &amp; Material
               </label>
               <Input
                 value={material}
@@ -486,7 +543,7 @@ export default function NewProductPage() {
 
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Dimensions / Form Factor
+                Product Dimensions / Form Factor
               </label>
               <Input
                 value={dimensions}
@@ -496,10 +553,10 @@ export default function NewProductPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Weight (g / kg)
+                Item Weight (g / kg)
               </label>
               <Input
                 value={weight}
@@ -510,7 +567,18 @@ export default function NewProductPage() {
 
             <div>
               <label className="block text-xs font-mono text-zinc-400 mb-1">
-                Dispatch / Delivery Estimate
+                Package Box Dimensions
+              </label>
+              <Input
+                value={packageDimensions}
+                onChange={(e) => setPackageDimensions(e.target.value)}
+                placeholder="e.g. 30cm x 20cm x 5cm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1">
+                Dispatch / Lead Time
               </label>
               <Input
                 value={dispatchEstimate}

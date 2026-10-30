@@ -6,14 +6,17 @@ import { ProductCard } from "@/components/storefront/ProductCard";
 export interface RelatedProductsProps {
   currentProductId: string;
   category: Product["category"];
+  relatedProducts?: Product[];
 }
 
 export const RelatedProducts: React.FC<RelatedProductsProps> = ({
   currentProductId,
   category,
+  relatedProducts,
 }) => {
-  const related = SEED_PRODUCTS.filter(
-    (p) => p.id !== currentProductId && p.category === category
+  const source = relatedProducts && relatedProducts.length > 0 ? relatedProducts : SEED_PRODUCTS;
+  const related = source.filter(
+    (p) => p.id !== currentProductId && (category ? p.category === category : true)
   ).slice(0, 4);
 
   if (related.length === 0) return null;

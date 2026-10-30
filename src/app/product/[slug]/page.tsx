@@ -4,6 +4,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight, ArrowLeft } from "lucide-react";
 import { SEED_PRODUCTS } from "@/data/seedCatalog";
+import { productRepository } from "@/lib/server/product-repository";
 import { ProductShowcase } from "@/components/product/ProductShowcase";
 import { ProductSpecs } from "@/components/product/ProductSpecs";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
@@ -11,22 +12,19 @@ import { ProductReviews } from "@/components/product/ProductReviews";
 import { ProductQA } from "@/components/product/ProductQA";
 import { RecentlyViewed } from "@/components/product/RecentlyViewed";
 
+export const dynamic = "force-dynamic";
+
 interface ProductPageProps {
   params: {
     slug: string;
   };
 }
 
-export async function generateStaticParams() {
-  return SEED_PRODUCTS.map((p) => ({
-    slug: p.slug,
-  }));
-}
-
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
-  const product = SEED_PRODUCTS.find((p) => p.slug === params.slug);
+  const dbProduct = await productRepository.getProductBySlug(params.slug);
+  const product = dbProduct || SEED_PRODUCTS.find((p) => p.slug === params.slug);
   if (!product) {
     return {
       title: "Product Not Found — Nexu Atelier",
@@ -47,11 +45,24 @@ export async function generateMetadata({
   };
 }
 
-export default function ProductDetailPage({ params }: ProductPageProps) {
-  const product = SEED_PRODUCTS.find((p) => p.slug === params.slug);
+export default async function ProductDetailPage({ params }: ProductPageProps) {
+  const dbProduct = await productRepository.getProductBySlug(params.slug);
+  const product = dbProduct || SEED_PRODUCTS.find((p) => p.slug === params.slug);
 
   if (!product) {
     notFound();
+  }
+
+  // Fetch real related pieces from same category if available
+  let relatedProducts: any[] = [];
+  try {
+    const relatedResult = await productRepository.getProducts({
+      category: product.category,
+      limit: 6,
+    });
+    relatedProducts = relatedResult.products.filter((p) => p.id !== product.id);
+  } catch {
+    // fallback gracefully
   }
 
   const jsonLd = {
@@ -131,6 +142,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
       <RelatedProducts
         currentProductId={product.id}
         category={product.category}
+        relatedProducts={relatedProducts}
       />
 
       {/* Patron Browsing Trail */}

@@ -368,8 +368,11 @@ export class AdminService {
       return { success: false, error: "Product not found." };
     }
 
-    if (status === ProductApprovalStatus.REJECTED && (!notes || notes.trim().length < 5)) {
-      return { success: false, error: "Editorial reason is required when rejecting a creation." };
+    if (
+      (status === ProductApprovalStatus.REJECTED || status === ProductApprovalStatus.CHANGES_REQUESTED) &&
+      (!notes || notes.trim().length < 5)
+    ) {
+      return { success: false, error: "Editorial reason is required (minimum 5 characters) when rejecting or requesting changes." };
     }
 
     try {
@@ -573,6 +576,12 @@ export class AdminService {
               where: { id: item.productId },
               data: { stock: { increment: item.quantity } },
             });
+            if (item.selectedSku) {
+              await tx.productVariant.updateMany({
+                where: { sku: item.selectedSku },
+                data: { stock: { increment: item.quantity } },
+              });
+            }
           }
         }
 
