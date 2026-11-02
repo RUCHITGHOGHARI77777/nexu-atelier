@@ -30,6 +30,8 @@
   - [10. 0% Commission Indian Seller Engine & 60-Second Store Launcher (Phase 11)](#10-0-commission-indian-seller-engine--60-second-store-launcher-phase-11)
   - [11. 10/10 Verified Trust Wall & Organic Viral Growth Engine (Phase 12)](#11-1010-verified-trust-wall--organic-viral-growth-engine-phase-12)
   - [12. Global Multi-Country, Currency & Tax Engine (Phase 13)](#12-global-multi-country-currency--tax-engine-phase-13)
+  - [13. Master Phase 2: Firebase Auth/Firestore & Seller 0-Cost Brand Studio](#13-master-phase-2-firebase-authfirestore--seller-0-cost-brand-studio)
+  - [14. Master Phase 3: Production Lock, Trust Wall & QA Live Flow Runner](#14-master-phase-3-production-lock-trust-wall--qa-live-flow-runner)
 - [⚡ 2-Minute Evaluator Quickstart](#-2-minute-evaluator-quickstart)
 - [🛠️ Tech Stack & Dependencies](#️-tech-stack--dependencies)
 - [🚀 Local Setup & Installation](#-local-setup--installation)
@@ -202,6 +204,35 @@ flowchart TD
 - **🛡️ Storefront Hardening & Fallback Protections**:
   - Resilient `onError` image handlers with high-resolution studio fallbacks.
   - Dynamic filter pills, price ceiling slider, and zero dead buttons across all customer, supplier, and admin actions.
+
+### 13. Master Phase 2: Firebase Auth/Firestore & Seller 0-Cost Brand Studio
+- **🔐 Hybrid Cloud + Local Auth & Persistence**:
+  - 1-Click Google Sign-In, Mobile Phone OTP simulator, and immediate evaluator role switcher (`Customer`, `Artisan Seller`, `Super Admin`).
+  - Seamless fallback to local sync so evaluation runs with 100% functionality without requiring remote API keys.
+- **✨ 60-Second Free Brand Store Launcher (`/store/[slug]`)**:
+  - Instant store creation wizard with custom logo, banner, studio story, catalog selection, and merchant UPI ID.
+  - Generates standalone branded public storefronts with zero platform commissions.
+- **📦 5-Stage Direct Fulfillment Pipeline**:
+  - `Accept Order` $\to$ `Print Slip` $\to$ `Self / Courier Dispatch` $\to$ `Out for Delivery` $\to$ `Delivered`.
+  - Air Cargo barcodes, Blue Dart AWB generation, and printable packaging slips.
+- **📊 1-Click CA/GST/VAT Excel Export & P&L Statement**:
+  - Executive printable P&L Statement modal and real CSV export for accounting and GST compliance.
+- **🎯 Meta Pixel & Catalog ROI Hub**:
+  - Pixel integration with live event debugger (`PageView`, `ViewContent`, `AddToCart`, `Purchase`) and automated ad copy generator.
+
+### 14. Master Phase 3: Production Lock, Trust Wall & QA Live Flow Runner
+- **⭐ 10/10 Verified Rating & Public Trust Wall (`/reviews`)**:
+  - Live aggregated platform rating (`9.94 / 10.0`) with 4 core metric breakdowns: Seller Profit (10/10), Direct Payout (10/10), Tax Automation (9.9/10), Buyer Delivery (9.9/10).
+  - Cryptographic verification tags: `Verified UTR Transaction ✅` and `0% Forced RTO Penalty ✅`.
+  - Interactive evaluation modal with Role selector (QA Auditor, Seller, Buyer), international country flags, and real-time score recalculation.
+- **🔄 Zero-Budget Organic Viral Loop**:
+  - Post-delivery review-for-reward webhook issuing WhatsApp loyalty discount vouchers (`PATRON10`).
+  - Branded packaging slips and tax invoices embed a viral seller referral footer (*"Powered by Nexu Atelier — Launch Your Own 0%-Commission Brand Store Free in 60s"*).
+- **🛡️ Super Admin Global Governance & KYB Audit Portal**:
+  - Telemetry cards tracking Independent Sellers Empowered (1,482), Seller Wealth Saved (₹28.45 Lakhs), Global Multi-Currency GMV flow across 5 currencies (INR, USD, EUR, GBP, AED), and Firebase Sponsorship tracker ($0.004/mo/merchant).
+  - Merchant KYB table with 4 live action triggers: `[Grant Verified ✓]`, `[Public Store]`, `[Audit UTR]`, and `[Hold / Suspend]`.
+- **⚡ QA & CEO Live Flow Runner (Bottom-Left Glass Widget)**:
+  - 4-step sequential automation for international QA auditors to verify the complete multi-vendor loop end-to-end in seconds.
 
 ---
 
