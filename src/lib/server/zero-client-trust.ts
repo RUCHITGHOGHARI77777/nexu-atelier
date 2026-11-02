@@ -70,3 +70,4 @@ export function verifyZeroClientTrust(params: ZeroTrustValidationParams): {
     return { authorized: false, error: err.message };
   }
 }
+

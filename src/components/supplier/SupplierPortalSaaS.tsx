@@ -1037,6 +1037,145 @@ export function SupplierPortalSaaS() {
               </span>
             </div>
           </div>
+
+          {/* 4. Separation of Free Core Platform vs. Third-Party Pass-Through Costs */}
+          <div className="rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-500/5 via-white to-slate-50 p-6 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-emerald-100">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-mono font-bold uppercase tracking-wider">
+                    TRANSPARENT COST SEPARATION
+                  </span>
+                  <span className="text-xs font-mono font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-300">
+                    NEXU Business Paradigm
+                  </span>
+                </div>
+                <h3 className="text-base font-black text-slate-950">
+                  Separation of Free Core Platform vs. Third-Party Pass-Through Costs
+                </h3>
+                <p className="text-xs text-slate-600">
+                  Strict alignment with our zero-commission artisan mission: We never charge for our software or cut your profits.
+                </p>
+              </div>
+              <span className="text-xs font-mono font-bold text-emerald-700 bg-white px-3 py-1.5 rounded-xl border border-emerald-200 shadow-2xs self-start md:self-auto">
+                0.0% NEXU Platform Commission Guaranteed
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column: 100% Free Core Platform */}
+              <div className="p-5 rounded-2xl bg-white border border-emerald-200/90 shadow-2xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>NEXU Platform Core (100% Free Forever)</span>
+                  </span>
+                  <span className="text-xs font-mono font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                    ₹0 / $0
+                  </span>
+                </div>
+
+                <div className="space-y-2.5 text-xs text-slate-700">
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-start justify-between gap-3">
+                    <div>
+                      <strong className="text-slate-950 block">SaaS Store Builder & Sovereign Front</strong>
+                      <span className="text-[11px] text-slate-500">Liquid white-glass flagship UI, custom logo, theme styling, and free /store/[slug]</span>
+                    </div>
+                    <span className="font-mono font-bold text-emerald-700 shrink-0">₹0 Free</span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-start justify-between gap-3">
+                    <div>
+                      <strong className="text-slate-950 block">Multi-Tenant Ingress & Subdomains</strong>
+                      <span className="text-[11px] text-slate-500">Subdomains (e.g. brand.nexu.global) with Edge Router & SSL certificates</span>
+                    </div>
+                    <span className="font-mono font-bold text-emerald-700 shrink-0">₹0 Free</span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-start justify-between gap-3">
+                    <div>
+                      <strong className="text-slate-950 block">Full Kanban Order & Inventory Engine</strong>
+                      <span className="text-[11px] text-slate-500">Real-time variant stock decrement, packaging slips, and return tracking</span>
+                    </div>
+                    <span className="font-mono font-bold text-emerald-700 shrink-0">₹0 Free</span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-start justify-between gap-3">
+                    <div>
+                      <strong className="text-slate-950 block">Zoho-Grade GST / CA Audit Ledgers</strong>
+                      <span className="text-[11px] text-slate-500">1-Click monthly .CSV tax export, CGST/SGST/IGST split, and printable tax receipts</span>
+                    </div>
+                    <span className="font-mono font-bold text-emerald-700 shrink-0">₹0 Free</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Optional Third-Party Pass-Through Direct Costs */}
+              <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-slate-950 uppercase tracking-wider flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                    <span>Optional Third-Party Direct Costs (Controlled by Seller)</span>
+                  </span>
+                  <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg">
+                    Direct Pass-Through
+                  </span>
+                </div>
+
+                <div className="space-y-2.5 text-xs text-slate-700">
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 space-y-0.5">
+                    <div className="flex items-center justify-between">
+                      <strong className="text-slate-950">1. Custom Top-Level Domain (.com / .in)</strong>
+                      <span className="font-mono font-bold text-slate-800">Actual Cost (~₹800/yr)</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Free /store/brand included. If you prefer your own domain, buy via Cloudflare/Namecheap at registrar cost.
+                    </p>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 space-y-0.5">
+                    <div className="flex items-center justify-between">
+                      <strong className="text-slate-950">2. Courier & Fulfillment Logistics</strong>
+                      <span className="font-mono font-bold text-emerald-700">₹0 Self-Delivery OR Courier Tariff</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      ₹0 when using your own local delivery staff; wholesale tariff (₹45-₹75/pkg) if using Shiprocket/BlueDart.
+                    </p>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 space-y-0.5">
+                    <div className="flex items-center justify-between">
+                      <strong className="text-slate-950">3. Payment Gateway Processing</strong>
+                      <span className="font-mono font-bold text-emerald-700">0.0% UPI / 2.0% Bank MDR for Cards</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      0% MDR on Direct UPI VPA transfers. Standard bank gateway MDR applies only if customer pays via international credit card.
+                    </p>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 space-y-0.5">
+                    <div className="flex items-center justify-between">
+                      <strong className="text-slate-950">4. Meta / Instagram Ads Retargeting</strong>
+                      <span className="font-mono font-bold text-indigo-700">Direct to Meta via Pixel</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Zero platform ad markup. Connect your metaPixelId to run targeted social campaigns, billed directly by Meta.
+                    </p>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 space-y-0.5">
+                    <div className="flex items-center justify-between">
+                      <strong className="text-slate-950">5. Cloud Database Overages</strong>
+                      <span className="font-mono font-bold text-purple-700">80% Threshold Auto-Scale</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Monitored in Super Admin. System triggers 1-Click zero-downtime cluster scale (100 GB to 1 TB) when capacity reaches 80%.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
