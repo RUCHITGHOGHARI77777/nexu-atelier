@@ -211,7 +211,7 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-zinc-200 transition-all shadow-xs text-zinc-900">
+    <header className="sticky top-0 z-40 w-full bg-white/85 backdrop-blur-xl border-b border-zinc-200/80 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] text-zinc-900">
       {/* Top Utility Banner: Market & Direct Track links */}
       <div className="hidden sm:block border-b border-zinc-100 bg-zinc-50/70 text-[11px] text-zinc-500 py-1.5 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between">

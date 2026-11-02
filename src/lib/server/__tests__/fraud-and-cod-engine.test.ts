@@ -71,6 +71,17 @@ describe("NEXU ATELIER — Fraud Detection, COD & Pre-Payment Engine", () => {
       });
       testSellerId = newSeller.id;
     }
+
+    // Ensure COD is enabled in platform settings for isolated test execution
+    await prisma.platformSetting.upsert({
+      where: { key: "fraud_cod_enabled" },
+      update: { value: "true" },
+      create: {
+        key: "fraud_cod_enabled",
+        value: "true",
+        description: "COD Enabled",
+      },
+    });
   });
 
   afterAll(async () => {

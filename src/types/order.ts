@@ -62,6 +62,17 @@ export interface OrderShipmentInfo {
   }>;
 }
 
+export interface OrderPaymentInfo {
+  method: string;
+  provider: string;
+  transactionRef: string;
+  bankRef?: string;
+  vpa?: string;
+  status: string;
+  amountPaise: number;
+  authorizedAt: string;
+}
+
 export interface Order {
   id: string; // e.g. ORD-2026-98124
   customerId: string;
@@ -79,6 +90,7 @@ export interface Order {
   estimatedDeliveryDate: string;
   timeline: OrderTimelineEvent[];
   shipments?: OrderShipmentInfo[];
+  paymentInfo?: OrderPaymentInfo;
   idempotencyKey?: string;
   notes?: string;
 }
@@ -97,4 +109,14 @@ export interface CheckoutRequestPayload {
   deliveryMethodId: "standard" | "express";
   idempotencyKey?: string;
   couponCode?: string;
+  paymentMethod?: string;
+  paymentDetails?: {
+    method?: string;
+    vpa?: string;
+    bankRef?: string;
+    bankName?: string;
+    cardLast4?: string;
+    walletName?: string;
+    notes?: string;
+  };
 }
