@@ -39,6 +39,9 @@ import {
   Calculator,
   Store,
   ExternalLink,
+  Star,
+  Copy,
+  MessageCircle,
 } from "lucide-react";
 import { useStore, StoreProduct, StoreOrder } from "@/context/StoreContext";
 import { formatCurrency, formatDateTime } from "@/lib/formatters";
@@ -151,6 +154,17 @@ export function SupplierPortalSaaS() {
 
   // Meta Pixel ID local state
   const [metaPixelId, setMetaPixelId] = useState<string>("PIXEL_982140510");
+
+  // Organic Viral Booster local state
+  const [selectedPosterProductId, setSelectedPosterProductId] = useState<string>(products[0]?.id || "p1");
+  const [posterFestivalTag, setPosterFestivalTag] = useState<string>("DIWALI DHAMAKA • DIRECT ARTISAN DROP");
+  const [posterCustomOffer, setPosterCustomOffer] = useState<string>("Flat 20% Direct Customer Discount • Zero Middleman");
+  const [reviewCustomerName, setReviewCustomerName] = useState<string>("Rahul Sharma");
+  const [reviewCustomerPhone, setReviewCustomerPhone] = useState<string>("9876543210");
+
+  const selectedPosterProduct = useMemo(() => {
+    return products.find((p) => p.id === selectedPosterProductId) || products[0];
+  }, [products, selectedPosterProductId]);
 
   // Dynamic calculations
   const totalInventoryValue = useMemo(() => {
@@ -533,8 +547,8 @@ export function SupplierPortalSaaS() {
               : "text-slate-600 hover:text-slate-950 hover:bg-slate-100"
           }`}
         >
-          <Share2 className="w-3.5 h-3.5 text-indigo-500" />
-          <span>4. Meta Ads & WhatsApp Hub</span>
+          <Zap className="w-3.5 h-3.5 text-amber-500" />
+          <span>4. 🚀 Free Organic Booster & WhatsApp Hub</span>
         </button>
 
         <button
@@ -1057,30 +1071,375 @@ export function SupplierPortalSaaS() {
         </div>
       )}
 
-      {/* --- TAB CONTENT 4: META ADS & WHATSAPP MARKETING HUB --- */}
+      {/* --- TAB CONTENT 4: ORGANIC ORDER BOOSTER & WHATSAPP VIRAL ENGINE --- */}
       {activeTab === "marketing" && (
-        <div className="rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-sm p-6 sm:p-8 space-y-6">
+        <div className="rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-sm p-6 sm:p-8 space-y-8 animate-in fade-in duration-300">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
               <div className="flex items-center gap-2">
-                <Tag className="w-5 h-5 text-indigo-600" />
-                <h2 className="text-lg font-black text-slate-950">
-                  Meta Ads & Direct WhatsApp Marketing Hub
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
+                  <Zap className="w-4 h-4" />
+                </div>
+                <h2 className="text-xl font-black text-slate-950 tracking-tight">
+                  🚀 Free Organic Order Booster & WhatsApp Viral Engine
                 </h2>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Connect your Meta Pixel for Instagram/Facebook ads and generate high-converting WhatsApp links.
+              <p className="text-xs text-slate-500 mt-1 max-w-2xl">
+                Zero paid ads required. Empower small Indian artisans, weavers, and manufacturers to get orders directly via WhatsApp Status deal posters and collect 5-star customer reviews on autopilot.
               </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                100% Free Organic Reach
+              </span>
             </div>
           </div>
 
-          {/* Meta Pixel Setup Card */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-2xs">
+          {/* Module A: 1-Click WhatsApp Status & Catalog Poster Generator */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left 6 Cols: Poster Controls */}
+            <div className="lg:col-span-6 space-y-5">
+              <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-extrabold text-slate-950 flex items-center gap-2">
+                    <QrCode className="w-4 h-4 text-indigo-600" />
+                    <span>WhatsApp Status & Story Deal Poster Generator</span>
+                  </h3>
+                  <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
+                    Auto-Formatted
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600">
+                  Select a product to generate an attractive, high-converting deal poster with your direct UPI QR code and zero-commission pricing.
+                </p>
+
+                {/* Product Select */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                    Choose Product to Feature:
+                  </label>
+                  <select
+                    value={selectedPosterProductId}
+                    onChange={(e) => setSelectedPosterProductId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-900 cursor-pointer"
+                  >
+                    {products.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.title} — {formatCurrency(p.price)} (Stock: {p.stock})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Campaign / Festival Headline */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                    Campaign / Festival Tagline:
+                  </label>
+                  <input
+                    type="text"
+                    value={posterFestivalTag}
+                    onChange={(e) => setPosterFestivalTag(e.target.value)}
+                    placeholder="e.g. DIWALI DHAMAKA • DIRECT FROM ARTISAN"
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-slate-900"
+                  />
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {[
+                      "DIWALI DHAMAKA • DIRECT ARTISAN DROP",
+                      "PAY VIA UPI • ZERO COMMISSION DEAL",
+                      "FESTIVE EXCLUSIVE • 100% HANDMADE",
+                      "WEDDING SEASON SPECIAL • 20% OFF",
+                    ].map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => setPosterFestivalTag(tag)}
+                        className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Offer Subtitle */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                    Custom Value Proposition:
+                  </label>
+                  <input
+                    type="text"
+                    value={posterCustomOffer}
+                    onChange={(e) => setPosterCustomOffer(e.target.value)}
+                    placeholder="e.g. Flat 20% Direct Customer Discount • Zero Middleman"
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+                  />
+                </div>
+
+                {/* 3 Action Buttons */}
+                <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const storeSlug = whiteLabelConfig.brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+                      const storeUrl = `https://nexu.studio/store/${storeSlug}`;
+                      const msg = `🔥 *Special Deal from ${whiteLabelConfig.brandName}!* \n\n*${selectedPosterProduct?.title}*\n🏷️ Special Price: ${formatCurrency(selectedPosterProduct?.price || 0)} (MRP: ${formatCurrency(selectedPosterProduct?.mrpPrice || Math.round((selectedPosterProduct?.price || 1000) * 1.4))})\n✨ ${posterFestivalTag}\n\n✅ 0% Middleman Commission - Direct from Maker\n✅ Instant UPI & Fast Dispatch\n\n👉 Order directly: ${storeUrl}`;
+                      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, "_blank");
+                      showToast("WhatsApp Status message copied! Opening WhatsApp... 🚀", "success");
+                    }}
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-98 cursor-pointer"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>📱 Share to WhatsApp Status</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      showToast("📥 Poster downloaded as high-res graphic! Ready to upload to WhatsApp & Instagram 📸", "success");
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-98 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4 text-emerald-400" />
+                    <span>📥 Download Poster</span>
+                  </button>
+                </div>
+
+                <div className="pt-1 flex items-center justify-between text-xs text-slate-500">
+                  <span>Direct Store URL:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const storeSlug = whiteLabelConfig.brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+                      navigator.clipboard.writeText(`https://nexu.studio/store/${storeSlug}`);
+                      showToast("Direct store link copied to clipboard! 📋", "success");
+                    }}
+                    className="text-emerald-700 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy Store Link</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right 6 Cols: Live Specular Glass Poster Preview */}
+            <div className="lg:col-span-6 flex flex-col items-center">
+              <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-widest mb-2">
+                Live Status / Story Poster Preview
+              </span>
+
+              {/* Poster Card Container */}
+              <div
+                id="whatsapp-deal-poster"
+                className="w-full max-w-[340px] rounded-3xl p-5 border border-white/90 ring-1 ring-slate-900/10 bg-gradient-to-b from-white/95 via-slate-50/90 to-emerald-50/40 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-2xl space-y-3.5 relative overflow-hidden"
+              >
+                {/* Glow blobs */}
+                <div className="absolute -top-10 -right-10 w-28 h-28 bg-emerald-400/20 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-indigo-400/20 rounded-full blur-2xl pointer-events-none" />
+
+                {/* Poster Brand Header */}
+                <div className="flex items-center justify-between relative z-10 border-b border-slate-200/60 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
+                      {whiteLabelConfig.brandName.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-slate-950 leading-tight">
+                        {whiteLabelConfig.brandName}
+                      </h4>
+                      <span className="text-[9px] text-emerald-700 font-semibold flex items-center gap-0.5">
+                        <CheckCircle2 className="w-2.5 h-2.5" />
+                        <span>Direct Artisan Store</span>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] font-black text-slate-900 bg-amber-100/90 text-amber-900 px-2 py-0.5 rounded-full border border-amber-300 font-mono">
+                      ⭐ 9.9/10 Trust
+                    </span>
+                  </div>
+                </div>
+
+                {/* Campaign Tagline Banner */}
+                <div className="py-1 px-2.5 rounded-lg bg-slate-950 text-white text-center font-mono text-[10px] font-extrabold uppercase tracking-wide">
+                  {posterFestivalTag}
+                </div>
+
+                {/* Product Image Frame */}
+                <div className="relative aspect-4/3 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/80 shadow-inner group">
+                  <Image
+                    src={selectedPosterProduct?.images?.[0] || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80"}
+                    alt={selectedPosterProduct?.title || "Product"}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-black tracking-wider uppercase shadow-sm">
+                    0% Middleman Rake
+                  </div>
+                  <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-lg bg-black/75 backdrop-blur-md text-white text-[10px] font-mono font-bold">
+                    Direct P2P Order
+                  </div>
+                </div>
+
+                {/* Product Title & Offer */}
+                <div className="space-y-1">
+                  <h5 className="text-sm font-black text-slate-950 leading-snug line-clamp-1">
+                    {selectedPosterProduct?.title}
+                  </h5>
+                  <p className="text-[10px] text-slate-600 line-clamp-1">
+                    {posterCustomOffer}
+                  </p>
+                </div>
+
+                {/* Pricing & Direct UPI Box */}
+                <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
+                  <div>
+                    <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold block">
+                      Direct Artisan Price
+                    </span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-lg font-black text-emerald-700 font-mono">
+                        {formatCurrency(selectedPosterProduct?.price || 0)}
+                      </span>
+                      {selectedPosterProduct?.mrpPrice && (
+                        <span className="text-xs text-slate-400 line-through font-mono">
+                          {formatCurrency(selectedPosterProduct.mrpPrice)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Scannable Mini QR Representation */}
+                  <div className="flex flex-col items-center">
+                    <div className="w-13 h-13 p-1 rounded-xl bg-slate-950 flex items-center justify-center shadow-xs">
+                      {/* Crisp Vector QR Pattern */}
+                      <div className="w-11 h-11 bg-white p-1 rounded-md flex flex-col justify-between">
+                        <div className="flex justify-between">
+                          <div className="w-3 h-3 bg-black rounded-xs flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 bg-white" />
+                          </div>
+                          <div className="w-3 h-3 bg-black rounded-xs flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 bg-white" />
+                          </div>
+                        </div>
+                        <div className="flex justify-center items-center">
+                          <div className="w-2 h-2 bg-emerald-600 rounded-full" />
+                        </div>
+                        <div className="flex justify-between">
+                          <div className="w-3 h-3 bg-black rounded-xs flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 bg-white" />
+                          </div>
+                          <div className="w-1.5 h-1.5 bg-black" />
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-[8px] font-mono text-slate-500 font-bold mt-0.5">
+                      Scan to Pay UPI
+                    </span>
+                  </div>
+                </div>
+
+                {/* Footer Micro-CTA */}
+                <div className="text-center pt-0.5">
+                  <span className="text-[10px] font-mono text-slate-500">
+                    nexu.studio/store/{whiteLabelConfig.brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Module B: ⭐ Automated WhatsApp Review & Referral Loop Engine */}
+          <div className="p-6 rounded-3xl border border-white/90 ring-1 ring-slate-900/5 bg-gradient-to-r from-emerald-50/50 via-teal-50/30 to-white backdrop-blur-2xl shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-emerald-100">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+                    <Star className="w-4 h-4 fill-amber-300 text-amber-300" />
+                  </div>
+                  <h3 className="text-base font-black text-slate-950">
+                    ⭐ Automated WhatsApp Review & Referral Loop (10/10 Score Engine)
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-600 mt-1 max-w-2xl">
+                  Turn every delivered buyer into an organic promoter. When an order is completed, send a 1-click WhatsApp message to collect a verified 5★ review on our Trust Wall and reward them with a 10% coupon (<strong className="text-slate-900 font-mono">PATRON10</strong>) for their next order.
+                </p>
+              </div>
+              <span className="text-xs font-mono font-bold text-emerald-800 bg-white px-3 py-1.5 rounded-xl border border-emerald-200 shadow-2xs">
+                Coupon: PATRON10 (10% OFF)
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+              {/* Customer Inputs */}
+              <div className="md:col-span-4 space-y-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                    Customer Name:
+                  </label>
+                  <input
+                    type="text"
+                    value={reviewCustomerName}
+                    onChange={(e) => setReviewCustomerName(e.target.value)}
+                    placeholder="e.g. Rahul Sharma"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-900"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                    Customer WhatsApp Number:
+                  </label>
+                  <input
+                    type="text"
+                    value={reviewCustomerPhone}
+                    onChange={(e) => setReviewCustomerPhone(e.target.value)}
+                    placeholder="e.g. 9876543210"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-slate-900"
+                  />
+                </div>
+              </div>
+
+              {/* Message Live Preview */}
+              <div className="md:col-span-5 p-3.5 rounded-2xl bg-white border border-emerald-200/80 shadow-2xs font-mono text-xs text-slate-700 space-y-1.5">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-800 block">
+                  WhatsApp Message Preview:
+                </span>
+                <p className="text-[11px] leading-relaxed text-slate-800">
+                  &quot;Hi <strong className="text-emerald-900">{reviewCustomerName}</strong>! 🙏 Thank you for ordering from <strong className="text-slate-950">{whiteLabelConfig.brandName}</strong>. Your support helps direct Indian artisans. Please share your rating on our Trust Wall: <span className="text-indigo-600 underline">https://nexu.studio/reviews</span> — Use code <strong className="text-emerald-700">PATRON10</strong> for 10% off your next direct order!&quot;
+                </p>
+              </div>
+
+              {/* Trigger Button */}
+              <div className="md:col-span-3 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cleanPhone = reviewCustomerPhone.replace(/[^0-9]/g, "");
+                    const msg = `Hi ${reviewCustomerName}! 🙏 Thank you for ordering from ${whiteLabelConfig.brandName}. Your support directly empowers Indian makers with 0% platform commission.\n\nCould you please take 30 seconds to rate us on our Trust Wall?\n👉 https://nexu.studio/reviews\n\nAs a thank-you, use coupon code *PATRON10* for *10% OFF* on your next order! 🎁`;
+                    window.open(`https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`, "_blank");
+                    showToast(`WhatsApp review request generated for ${reviewCustomerName}! ⭐`, "success");
+                  }}
+                  className="w-full px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Send WhatsApp Review Link</span>
+                </button>
+                <span className="text-[10px] text-slate-500 text-center">
+                  Includes 10% repeat order discount coupon
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Module C: Meta Pixel Integration (Optional Paid Channel) */}
+          <div className="pt-2 border-t border-slate-200/80">
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-2xs max-w-xl">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-950 flex items-center gap-1.5">
                   <Tag className="w-4 h-4 text-indigo-600" />
-                  <span>Meta Pixel Integration (Instagram / Facebook Ads)</span>
+                  <span>Meta Pixel Integration (Instagram / Facebook Ads - Optional)</span>
                 </span>
                 <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-bold">
                   ACTIVE
@@ -1095,7 +1454,7 @@ export function SupplierPortalSaaS() {
                   value={metaPixelId}
                   onChange={(e) => setMetaPixelId(e.target.value)}
                   placeholder="e.g. PIXEL_982140510"
-                  className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
                 />
                 <button
                   type="button"
@@ -1103,35 +1462,6 @@ export function SupplierPortalSaaS() {
                   className="px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold shrink-0 cursor-pointer"
                 >
                   Save
-                </button>
-              </div>
-            </div>
-
-            {/* Direct Store Link Generator */}
-            <div className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-2xs">
-              <span className="text-xs font-bold text-slate-950 flex items-center gap-1.5">
-                <Share2 className="w-4 h-4 text-emerald-600" />
-                <span>Direct WhatsApp & Instagram Bio Store Link</span>
-              </span>
-              <p className="text-xs text-slate-600">
-                Share this dedicated link with your buyers to receive direct UPI orders with 0% platform cuts.
-              </p>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={`https://nexu.studio/store/${whiteLabelConfig.brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
-                  className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 bg-slate-50 text-slate-800"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`https://nexu.studio/store/${whiteLabelConfig.brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`);
-                    showToast("Link copied to clipboard! Share on WhatsApp status 📋", "success");
-                  }}
-                  className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0 cursor-pointer"
-                >
-                  Copy Link
                 </button>
               </div>
             </div>

@@ -118,6 +118,25 @@ export interface WhiteLabelConfig {
   accentColor: "blue" | "emerald" | "slate" | "amber";
 }
 
+export interface PlatformReview {
+  id: string;
+  type: "CUSTOMER" | "SELLER";
+  authorName: string;
+  authorCity: string;
+  ratingScore: number; // 1 to 10
+  headline: string;
+  comment: string;
+  date: string;
+  verified: boolean;
+  avatarUrl?: string;
+  productTitle?: string;
+  deliveryRating?: number;
+  qualityRating?: number;
+  savedCommissionINR?: number;
+  previousMarketplace?: string;
+  storeName?: string;
+}
+
 export const DEFAULT_WHITELABEL_CONFIG: WhiteLabelConfig = {
   brandName: "AuraMart Enterprise",
   brandSubtitle: "Enterprise Multi-Vendor SaaS",
@@ -176,6 +195,9 @@ interface StoreContextType {
   toast: ToastState;
   toasts: ToastItem[];
   isCartDrawerOpen: boolean;
+  reviews: PlatformReview[];
+  platformOverallScore: number;
+  submitPlatformReview: (review: Omit<PlatformReview, "id" | "date" | "verified">) => void;
   // Actions
   updateWhiteLabelConfig: (config: Partial<WhiteLabelConfig>) => void;
   resetWhiteLabelConfig: () => void;
@@ -932,6 +954,93 @@ export const INITIAL_B2B_QUOTES: B2BQuoteRequest[] = [
   },
 ];
 
+export const INITIAL_PLATFORM_REVIEWS: PlatformReview[] = [
+  {
+    id: "rev_plat_01",
+    type: "SELLER",
+    authorName: "Devendra Rathore",
+    authorCity: "Jaipur, Rajasthan",
+    ratingScore: 10,
+    headline: "Saved ₹38,400 in our first month alone. Never returning to Meesho's penalty traps.",
+    comment: "On Meesho, customer returns were costing us ₹180 per courier return. Here, we verify addresses on WhatsApp before dispatch. Zero commission means all profits stay in our bank account via direct UPI in 0 seconds.",
+    savedCommissionINR: 38400,
+    previousMarketplace: "Amazon & Meesho",
+    storeName: "Jaipur Heritage Handlooms",
+    date: "02 Nov 2026",
+    verified: true,
+  },
+  {
+    id: "rev_plat_02",
+    type: "CUSTOMER",
+    authorName: "Meera Deshmukh",
+    authorCity: "Mumbai, Maharashtra",
+    ratingScore: 10,
+    headline: "Museum-grade handloom silk delivered in 2 days with authentic artisan note.",
+    comment: "The direct UPI payment was instant and seamless. Blue Dart tracking updated at every stage. You can feel the craftsmanship and care in every stitch.",
+    productTitle: "Loom & Spindle Mulberry Raw Silk Kimono",
+    deliveryRating: 5,
+    qualityRating: 5,
+    date: "01 Nov 2026",
+    verified: true,
+  },
+  {
+    id: "rev_plat_03",
+    type: "SELLER",
+    authorName: "Sunita Devi & Shashi",
+    authorCity: "Varanasi, UP",
+    ratingScore: 10,
+    headline: "Our weavers now get paid in 0 seconds directly to bank UPI instead of waiting 14 days.",
+    comment: "Flipkart used to hold our payouts for 2 weeks while taking 22% commission. Launching our store took literally 60 seconds. Our customers love the direct WhatsApp touch.",
+    savedCommissionINR: 52000,
+    previousMarketplace: "Flipkart & Amazon",
+    storeName: "Kashi Ahimsa Weavers",
+    date: "31 Oct 2026",
+    verified: true,
+  },
+  {
+    id: "rev_plat_04",
+    type: "CUSTOMER",
+    authorName: "Vikramaditya Rao",
+    authorCity: "Hyderabad, Telangana",
+    ratingScore: 10,
+    headline: "Flawless packaging and official GST invoice with verifiable bank UTR.",
+    comment: "Saved almost ₹3,000 compared to other sites because the seller doesn't have to pay marketplace commissions. 100% genuine product with official manufacturer warranty.",
+    productTitle: "Sony WH-1000XM5 Studio Wireless Headphones",
+    deliveryRating: 5,
+    qualityRating: 5,
+    date: "30 Oct 2026",
+    verified: true,
+  },
+  {
+    id: "rev_plat_05",
+    type: "SELLER",
+    authorName: "Harish Patel",
+    authorCity: "Surat, Gujarat",
+    ratingScore: 10,
+    headline: "Full customer ownership. We can now market directly on WhatsApp & Instagram.",
+    comment: "Amazon hides your customer phone and email. Here we own 100% of our customer relationships. Repeat orders went up by 40% with zero ad tax.",
+    savedCommissionINR: 65000,
+    previousMarketplace: "Amazon FBA",
+    storeName: "EcoWeave Textiles",
+    date: "29 Oct 2026",
+    verified: true,
+  },
+  {
+    id: "rev_plat_06",
+    type: "CUSTOMER",
+    authorName: "Ananya Iyer",
+    authorCity: "Bangalore, Karnataka",
+    ratingScore: 9.8,
+    headline: "Best ceramic pour-over dripper I've owned. Supported local pottery masters directly.",
+    comment: "Porous clay extracted rich notes with zero heat loss. Delivery boy called beforehand and package had sustainable honeycomb wrap.",
+    productTitle: "Handmade Terracotta Slow Pour-Over Dripper",
+    deliveryRating: 5,
+    qualityRating: 5,
+    date: "28 Oct 2026",
+    verified: true,
+  },
+];
+
 export const INITIAL_PRELOADED_ORDERS: StoreOrder[] = [
   {
     id: "ORD-2026-894201",
@@ -1096,6 +1205,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<StoreCartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [orders, setOrders] = useState<StoreOrder[]>(INITIAL_PRELOADED_ORDERS);
+  const [reviews, setReviews] = useState<PlatformReview[]>(INITIAL_PLATFORM_REVIEWS);
   const [b2bQuotes, setB2bQuotes] = useState<B2BQuoteRequest[]>(INITIAL_B2B_QUOTES);
   const [isB2BModalOpen, setIsB2BModalOpen] = useState(false);
   const [b2bModalProduct, setB2bModalProduct] = useState<StoreProduct | null>(null);
@@ -1179,6 +1289,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         } catch {}
       }
 
+      const savedReviews = safeStorageGet("nexu_platform_reviews");
+      if (savedReviews) {
+        try {
+          const parsed = JSON.parse(savedReviews);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setReviews(parsed);
+          }
+        } catch {}
+      }
+
       const savedRole = safeStorageGet("nexu_saas_role");
       if (savedRole && ["customer", "supplier", "admin"].includes(savedRole)) {
         setActiveRole(savedRole as RoleType);
@@ -1222,6 +1342,28 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     safeStorageSet("nexu_whitelabel_config", JSON.stringify(whiteLabelConfig));
   }, [whiteLabelConfig]);
+
+  // Save reviews to localStorage
+  useEffect(() => {
+    safeStorageSet("nexu_platform_reviews", JSON.stringify(reviews));
+  }, [reviews]);
+
+  const platformOverallScore = useMemo(() => {
+    if (reviews.length === 0) return 9.9;
+    const total = reviews.reduce((acc, r) => acc + r.ratingScore, 0);
+    return Number((total / reviews.length).toFixed(1));
+  }, [reviews]);
+
+  const submitPlatformReview = (reviewData: Omit<PlatformReview, "id" | "date" | "verified">) => {
+    const newReview: PlatformReview = {
+      ...reviewData,
+      id: `rev_plat_${Date.now()}`,
+      date: "Just now",
+      verified: true,
+    };
+    setReviews((prev) => [newReview, ...prev]);
+    showToast(`🌟 Thank you ${reviewData.authorName}! Your ${reviewData.ratingScore}/10 review is live!`, "success");
+  };
 
   const updateWhiteLabelConfig = (config: Partial<WhiteLabelConfig>) => {
     setWhiteLabelConfig((prev) => {
@@ -1948,6 +2090,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         filteredProducts,
         cartTotalCount,
         cartSubtotal,
+        reviews,
+        platformOverallScore,
+        submitPlatformReview,
       }}
     >
       {children}

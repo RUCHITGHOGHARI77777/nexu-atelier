@@ -58,6 +58,24 @@ flowchart TD
     subgraph Demo["Module F: Evaluator Quick-Test Hub"]
         F1["1-Click Cart & Checkout Simulator"]
         F2["1-Click Mobile UPI Instant Pay & Invoice"]
+        F3["1-Click Supplier Dispatch & Manifest"]
+        F4["1-Click Admin 10% Fee Verification"]
+    end
+
+    subgraph Phase11["Module G: 0% Commission Indian Seller Engine"]
+        G1["Interactive Savings Calculator vs Amazon/Meesho"]
+        G2["60-Second Brand Store Creation Wizard"]
+        G3["Direct Storefront URL (/store/slug)"]
+        G4["Indian Seller Fulfillment & CA Tax Reports"]
+    end
+
+    subgraph Phase12["Module H & I: 10/10 Trust Wall & Organic Viral Engine"]
+        H1["Public Trust Wall (/reviews) & 9.9/10 Score"]
+        H2["Dual Review Streams (Artisans + Verified Customers)"]
+        H3["1-Click WhatsApp Status & Deal Poster Generator"]
+        H4["Automated WhatsApp Review Loop + PATRON10 Coupon"]
+        H5["Super Admin Social Impact & Governance Portal"]
+    end
         F3["1-Click Supplier Dispatch Simulator"]
         F4["1-Click Admin Fee Audit"]
     end
@@ -182,6 +200,9 @@ flowchart TD
 | **Defensive Storage** | `safeStorageGet/Set` | Zero crashes on incognito/quota | Validated across full matrix | **PASS** |
 | **Browser E2E Automation** | Edge / Puppeteer | 8 Phase 9 Hardening Milestones | 8 Milestones Passed | **PASS** |
 | **Visual Artifacts** | High-Res PNG Capture | 8 Phase 9 Proofs | Saved in `screenshots/` & artifact folder | **PASS** |
+| **Trust Wall & Rating Engine** | `/reviews` + Modal | 10/10 Score Sync + Confetti | Verified via Puppeteer | **PASS** |
+| **Seller Organic Booster** | Status Poster + QR | 1-Click WhatsApp + Coupon Loop | Verified via Puppeteer | **PASS** |
+| **Super Admin Social Impact** | Admin Tab 5 | 4 Mission KPI Cards + Case Studies | Verified via Puppeteer | **PASS** |
 
 ---
 

@@ -17,6 +17,7 @@ import {
   Store,
   UserCheck,
   CheckCircle,
+  Star,
 } from "lucide-react";
 import { useStore, RoleType } from "@/context/StoreContext";
 import { formatCurrency } from "@/lib/formatters";
@@ -225,10 +226,20 @@ export function NavbarSaaS() {
           {/* Quick Link to 0% Commission Branded Seller Store */}
           <Link
             href="/store/jaipur-heritage-handlooms"
-            className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition-all shadow-2xs shrink-0"
+            className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition-all shadow-2xs shrink-0"
             title="View 0% Commission Seller Store Example"
           >
             <span>0% Comm Store 🚀</span>
+          </Link>
+
+          {/* Public Trust Wall & 9.9/10 Rating Link */}
+          <Link
+            href="/reviews"
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold transition-all shadow-2xs shrink-0"
+            title="Verified Reviews & 9.9/10 Trust Wall"
+          >
+            <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+            <span>Trust Wall (9.9/10)</span>
           </Link>
 
           {/* 4. Wishlist & Cart Actions */}

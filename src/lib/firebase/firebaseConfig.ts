@@ -38,3 +38,4 @@ try {
 
 export { app, auth, db, isLiveFirebase };
 export default firebaseConfig;
+
