@@ -29,6 +29,7 @@
   - [9. Dedicated @media print Invoice Engine & Zero-Crash Safeguards (Phase 9)](#9-dedicated-media-print-invoice-engine--zero-crash-safeguards-phase-9)
   - [10. 0% Commission Indian Seller Engine & 60-Second Store Launcher (Phase 11)](#10-0-commission-indian-seller-engine--60-second-store-launcher-phase-11)
   - [11. 10/10 Verified Trust Wall & Organic Viral Growth Engine (Phase 12)](#11-1010-verified-trust-wall--organic-viral-growth-engine-phase-12)
+  - [12. Global Multi-Country, Currency & Tax Engine (Phase 13)](#12-global-multi-country-currency--tax-engine-phase-13)
 - [⚡ 2-Minute Evaluator Quickstart](#-2-minute-evaluator-quickstart)
 - [🛠️ Tech Stack & Dependencies](#️-tech-stack--dependencies)
 - [🚀 Local Setup & Installation](#-local-setup--installation)
@@ -184,6 +185,23 @@ flowchart TD
   - Audited impact metrics: **1,482 Small Sellers Empowered**, **₹28,45,000+ Commission Saved**, and **₹0.00/month Cloud Cost** running on lean Firebase and Postgres free tiers.
   - Grassroots seller case studies from Varanasi silk weavers, Khurja terracotta artisans, and Dharavi leather collectives.
   - Zero-cost architecture sustainability manifesto.
+
+### 12. Global Multi-Country, Currency & Tax Engine (Phase 13)
+- **🌐 5 Supported Economic Regions & Automated Fiscal Compliance**:
+  - **🇮🇳 India (`INR ₹`)**: Direct NPCI UPI / Instant QR, Dual-GST (9% CGST + 9% SGST), GSTIN validation.
+  - **🇺🇸 United States (`USD $`)**: Stripe Instant / ACH / Apple Pay, State Sales Tax (8.5%), IRS EIN registration.
+  - **🇬🇧 United Kingdom (`GBP £`)**: UK Faster Payments / BACS, HMRC Standard VAT (20%), GB VAT registration.
+  - **🇪🇺 European Union (`EUR €`)**: SEPA Instant / Klarna, Single European VAT Directive (20%), EU VAT registration.
+  - **🇦🇪 UAE (`AED د.إ`)**: Emirates Instant Pay / Wio, FTA VAT (5%), Federal TRN registration.
+- **⚡ Non-Intrusive Currency Re-Rendering**:
+  - Instantaneous UI updates across Product Catalog, Quick View Modals, Cart Drawer, Checkout Summaries, and Printable Tax Invoices.
+  - Underpinned by integer minor-unit base storage (paise/cents) to completely eliminate IEEE 754 floating-point rounding errors.
+- **📊 Currency-Aware Marketplace Savings Calculator**:
+  - Automatically calculates commission savings, monthly GMV, and return penalty deductions in the user's local currency.
+  - Highlights net monthly seller retainable profit in bold emerald green (`font-mono tabular-nums`).
+- **🛡️ Storefront Hardening & Fallback Protections**:
+  - Resilient `onError` image handlers with high-resolution studio fallbacks.
+  - Dynamic filter pills, price ceiling slider, and zero dead buttons across all customer, supplier, and admin actions.
 
 ---
 
