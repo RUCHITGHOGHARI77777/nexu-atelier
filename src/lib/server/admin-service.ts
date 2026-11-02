@@ -28,6 +28,7 @@ import {
   AutomationStatsView,
   FinancialReportView,
 } from "@/types/admin";
+import { platformAuditService } from "./platform-audit-service";
 
 export class AdminService {
   /**
@@ -301,6 +302,22 @@ export class AdminService {
           },
         });
       });
+
+      // Immutable Platform Audit Log for high-privilege store suspension
+      if (newStatus === SellerStatus.SUSPENDED) {
+        await platformAuditService.recordAudit({
+          action: "Admin Store Suspension",
+          entityType: "STORE",
+          entityId: sellerId,
+          storeId: sellerId,
+          performedBy: adminUserId,
+          details: {
+            previousStatus: seller.status,
+            newStatus,
+            reason: reason?.trim() || "Administrative suspension",
+          },
+        });
+      }
 
       return { success: true };
     } catch (err: any) {

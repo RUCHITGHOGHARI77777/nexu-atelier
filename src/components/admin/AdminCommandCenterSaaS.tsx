@@ -79,12 +79,18 @@ export function AdminCommandCenterSaaS() {
   
   const [isUpgradingCluster, setIsUpgradingCluster] = useState(false);
 
-  const handleUpgradeCluster = () => {
+  const handleUpgradeCluster = async () => {
     setIsUpgradingCluster(true);
-    setTimeout(() => {
+    try {
+      await fetch("/api/admin/scale-cluster", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetTier: "1_TB_NVME_ENTERPRISE", connectionPool: 500 }),
+      }).catch(() => null);
+    } finally {
       upgradeDatabaseCluster();
       setIsUpgradingCluster(false);
-    }, 950);
+    }
   };
 
   // Local White-Label Form State

@@ -22,6 +22,7 @@ import {
   FulfillmentStatus,
   PayoutStatus,
 } from "@prisma/client";
+import { platformAuditService } from "./platform-audit-service";
 
 export class SellerService {
   /**
@@ -126,6 +127,86 @@ export class SellerService {
       };
     } catch {
       return { success: false, error: "Failed to submit seller application." };
+    }
+  }
+
+  /**
+   * Updates seller profile, bank account, and tax information with immutable audit logging.
+   */
+  public async updateSellerProfile(
+    sellerId: string,
+    updates: {
+      taxIdentifier?: string;
+      bankAccountName?: string;
+      bankAccountNumber?: string;
+      bankIfsc?: string;
+      story?: string;
+      leadTimeDays?: number;
+      originHub?: string;
+    },
+    performedByEmail: string
+  ): Promise<{ success: boolean; seller?: any; error?: string }> {
+    try {
+      const existing = await prisma.seller.findUnique({
+        where: { id: sellerId },
+      });
+      if (!existing) {
+        return { success: false, error: "Seller profile not found." };
+      }
+
+      // High-privilege action: Payout Handle Change
+      if (
+        updates.bankAccountNumber &&
+        updates.bankAccountNumber.trim() !== (existing.bankAccountNumber || "").trim()
+      ) {
+        await platformAuditService.recordAudit({
+          action: "Payout Handle Change",
+          entityType: "PAYMENT",
+          entityId: sellerId,
+          storeId: sellerId,
+          performedBy: performedByEmail,
+          details: {
+            previousBankLast4: existing.bankAccountNumber ? existing.bankAccountNumber.slice(-4) : "NONE",
+            newBankLast4: updates.bankAccountNumber.trim().slice(-4),
+            bankIfsc: updates.bankIfsc || existing.bankIfsc,
+          },
+        });
+      }
+
+      // High-privilege action: Tax ID Update
+      if (
+        updates.taxIdentifier &&
+        updates.taxIdentifier.trim() !== (existing.taxIdentifier || "").trim()
+      ) {
+        await platformAuditService.recordAudit({
+          action: "Tax ID Update",
+          entityType: "STORE",
+          entityId: sellerId,
+          storeId: sellerId,
+          performedBy: performedByEmail,
+          details: {
+            previousTaxId: existing.taxIdentifier || "NONE",
+            newTaxId: updates.taxIdentifier.trim(),
+          },
+        });
+      }
+
+      const updated = await prisma.seller.update({
+        where: { id: sellerId },
+        data: {
+          taxIdentifier: updates.taxIdentifier !== undefined ? updates.taxIdentifier.trim() : undefined,
+          bankAccountName: updates.bankAccountName !== undefined ? updates.bankAccountName.trim() : undefined,
+          bankAccountNumber: updates.bankAccountNumber !== undefined ? updates.bankAccountNumber.trim() : undefined,
+          bankIfsc: updates.bankIfsc !== undefined ? updates.bankIfsc.trim().toUpperCase() : undefined,
+          story: updates.story !== undefined ? updates.story.trim() : undefined,
+          leadTimeDays: updates.leadTimeDays !== undefined ? updates.leadTimeDays : undefined,
+          originHub: updates.originHub !== undefined ? updates.originHub.trim() : undefined,
+        },
+      });
+
+      return { success: true, seller: updated };
+    } catch {
+      return { success: false, error: "Failed to update seller profile." };
     }
   }
 

@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { RefundStatus, PaymentStatus } from "@prisma/client";
 import { paymentService } from "./payment/payment-service";
 import { notificationService } from "./notification-service";
+import { platformAuditService } from "./platform-audit-service";
 
 export interface InitiateRefundParams {
   orderId: string;
@@ -174,6 +175,22 @@ export class RefundService {
           performedBy: adminUserId,
         },
       });
+    });
+
+    // Record Immutable Platform Audit Log for high-privilege action
+    await platformAuditService.recordAudit({
+      action: "Return Refund",
+      entityType: "REFUND",
+      entityId: refundId,
+      performedBy: adminUserId,
+      details: {
+        orderId: order.id,
+        amountINR: amountPaise / 100,
+        amountPaise,
+        reason,
+        provider: adapter.provider,
+        providerRefundId: providerRes.providerRefundId,
+      },
     });
 
     // Send transactional notification

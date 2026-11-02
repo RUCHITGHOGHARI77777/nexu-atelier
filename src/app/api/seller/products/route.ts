@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedSeller } from "@/lib/server/seller-auth-helper";
 import { sellerService } from "@/lib/server/seller-service";
+import { assertZeroClientTrust, AntiIdorSecurityViolationError } from "@/lib/server/zero-client-trust";
 
 export async function GET(request: Request) {
   const auth = await getAuthenticatedSeller();
@@ -62,6 +63,15 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
+
+    // Zero Client Trust: Enforce that client-supplied storeId/sellerId matches authenticated activeStoreId
+    assertZeroClientTrust({
+      claimedStoreId: body.sellerId || body.storeId || body.vendorId,
+      authenticatedStoreId: auth.activeStoreId || auth.seller.id,
+      userRole: auth.user.role,
+      actionContext: "POST /api/seller/products",
+    });
+
     const result = await sellerService.createProduct(auth.seller.id, body);
 
     if (!result.success || !result.product) {
@@ -72,7 +82,10 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ product: result.product }, { status: 201 });
-  } catch {
+  } catch (err: any) {
+    if (err instanceof AntiIdorSecurityViolationError) {
+      return NextResponse.json({ error: err.message }, { status: 403 });
+    }
     return NextResponse.json(
       { error: "Server error creating product." },
       { status: 500 }

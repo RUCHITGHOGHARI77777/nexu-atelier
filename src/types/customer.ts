@@ -5,6 +5,7 @@ export interface CustomerUser {
   phone?: string;
   createdAt: string;
   role: "customer" | "seller" | "admin";
+  activeStoreId?: string;
 }
 
 export type AddressType = "home" | "work" | "studio" | "other";

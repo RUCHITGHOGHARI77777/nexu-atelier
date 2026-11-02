@@ -6,6 +6,7 @@ import { CustomerUser } from "@/types/customer";
 export interface SellerAuthContext {
   user: CustomerUser;
   seller: SellerProfile | null;
+  activeStoreId?: string;
   isSeller: boolean;
   isApproved: boolean;
 }
@@ -25,8 +26,12 @@ export async function getAuthenticatedSeller(): Promise<SellerAuthContext | null
 
   if (!dbSeller) {
     return {
-      user,
+      user: {
+        ...user,
+        activeStoreId: undefined,
+      },
       seller: null,
+      activeStoreId: undefined,
       isSeller: user.role === "seller",
       isApproved: false,
     };
@@ -57,8 +62,12 @@ export async function getAuthenticatedSeller(): Promise<SellerAuthContext | null
   };
 
   return {
-    user,
+    user: {
+      ...user,
+      activeStoreId: dbSeller.id,
+    },
     seller,
+    activeStoreId: dbSeller.id,
     isSeller: true,
     isApproved: dbSeller.status === "APPROVED",
   };
