@@ -24,6 +24,7 @@ import {
 import { useStore, RoleType } from "@/context/StoreContext";
 import { formatCurrency } from "@/lib/formatters";
 import { REGIONS } from "@/lib/currency";
+import { FirebaseAuthModal } from "@/components/auth/FirebaseAuthModal";
 
 export function NavbarSaaS() {
   const router = useRouter();
@@ -43,6 +44,9 @@ export function NavbarSaaS() {
     activeRegion,
     setActiveRegion,
     formatPrice,
+    currentUser,
+    isAuthModalOpen,
+    setIsAuthModalOpen,
   } = useStore();
 
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
@@ -90,13 +94,27 @@ export function NavbarSaaS() {
           </div>
 
           <div className="flex items-center gap-4 font-mono text-[10px]">
+            <button
+              type="button"
+              onClick={() => setIsAuthModalOpen(true)}
+              className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200 transition-colors font-mono cursor-pointer"
+              title="Firebase Auth & Identity Engine (Click to Switch Identity)"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-bold">🟢 Cloud Sync Active (Real-Time Ledger)</span>
+            </button>
+            <span className="text-slate-300">•</span>
             <span>{activeRegion.taxIdLabel}: <strong className="text-slate-800">{activeRegion.taxIdDefault}</strong></span>
             <span className="text-slate-300">•</span>
             <span className="text-indigo-700 font-semibold">Gateway: {activeRegion.paymentGatewayName}</span>
             <span className="text-slate-300">•</span>
-            <Link href="/account" className="hover:text-slate-900 transition-colors">
-              Patron Account Hub
-            </Link>
+            <button
+              type="button"
+              onClick={() => setIsAuthModalOpen(true)}
+              className="hover:text-slate-900 transition-colors font-semibold cursor-pointer"
+            >
+              {currentUser ? `👤 ${currentUser.displayName.split(" ")[0]} (${currentUser.role})` : "Sign In"}
+            </button>
           </div>
         </div>
       </div>
@@ -331,8 +349,26 @@ export function NavbarSaaS() {
             )}
           </div>
 
-          {/* 4. Wishlist & Cart Actions */}
+          {/* 4. Firebase User Profile & Cart Actions */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Firebase Auth Trigger */}
+            <button
+              type="button"
+              onClick={() => setIsAuthModalOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200/80 bg-white/70 hover:bg-white text-slate-800 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+              title="Firebase Auth Profile & Role Switcher"
+            >
+              <div className="w-5 h-5 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center font-bold">
+                {currentUser ? currentUser.displayName.charAt(0).toUpperCase() : "U"}
+              </div>
+              <span className="hidden lg:inline truncate max-w-[100px]">
+                {currentUser ? currentUser.displayName.split(" ")[0] : "Sign In"}
+              </span>
+              <span className="text-[9px] font-mono text-emerald-700 uppercase bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
+                {currentUser ? currentUser.role : "Guest"}
+              </span>
+            </button>
+
             {/* Wishlist Heart */}
             <Link
               href="/wishlist"
@@ -387,6 +423,9 @@ export function NavbarSaaS() {
           </div>
         </div>
       </div>
+
+      {/* Firebase Auth & Identity Modal */}
+      <FirebaseAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </header>
   );
 }

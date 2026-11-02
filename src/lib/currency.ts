@@ -144,3 +144,4 @@ export function formatPriceRegional(amountINR: number, region: RegionConfig): st
     maximumFractionDigits: 2,
   }).format(localVal);
 }
+

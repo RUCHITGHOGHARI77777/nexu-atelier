@@ -9,6 +9,7 @@ import {
   formatPriceRegional,
   convertFromINR,
 } from "@/lib/currency";
+import { AppUser, getSavedAuthUser, saveAuthUserLocally } from "@/lib/firebase/firebaseAuthService";
 
 export type RoleType = "customer" | "supplier" | "admin";
 
@@ -206,6 +207,11 @@ interface StoreContextType {
   reviews: PlatformReview[];
   platformOverallScore: number;
   submitPlatformReview: (review: Omit<PlatformReview, "id" | "date" | "verified">) => void;
+  // Firebase Auth & Identity
+  currentUser: AppUser | null;
+  setCurrentUser: (user: AppUser | null) => void;
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: (open: boolean) => void;
   // Multi-Country & Currency Engine
   activeRegion: RegionConfig;
   setActiveRegion: (code: RegionCode) => void;
@@ -250,6 +256,7 @@ interface StoreContextType {
   acceptSellerOrder: (orderId: string) => void;
   rejectSellerOrder: (orderId: string, reason?: string) => void;
   dispatchSellerOrder: (orderId: string, deliveryDetails: { mode: "self" | "courier"; partner: string; trackingRef: string }) => void;
+  markSellerOrderOutForDelivery: (orderId: string) => void;
   markSellerOrderDelivered: (orderId: string) => void;
   generateShippingManifest: (orderId: string) => { awb: string; manifestId: string; generatedAt: string };
   loadSampleOrders: () => void;
@@ -1233,9 +1240,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [minRating, setMinRating] = useState<number>(0);
   const [quickViewProduct, setQuickViewProduct] = useState<StoreProduct | null>(null);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+  const [currentUser, setCurrentUserState] = useState<AppUser | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [activeRegion, setActiveRegionState] = useState<RegionConfig>(DEFAULT_REGION);
   const [toast, setToast] = useState<ToastState>({ show: false, message: "", type: "info" });
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+
+  const setCurrentUser = (user: AppUser | null) => {
+    setCurrentUserState(user);
+    saveAuthUserLocally(user);
+  };
 
   const setActiveRegion = (code: RegionCode) => {
     const target = REGIONS[code] || DEFAULT_REGION;
@@ -1330,6 +1344,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const savedRegion = safeStorageGet("nexu_saas_region") as RegionCode | null;
       if (savedRegion && REGIONS[savedRegion]) {
         setActiveRegionState(REGIONS[savedRegion]);
+      }
+
+      const savedAuth = getSavedAuthUser();
+      if (savedAuth) {
+        setCurrentUserState(savedAuth);
       }
     } catch {
       // LocalStorage access restricted or unavailable in private browsing mode
@@ -1740,6 +1759,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     showToast(`🚚 Order #${orderId} Dispatched via ${deliveryDetails.partner} (Ref: ${deliveryDetails.trackingRef})`, "success");
   };
 
+  const markSellerOrderOutForDelivery = (orderId: string) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          deliveryStage: 4,
+          deliveryStageName: "Out for Delivery",
+          status: "OUT_FOR_DELIVERY",
+        };
+      })
+    );
+    showToast(`🚚 Order #${orderId} is Out for Delivery! Live courier timeline updated.`, "info");
+  };
+
   const markSellerOrderDelivered = (orderId: string) => {
     setOrders((prev) =>
       prev.map((o) => {
@@ -2111,6 +2145,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         acceptSellerOrder,
         rejectSellerOrder,
         dispatchSellerOrder,
+        markSellerOrderOutForDelivery,
         markSellerOrderDelivered,
         generateShippingManifest,
         loadSampleOrders,
@@ -2121,6 +2156,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         reviews,
         platformOverallScore,
         submitPlatformReview,
+        currentUser,
+        setCurrentUser,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
         activeRegion,
         setActiveRegion,
         formatPrice,

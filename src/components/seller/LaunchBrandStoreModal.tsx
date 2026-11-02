@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import {
   X,
   Store,
@@ -16,6 +17,8 @@ import {
   Zap,
   Globe,
   Share2,
+  ExternalLink,
+  Copy,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useStore } from "@/context/StoreContext";
@@ -173,16 +176,27 @@ export function LaunchBrandStoreModal({ isOpen, onClose, onStoreCreated }: Launc
                 <span className="text-xs font-mono font-bold text-slate-900 truncate">
                   https://nexu.studio/store/{createdStoreData.slug}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`https://nexu.studio/store/${createdStoreData.slug}`);
-                    showToast("Link copied to clipboard! Share on WhatsApp & Instagram 📋", "success");
-                  }}
-                  className="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold shrink-0 cursor-pointer"
-                >
-                  Copy Link
-                </button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://nexu.studio/store/${createdStoreData.slug}`);
+                      showToast("Link copied to clipboard! Share on WhatsApp & Instagram 📋", "success");
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <Copy className="w-3 h-3" />
+                    <span>Copy Link</span>
+                  </button>
+                  <Link
+                    href={`/store/${createdStoreData.slug}`}
+                    onClick={onClose}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    <span>Preview My Public Storefront</span>
+                  </Link>
+                </div>
               </div>
               <div className="flex items-center gap-3 pt-1 text-[11px] text-slate-500">
                 <span>Direct UPI: <strong className="text-slate-800 font-mono">{createdStoreData.directUpiId}</strong></span>

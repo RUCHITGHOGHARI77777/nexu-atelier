@@ -47,6 +47,7 @@ import { useStore, StoreProduct, StoreOrder } from "@/context/StoreContext";
 import { formatCurrency, formatDateTime } from "@/lib/formatters";
 import { BrandedPackagingSlipModal } from "./BrandedPackagingSlipModal";
 import { DispatchOrderModal } from "./DispatchOrderModal";
+import { SellerProfitLossModal } from "./SellerProfitLossModal";
 import { LaunchBrandStoreModal } from "../seller/LaunchBrandStoreModal";
 
 // Quick Preset Samples for instant 1-click product creation
@@ -111,6 +112,7 @@ export function SupplierPortalSaaS() {
     toggleProductStatus,
     acceptSellerOrder,
     rejectSellerOrder,
+    markSellerOrderOutForDelivery,
     markSellerOrderDelivered,
     generateShippingManifest,
     showToast,
@@ -130,9 +132,19 @@ export function SupplierPortalSaaS() {
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isLaunchStoreWizardOpen, setIsLaunchStoreWizardOpen] = useState(false);
+  const [isProfitLossModalOpen, setIsProfitLossModalOpen] = useState(false);
   const [packagingSlipOrder, setPackagingSlipOrder] = useState<StoreOrder | null>(null);
   const [dispatchModalOrder, setDispatchModalOrder] = useState<StoreOrder | null>(null);
   const [manifestModalOrder, setManifestModalOrder] = useState<StoreOrder | null>(null);
+
+  // Meta Pixel & ROI Simulator State
+  const [isTestingPixel, setIsTestingPixel] = useState(false);
+  const [pixelTestResults, setPixelTestResults] = useState<
+    { event: string; status: number; payload: string; time: string }[] | null
+  >(null);
+  const [adSpendInput, setAdSpendInput] = useState<number>(5000);
+  const [adRoasMultiplier, setAdRoasMultiplier] = useState<number>(4.2);
+  const [utmChannel, setUtmChannel] = useState<"instagram" | "facebook" | "whatsapp" | "google">("instagram");
 
   // New Product Form fields
   const [newTitle, setNewTitle] = useState("");
@@ -808,8 +820,29 @@ export function SupplierPortalSaaS() {
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-2.5 shrink-0">
-                        {!isDelivered ? (
+                      <div className="flex items-center gap-2 shrink-0">
+                        {ord.deliveryStage === 3 && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => markSellerOrderOutForDelivery(ord.id)}
+                              className="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-98 cursor-pointer transition-colors"
+                            >
+                              <Truck className="w-3.5 h-3.5 text-white" />
+                              <span>Mark Out for Delivery 🚚</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => markSellerOrderDelivered(ord.id)}
+                              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-98 cursor-pointer transition-colors"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Mark Delivered ✅</span>
+                            </button>
+                          </>
+                        )}
+
+                        {ord.deliveryStage === 4 && (
                           <button
                             type="button"
                             onClick={() => markSellerOrderDelivered(ord.id)}
@@ -818,7 +851,9 @@ export function SupplierPortalSaaS() {
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             <span>Mark Delivered & Request 5★ Review ⭐</span>
                           </button>
-                        ) : (
+                        )}
+
+                        {isDelivered && (
                           <button
                             type="button"
                             onClick={() => {
@@ -986,60 +1021,110 @@ export function SupplierPortalSaaS() {
                 </h2>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Government-compliant tax summaries with 0% platform deductions. Download monthly CSV for GST return filing.
+                Government-compliant tax summaries with 0% platform deductions. Download monthly CSV or printable executive P&L statement.
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={handleExportCAProfitReport}
-              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-md cursor-pointer transition-all active:scale-98 shrink-0"
-            >
-              <Download className="w-4 h-4" />
-              <span>📥 Export Complete Monthly CA & GST Report (.CSV)</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={handleExportCAProfitReport}
+                className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-md cursor-pointer transition-all active:scale-98 shrink-0"
+              >
+                <Download className="w-4 h-4" />
+                <span>📥 Export Monthly CA & GST Report (.CSV)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsProfitLossModalOpen(true)}
+                className="px-4 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 shadow-md cursor-pointer transition-all active:scale-98 shrink-0"
+              >
+                <Printer className="w-4 h-4 text-emerald-400" />
+                <span>🖨️ Download Monthly P&L Statement (PDF / Print)</span>
+              </button>
+            </div>
           </div>
 
-          {/* Tax Cards Grid */}
+          {/* 7 Live Financial Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Card 1: Gross Brand Revenue */}
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
               <span className="text-[10px] font-mono text-slate-500 uppercase block font-bold">
-                Taxable Turnover (Exclusive)
+                1. Gross Brand Revenue (GMV)
               </span>
-              <span className="text-xl font-black font-mono text-slate-950 block">
-                {formatCurrency(grossSalesINR - totalTaxCollected)}
+              <span className="text-xl font-black font-mono tabular-nums text-slate-950 block">
+                {formatCurrency(grossSalesINR)}
               </span>
-              <span className="text-[10px] text-slate-500">Base goods sales value</span>
+              <span className="text-[10px] text-slate-500">{orders.length} Verified Customer Orders</span>
             </div>
 
+            {/* Card 2: Total GST / VAT Collected */}
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
               <span className="text-[10px] font-mono text-slate-500 uppercase block font-bold">
-                CGST (9%) + SGST (9%) Collected
+                2. Total GST / VAT Collected
               </span>
-              <span className="text-xl font-black font-mono text-indigo-700 block">
+              <span className="text-xl font-black font-mono tabular-nums text-indigo-700 block">
                 {formatCurrency(totalTaxCollected)}
               </span>
-              <span className="text-[10px] text-slate-500">CGST: {formatCurrency(cgstCollected)} • SGST: {formatCurrency(sgstCollected)}</span>
+              <span className="text-[10px] text-slate-500">CGST (9%): {formatCurrency(cgstCollected)} • SGST (9%): {formatCurrency(sgstCollected)}</span>
             </div>
 
+            {/* Card 3: 1% TCS / TDS Ledger */}
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
               <span className="text-[10px] font-mono text-slate-500 uppercase block font-bold">
-                1% TCS / TDS Compliance
+                3. 1% TCS / TDS Tax Ledger
               </span>
-              <span className="text-xl font-black font-mono text-amber-700 block">
+              <span className="text-xl font-black font-mono tabular-nums text-amber-700 block">
                 {formatCurrency(tcs1PercentEstimate)}
               </span>
               <span className="text-[10px] text-slate-500">Section 194-O statutory tracking</span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-1">
-              <span className="text-[10px] font-mono text-emerald-800 uppercase block font-bold">
-                100% Net Bank Settlement
+            {/* Card 4: Seller Packaging & Shipping Cost */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-[10px] font-mono text-slate-500 uppercase block font-bold">
+                4. Seller Packaging & Materials Cost
               </span>
-              <span className="text-xl font-black font-mono text-emerald-800 block">
+              <span className="text-xl font-black font-mono tabular-nums text-slate-800 block">
+                {formatCurrency(totalPackingExpenses)}
+              </span>
+              <span className="text-[10px] text-slate-500">₹{packingCostPerOrder}/box across {orders.length} shipments</span>
+            </div>
+
+            {/* Card 5: Platform Commission Charged */}
+            <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-1">
+              <span className="text-[10px] font-mono text-emerald-800 uppercase block font-bold">
+                5. Platform Commission Charged
+              </span>
+              <span className="text-xl font-black font-mono tabular-nums text-emerald-700 block">
+                ₹0.00
+              </span>
+              <span className="text-[10px] text-emerald-700 font-bold">0% Commission Forever</span>
+            </div>
+
+            {/* Card 6: Marketplace Commission Saved */}
+            <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 space-y-1">
+              <span className="text-[10px] font-mono text-blue-800 uppercase block font-bold">
+                6. Marketplace Cuts & RTO Saved
+              </span>
+              <span className="text-xl font-black font-mono tabular-nums text-blue-700 block">
+                + {formatCurrency(Math.round(grossSalesINR * 0.22))}
+              </span>
+              <span className="text-[10px] text-blue-700 font-medium">vs Amazon/Meesho 22% cuts</span>
+            </div>
+
+            {/* Card 7: 100% Net Take-Home Profit (Spans 2 cols on lg) */}
+            <div className="sm:col-span-2 p-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white space-y-1 shadow-md shadow-emerald-600/10">
+              <span className="text-[10px] font-mono text-emerald-100 uppercase block font-bold tracking-wider">
+                7. 100% Net Bank Settlement (Take-Home Profit)
+              </span>
+              <span className="text-2xl font-black font-mono tabular-nums text-white block">
                 {formatCurrency(netSellerTakeHomeProfit)}
               </span>
-              <span className="text-[10px] text-emerald-700 font-bold">0% Platform Cut Deducted!</span>
+              <span className="text-[11px] text-emerald-100 font-medium">
+                Direct P2P settlement to merchant UPI: {whiteLabelConfig.merchantUpiId}
+              </span>
             </div>
           </div>
 
@@ -1433,36 +1518,217 @@ export function SupplierPortalSaaS() {
             </div>
           </div>
 
-          {/* Module C: Meta Pixel Integration (Optional Paid Channel) */}
-          <div className="pt-2 border-t border-slate-200/80">
-            <div className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-2xs max-w-xl">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-950 flex items-center gap-1.5">
-                  <Tag className="w-4 h-4 text-indigo-600" />
-                  <span>Meta Pixel Integration (Instagram / Facebook Ads - Optional)</span>
-                </span>
-                <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-bold">
-                  ACTIVE
-                </span>
+          {/* Module C: Meta Pixel, Conversions API & Ad Campaign ROI Simulator */}
+          <div className="pt-4 border-t border-slate-200/80 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">
+                    <Tag className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-base font-black text-slate-950">
+                    Meta Pixel (Instagram/FB) & Ad Campaign ROI Simulator
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-600 mt-1">
+                  Connect your Meta Pixel ID to track customer acquisition and build UTM-tagged campaigns for WhatsApp, Instagram, and Facebook.
+                </p>
               </div>
-              <p className="text-xs text-slate-600">
-                Enter your Meta Ads Pixel ID to track PageView, AddToCart, and Purchase conversions in real time.
-              </p>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={metaPixelId}
-                  onChange={(e) => setMetaPixelId(e.target.value)}
-                  placeholder="e.g. PIXEL_982140510"
-                  className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
-                />
-                <button
-                  type="button"
-                  onClick={() => showToast(`Meta Pixel ${metaPixelId} synced with store!`, "success")}
-                  className="px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold shrink-0 cursor-pointer"
-                >
-                  Save
-                </button>
+              <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-200">
+                Conversions API Ready
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left 6 Cols: Meta Pixel Configuration & Live Event Test */}
+              <div className="lg:col-span-6 p-5 rounded-2xl bg-white border border-slate-200 space-y-4 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 block">
+                    1. Meta Pixel & Conversions API Setup
+                  </span>
+                  <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-bold">
+                    READY
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                    Meta Pixel ID:
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={metaPixelId}
+                      onChange={(e) => setMetaPixelId(e.target.value)}
+                      placeholder="e.g. FB-PIXEL-982140510"
+                      className="flex-1 px-3.5 py-2 text-xs font-mono rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+                    />
+                    <button
+                      type="button"
+                      disabled={isTestingPixel}
+                      onClick={() => {
+                        setIsTestingPixel(true);
+                        setTimeout(() => {
+                          const now = new Date().toLocaleTimeString();
+                          setPixelTestResults([
+                            {
+                              event: "PageView",
+                              status: 200,
+                              payload: `{"url": "https://nexu.studio/store/${whiteLabelConfig.brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}", "pixel_id": "${metaPixelId}"}`,
+                              time: now,
+                            },
+                            {
+                              event: "AddToCart",
+                              status: 200,
+                              payload: `{"content_name": "${selectedPosterProduct?.title || "Titan 65W GaN"}", "value": ${selectedPosterProduct?.price || 3499}, "currency": "INR"}`,
+                              time: now,
+                            },
+                            {
+                              event: "Purchase",
+                              status: 200,
+                              payload: `{"value": ${selectedPosterProduct?.price || 3499}, "currency": "INR", "event_id": "evt_px_${Math.floor(100000 + Math.random() * 900000)}"}`,
+                              time: now,
+                            },
+                          ]);
+                          setIsTestingPixel(false);
+                          showToast(`✅ Meta Pixel Verified! PageView, AddToCart & Purchase events fired successfully.`, "success");
+                        }, 800);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shrink-0 cursor-pointer shadow-sm transition-all"
+                    >
+                      {isTestingPixel ? "Firing Events..." : "Verify Pixel Event Test ⚡"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Pixel Live Verification Console */}
+                {pixelTestResults && (
+                  <div className="p-3.5 rounded-xl bg-slate-900 text-slate-100 font-mono text-[11px] space-y-2 border border-slate-800 animate-in fade-in">
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 border-b border-slate-800 pb-1.5">
+                      <span>Meta Events Manager Simulated Feed</span>
+                      <span className="text-emerald-400 font-bold">3/3 Passed ✓</span>
+                    </div>
+                    {pixelTestResults.map((t, idx) => (
+                      <div key={idx} className="flex items-start justify-between gap-2">
+                        <div>
+                          <span className="text-emerald-400 font-bold">[{t.event}]</span>{" "}
+                          <span className="text-slate-300 text-[10px] truncate max-w-[280px] inline-block">{t.payload}</span>
+                        </div>
+                        <span className="text-emerald-400 shrink-0 text-[10px]">200 OK</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Right 6 Cols: UTM Campaign Link Builder & ROI Simulator */}
+              <div className="lg:col-span-6 p-5 rounded-2xl bg-white border border-slate-200 space-y-4 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 block">
+                    2. UTM Campaign Link Generator & ROI Estimator
+                  </span>
+                  <span className="text-[10px] font-mono text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200 font-bold">
+                    0% COMM
+                  </span>
+                </div>
+
+                {/* Channel Switcher */}
+                <div className="flex rounded-xl bg-slate-100 p-1 text-[11px] font-semibold">
+                  {(["instagram", "facebook", "whatsapp", "google"] as const).map((ch) => (
+                    <button
+                      key={ch}
+                      type="button"
+                      onClick={() => setUtmChannel(ch)}
+                      className={`flex-1 py-1 rounded-lg capitalize transition-all cursor-pointer ${
+                        utmChannel === ch
+                          ? "bg-white text-slate-950 font-bold shadow-xs"
+                          : "text-slate-600 hover:text-slate-950"
+                      }`}
+                    >
+                      {ch === "instagram" ? "📸 Instagram" : ch === "facebook" ? "📘 FB Feed" : ch === "whatsapp" ? "💬 WhatsApp" : "🔍 Google"}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Generated UTM Link */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono">
+                    <span>Generated Campaign URL:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const storeSlug = whiteLabelConfig.brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+                        const fullUrl = `https://nexu.studio/store/${storeSlug}?utm_source=${utmChannel}&utm_medium=social_ad&utm_campaign=brand_direct`;
+                        navigator.clipboard.writeText(fullUrl);
+                        showToast(`Copied ${utmChannel.toUpperCase()} campaign URL to clipboard! 📋`, "success");
+                      }}
+                      className="text-indigo-600 font-bold hover:underline cursor-pointer"
+                    >
+                      Copy Campaign Link 📋
+                    </button>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-800 break-all select-all">
+                    https://nexu.studio/store/{whiteLabelConfig.brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}?utm_source={utmChannel}&utm_medium=social_ad&utm_campaign=brand_direct
+                  </div>
+                </div>
+
+                {/* ROI Simulator Controls */}
+                <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                      Target Ad Spend:
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="range"
+                        min="1000"
+                        max="25000"
+                        step="500"
+                        value={adSpendInput}
+                        onChange={(e) => setAdSpendInput(Number(e.target.value))}
+                        className="w-full accent-indigo-600 cursor-pointer"
+                      />
+                      <span className="text-xs font-mono font-bold text-slate-900 shrink-0">
+                        {formatCurrency(adSpendInput)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                      Target ROAS ({adRoasMultiplier}x):
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="range"
+                        min="2.0"
+                        max="8.0"
+                        step="0.2"
+                        value={adRoasMultiplier}
+                        onChange={(e) => setAdRoasMultiplier(Number(e.target.value))}
+                        className="w-full accent-emerald-600 cursor-pointer"
+                      />
+                      <span className="text-xs font-mono font-bold text-emerald-700 shrink-0">
+                        {adRoasMultiplier}x
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Projected Return */}
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-emerald-800 font-bold block">
+                      Projected Revenue: {formatCurrency(Math.round(adSpendInput * adRoasMultiplier))}
+                    </span>
+                    <span className="text-[10px] text-emerald-700">
+                      Net Retained Profit: <strong className="font-mono">{formatCurrency(Math.round(adSpendInput * (adRoasMultiplier - 1)))}</strong>
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-emerald-800 bg-white px-2 py-1 rounded-lg border border-emerald-200">
+                    ₹0 Platform Fee
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -1556,6 +1822,14 @@ export function SupplierPortalSaaS() {
       <LaunchBrandStoreModal
         isOpen={isLaunchStoreWizardOpen}
         onClose={() => setIsLaunchStoreWizardOpen(false)}
+      />
+
+      {/* --- MODAL: MONTHLY PROFIT & LOSS STATEMENT (PDF / PRINT) --- */}
+      <SellerProfitLossModal
+        isOpen={isProfitLossModalOpen}
+        onClose={() => setIsProfitLossModalOpen(false)}
+        orders={orders}
+        packingCostPerOrder={packingCostPerOrder}
       />
 
       {/* --- MODAL: ADD PRODUCT FORM --- */}

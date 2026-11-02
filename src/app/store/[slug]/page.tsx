@@ -25,7 +25,7 @@ import { formatCurrency } from "@/lib/formatters";
 export default function BrandedStorefrontPage() {
   const params = useParams();
   const slug = (params?.slug as string) || "jaipur-heritage-handlooms";
-  const { products, addToCart, showToast } = useStore();
+  const { products, addToCart, showToast, formatPrice } = useStore();
 
   const [sellerStore, setSellerStore] = useState<SellerBrandStore | null>(null);
   const [loading, setLoading] = useState(true);
@@ -178,6 +178,10 @@ export default function BrandedStorefrontPage() {
                   <img
                     src={p.images[0]}
                     alt={p.title}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80";
+                    }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-slate-950/75 backdrop-blur-md text-[10px] font-mono font-bold text-white">
@@ -198,10 +202,10 @@ export default function BrandedStorefrontPage() {
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                 <div>
                   <span className="text-xs line-through text-slate-400 block font-mono">
-                    {formatCurrency(p.mrpPrice)}
+                    {formatPrice(p.mrpPrice)}
                   </span>
                   <span className="text-base font-black font-mono text-slate-950 block">
-                    {formatCurrency(p.price)}
+                    {formatPrice(p.price)}
                   </span>
                 </div>
 
