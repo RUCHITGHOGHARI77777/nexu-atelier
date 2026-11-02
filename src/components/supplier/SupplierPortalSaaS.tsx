@@ -28,9 +28,23 @@ import {
   Layers,
   Barcode,
   Briefcase,
+  Download,
+  Share2,
+  Tag,
+  Zap,
+  Phone,
+  MessageSquare,
+  QrCode,
+  DollarSign,
+  Calculator,
+  Store,
+  ExternalLink,
 } from "lucide-react";
 import { useStore, StoreProduct, StoreOrder } from "@/context/StoreContext";
 import { formatCurrency, formatDateTime } from "@/lib/formatters";
+import { BrandedPackagingSlipModal } from "./BrandedPackagingSlipModal";
+import { DispatchOrderModal } from "./DispatchOrderModal";
+import { LaunchBrandStoreModal } from "../seller/LaunchBrandStoreModal";
 
 // Quick Preset Samples for instant 1-click product creation
 const QUICK_PRODUCT_PRESETS = [
@@ -86,22 +100,35 @@ export function SupplierPortalSaaS() {
     products,
     orders,
     b2bQuotes,
+    whiteLabelConfig,
     updateB2BQuoteStatus,
     addProduct,
     updateProductStock,
     updateProductPrice,
     toggleProductStatus,
-    markOrderDispatched,
+    acceptSellerOrder,
+    rejectSellerOrder,
+    markSellerOrderDelivered,
     generateShippingManifest,
     showToast,
   } = store;
 
-  // Filter & Search states
-  const [productSearch, setProductSearch] = useState("");
-  const [orderFilter, setOrderFilter] = useState<"ALL" | "PENDING" | "DISPATCHED" | "DELIVERED">("ALL");
+  // Active top navigation tab
+  const [activeTab, setActiveTab] = useState<
+    "fulfillment" | "inventory" | "financials" | "marketing" | "b2b"
+  >("fulfillment");
 
-  // Modal states
+  // Order fulfillment sub-tab
+  const [fulfillmentSubTab, setFulfillmentSubTab] = useState<"pending" | "ready_to_ship" | "delivered">("pending");
+
+  // Search & Filter states
+  const [productSearch, setProductSearch] = useState("");
+
+  // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isLaunchStoreWizardOpen, setIsLaunchStoreWizardOpen] = useState(false);
+  const [packagingSlipOrder, setPackagingSlipOrder] = useState<StoreOrder | null>(null);
+  const [dispatchModalOrder, setDispatchModalOrder] = useState<StoreOrder | null>(null);
   const [manifestModalOrder, setManifestModalOrder] = useState<StoreOrder | null>(null);
 
   // New Product Form fields
@@ -119,10 +146,13 @@ export function SupplierPortalSaaS() {
     "Enterprise precision crafted drop. Guaranteed authentic and inspected for quality."
   );
 
-  // Current supplier focus (Apex Electronics & Multi-Vendor Seller Hub)
-  const currentSupplierName = "Apex Electronics Hub & Partner Studios";
+  // Seller packaging cost estimate per order for net profit calculation
+  const [packingCostPerOrder, setPackingCostPerOrder] = useState<number>(120);
 
-  // Calculate Supplier KPIs
+  // Meta Pixel ID local state
+  const [metaPixelId, setMetaPixelId] = useState<string>("PIXEL_982140510");
+
+  // Dynamic calculations
   const totalInventoryValue = useMemo(() => {
     return products.reduce((acc, p) => acc + p.price * p.stock, 0);
   }, [products]);
@@ -131,29 +161,40 @@ export function SupplierPortalSaaS() {
     return products.filter((p) => p.stock > 0).length;
   }, [products]);
 
-  const pendingDispatchOrders = useMemo(() => {
-    return orders.filter((o) => (o.deliveryStage || 1) <= 2);
-  }, [orders]);
-
-  const totalGrossOrderSales = useMemo(() => {
+  const grossSalesINR = useMemo(() => {
     return orders.reduce((acc, o) => acc + o.total, 0);
   }, [orders]);
 
-  // Net payout balance (Gross sales minus 10% platform marketplace commission)
-  const netPayoutBalance = useMemo(() => {
-    return Math.round(totalGrossOrderSales * 0.9);
-  }, [totalGrossOrderSales]);
+  // Zero commission platform: 100% net take-home (minus packaging expense entered by seller)
+  const totalPackingExpenses = useMemo(() => {
+    return orders.length * packingCostPerOrder;
+  }, [orders, packingCostPerOrder]);
 
-  // Filtered orders for table
-  const filteredOrders = useMemo(() => {
-    return orders.filter((o) => {
-      const stage = o.deliveryStage || 1;
-      if (orderFilter === "PENDING") return stage <= 2;
-      if (orderFilter === "DISPATCHED") return stage === 3 || stage === 4;
-      if (orderFilter === "DELIVERED") return stage === 5;
-      return true;
-    });
-  }, [orders, orderFilter]);
+  const netSellerTakeHomeProfit = useMemo(() => {
+    return Math.max(0, grossSalesINR - totalPackingExpenses);
+  }, [grossSalesINR, totalPackingExpenses]);
+
+  // Tax calculations
+  const totalTaxCollected = useMemo(() => {
+    return orders.reduce((acc, o) => acc + (o.taxAmount || Math.round((o.total * 18) / 118)), 0);
+  }, [orders]);
+
+  const cgstCollected = Math.round(totalTaxCollected / 2);
+  const sgstCollected = totalTaxCollected - cgstCollected;
+  const tcs1PercentEstimate = Math.round(grossSalesINR * 0.01);
+
+  // Group orders for the 3-step fulfillment workflow
+  const pendingOrders = useMemo(() => {
+    return orders.filter((o) => (o.deliveryStage || 1) <= 1 && o.deliveryStage !== 0);
+  }, [orders]);
+
+  const readyToShipOrders = useMemo(() => {
+    return orders.filter((o) => o.deliveryStage === 2);
+  }, [orders]);
+
+  const outForDeliveryAndDeliveredOrders = useMemo(() => {
+    return orders.filter((o) => (o.deliveryStage || 1) >= 3);
+  }, [orders]);
 
   // Filtered products for stock manager
   const filteredProducts = useMemo(() => {
@@ -204,98 +245,226 @@ export function SupplierPortalSaaS() {
       images: [newImageUrl.trim()],
       supplier: {
         id: "sup_apex",
-        name: "Apex Electronics Hub",
-        location: "Bangalore, KA",
-        rating: 4.96,
-        fulfillmentRate: "99.8%",
+        name: whiteLabelConfig.brandName,
+        location: "Jaipur / Bangalore Artisan Hub",
+        rating: 4.98,
+        fulfillmentRate: "100%",
         verified: true,
       },
       specs: {
         "Supplier SKU": `APEX-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        "Quality Inspection": "100% Passed Escrow Verification",
-        "Dispatched From": "Whitefield Central Hub, Bangalore",
+        "Quality Inspection": "100% Passed Direct Seller Verification",
+        "Dispatched From": "Verified Artisan Warehouse Hub",
       },
       reviews: [
         {
           id: `rev_${Date.now()}`,
-          author: "Corporate Buyer",
+          author: "Verified Patron",
           rating: 5,
           date: "Just now",
-          comment: "Initial batch order placed. Impeccable packaging and prompt SLA dispatch.",
+          comment: "Direct from artisan maker. Unmatched quality and rapid delivery.",
           verified: true,
         },
       ],
     });
 
     setIsAddModalOpen(false);
-    // Reset form
     setNewTitle("");
     setNewSubtitle("");
   };
 
+  // Export Real CA & GST CSV File
+  const handleExportCAProfitReport = () => {
+    if (orders.length === 0) {
+      showToast("No orders available to export.", "warning");
+      return;
+    }
+
+    const headers = [
+      "Order ID",
+      "Order Date",
+      "Customer Name",
+      "Customer Phone",
+      "Destination City",
+      "Destination Pincode",
+      "GSTIN",
+      "Invoice Number",
+      "Payment Method",
+      "Bank UTR Ref",
+      "Gross Total (INR)",
+      "Taxable Value (INR)",
+      "CGST 9% (INR)",
+      "SGST 9% (INR)",
+      "IGST 18% (INR)",
+      "Estimated Packing Cost (INR)",
+      "1% TCS Sec 52 (INR)",
+      "Net Seller Profit (INR)",
+      "Fulfillment Status",
+    ];
+
+    const rows = orders.map((o) => {
+      const taxable = Math.round((o.total * 100) / 118);
+      const tax = o.total - taxable;
+      const cgst = Math.round(tax / 2);
+      const sgst = tax - cgst;
+      const tcs = Math.round(o.total * 0.01);
+      const netProfit = o.total - packingCostPerOrder;
+
+      return [
+        `"${o.id}"`,
+        `"${new Date(o.createdAt).toLocaleString("en-IN")}"`,
+        `"${o.customerName}"`,
+        `"${o.customerPhone}"`,
+        `"${o.shippingAddress?.city || "Mumbai"}"`,
+        `"${o.shippingAddress?.pincode || "400001"}"`,
+        `"${whiteLabelConfig.gstinNumber}"`,
+        `"INV-2026-${o.id.slice(-6)}"`,
+        `"DIRECT UPI (0% COMM)"`,
+        `"${o.paymentDetails?.utrNumber || "UPI/2026/894201"}"`,
+        o.total,
+        taxable,
+        cgst,
+        sgst,
+        0,
+        packingCostPerOrder,
+        tcs,
+        netProfit,
+        `"${o.status}"`,
+      ].join(",");
+    });
+
+    const csvContent = [headers.join(","), ...rows].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Monthly_GST_and_CA_Profit_Report_November_2026.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast("📥 Exported Official CA-Ready GST & Profit Report (.CSV)!", "success");
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 text-slate-900 animate-in fade-in duration-300">
-      {/* --- SUPPLIER PORTAL HERO HEADER --- */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-slate-900 animate-in fade-in duration-300">
+      {/* --- SELLER DASHBOARD HERO HEADER --- */}
       <div className="rounded-3xl border border-white/90 ring-1 ring-slate-900/5 bg-white/80 backdrop-blur-2xl shadow-[0_15px_45px_rgba(15,23,42,0.04)] p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-mono font-bold uppercase tracking-wider">
-              B2B SUPPLIER & SELLER HUB
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-mono font-bold uppercase tracking-wider">
+              0% COMMISSION INDIAN SELLER DASHBOARD
             </span>
             <span className="flex items-center gap-1 text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
               <ShieldCheck className="w-3 h-3 text-emerald-600" />
-              <span>Verified Enterprise Maker</span>
+              <span>Verified Brand Store</span>
+            </span>
+            <span className="text-[11px] text-indigo-700 font-mono font-bold bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
+              Direct UPI: {whiteLabelConfig.merchantUpiId}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight flex items-center gap-2.5">
-            <span>{currentSupplierName}</span>
+
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight flex items-center gap-2.5">
+            <span>{whiteLabelConfig.brandName}</span>
           </h1>
+
           <p className="text-xs text-slate-500 font-mono">
-            Supplier Code: <strong className="text-slate-800">SUP-APEX-8942</strong> • SLA Fulfillment Rate:{" "}
-            <strong className="text-emerald-700">99.8% On-Time</strong> • Blue Dart Express Priority Partner
+            GSTIN: <strong className="text-slate-800">{whiteLabelConfig.gstinNumber}</strong> • Escrow Rate:{" "}
+            <strong className="text-emerald-700">0% Commission (100% Profit to You)</strong> • P2P Bank Settlement
           </p>
         </div>
 
-        {/* Header Actions */}
-        <div className="flex items-center gap-3">
+        {/* Top Actions */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setIsLaunchStoreWizardOpen(true)}
+            className="px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Launch Another Brand Store (60s)</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="px-5 py-3 rounded-2xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
+            className="px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-md transition-all active:scale-98 cursor-pointer"
           >
             <Plus className="w-4 h-4 text-emerald-400" />
-            <span>Add New Product to Storefront</span>
+            <span>+ Add Product to Store</span>
           </button>
         </div>
       </div>
 
-      {/* --- 4 SUPPLIER KPI CARDS (LIQUID WHITE GLASS) --- */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* KPI 1: Total Inventory Value */}
-        <div className="rounded-2xl border border-white/90 ring-1 ring-slate-900/5 bg-white/75 backdrop-blur-2xl p-5 shadow-[0_8px_30px_rgb(15,23,42,0.04)] space-y-2 hover:shadow-[0_20px_50px_rgb(37,99,235,0.08)] hover:-translate-y-1 transition-all duration-300 ease-out">
+      {/* --- 4 LIVE METRIC SUMMARY CARDS --- */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* KPI 1: Gross Sales */}
+        <div className="rounded-2xl border border-white/90 ring-1 ring-slate-900/5 bg-white/75 backdrop-blur-2xl p-5 shadow-[0_8px_30px_rgb(15,23,42,0.04)] space-y-2 hover:shadow-md transition-all">
           <div className="flex items-center justify-between text-xs text-slate-500 font-mono">
-            <span>Total Inventory Value</span>
-            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
+            <span>Gross Sales (GMV)</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
               <IndianRupee className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline justify-between">
             <span className="text-2xl font-black text-slate-950 font-mono tracking-tight">
-              {formatCurrency(totalInventoryValue)}
+              {formatCurrency(grossSalesINR)}
             </span>
             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-              In Stock
+              {orders.length} Orders
             </span>
           </div>
           <p className="text-[11px] text-slate-500">
-            Valuation calculated across {products.length} catalog items
+            Total sales volume captured directly
           </p>
         </div>
 
-        {/* KPI 2: Active Products */}
-        <div className="rounded-2xl border border-white/90 ring-1 ring-slate-900/5 bg-white/75 backdrop-blur-2xl p-5 shadow-[0_8px_30px_rgb(15,23,42,0.04)] space-y-2 hover:shadow-[0_20px_50px_rgb(37,99,235,0.08)] hover:-translate-y-1 transition-all duration-300 ease-out">
+        {/* KPI 2: 100% Net Take-Home Bank Profit */}
+        <div className="rounded-2xl border border-white/90 ring-1 ring-slate-900/5 bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-5 shadow-lg shadow-emerald-500/15 space-y-2">
+          <div className="flex items-center justify-between text-xs text-emerald-100 font-mono">
+            <span className="font-bold">100% Net Bank Profit</span>
+            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-black font-mono tracking-tight text-white">
+              {formatCurrency(netSellerTakeHomeProfit)}
+            </span>
+            <span className="text-[10px] font-bold bg-white text-emerald-800 px-2 py-0.5 rounded-full">
+              0% Fee
+            </span>
+          </div>
+          <p className="text-[11px] text-emerald-100">
+            ₹0 lost to Amazon/Flipkart/Meesho commissions
+          </p>
+        </div>
+
+        {/* KPI 3: Actionable Pending Orders */}
+        <div className="rounded-2xl border border-white/90 ring-1 ring-slate-900/5 bg-white/75 backdrop-blur-2xl p-5 shadow-[0_8px_30px_rgb(15,23,42,0.04)] space-y-2 hover:shadow-md transition-all">
           <div className="flex items-center justify-between text-xs text-slate-500 font-mono">
-            <span>Active Listings</span>
+            <span>Pending Dispatch</span>
+            <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-700">
+              <Truck className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-black text-amber-600 font-mono tracking-tight">
+              {pendingOrders.length + readyToShipOrders.length}
+            </span>
+            <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+              Action Required
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            {pendingOrders.length} Pending • {readyToShipOrders.length} Ready to Ship
+          </p>
+        </div>
+
+        {/* KPI 4: Active Listings */}
+        <div className="rounded-2xl border border-white/90 ring-1 ring-slate-900/5 bg-white/75 backdrop-blur-2xl p-5 shadow-[0_8px_30px_rgb(15,23,42,0.04)] space-y-2 hover:shadow-md transition-all">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-mono">
+            <span>Active Catalog Items</span>
             <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-700">
               <Boxes className="w-4 h-4" />
             </div>
@@ -305,523 +474,482 @@ export function SupplierPortalSaaS() {
               {activeProductsCount} <span className="text-xs font-normal text-slate-500">/ {products.length}</span>
             </span>
             <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
-              Live on Store
+              Live
             </span>
           </div>
           <p className="text-[11px] text-slate-500">
-            {products.length - activeProductsCount} items marked Out-of-Stock
-          </p>
-        </div>
-
-        {/* KPI 3: Pending Dispatch Orders */}
-        <div className="rounded-2xl border border-white/90 ring-1 ring-slate-900/5 bg-white/75 backdrop-blur-2xl p-5 shadow-[0_8px_30px_rgb(15,23,42,0.04)] space-y-2 hover:shadow-[0_20px_50px_rgb(37,99,235,0.08)] hover:-translate-y-1 transition-all duration-300 ease-out">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-mono">
-            <span>Pending Dispatch</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-700">
-              <Truck className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-black text-amber-600 font-mono tracking-tight">
-              {pendingDispatchOrders.length}
-            </span>
-            <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-              Requires Action
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-500">
-            Orders awaiting courier packing & dispatch
-          </p>
-        </div>
-
-        {/* KPI 4: Net Available Payout Balance */}
-        <div className="rounded-2xl border border-white/90 ring-1 ring-slate-900/5 bg-white/75 backdrop-blur-2xl p-5 shadow-[0_8px_30px_rgb(15,23,42,0.04)] space-y-2 hover:shadow-[0_20px_50px_rgb(37,99,235,0.08)] hover:-translate-y-1 transition-all duration-300 ease-out">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-mono">
-            <span>Net Payout Balance</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-700">
-              <TrendingUp className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-black text-emerald-700 font-mono tracking-tight">
-              {formatCurrency(netPayoutBalance)}
-            </span>
-            <button
-              type="button"
-              onClick={() => showToast("Escrow payout settlement requested to HDFC Bank A/c ending in 4921", "success")}
-              className="text-[10px] font-bold text-slate-900 bg-white hover:bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs transition-colors"
-            >
-              Withdraw
-            </button>
-          </div>
-          <p className="text-[11px] text-slate-500">
-            90% net studio share (10% platform fee deducted)
+            Total Inventory Value: {formatCurrency(totalInventoryValue)}
           </p>
         </div>
       </div>
 
-      {/* --- ORDER FULFILLMENT QUEUE & MANIFEST GENERATION --- */}
-      <div className="rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-[0_15px_45px_rgba(0,0,0,0.04)] p-6 sm:p-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-          <div>
-            <div className="flex items-center gap-2">
-              <Package className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-lg font-extrabold text-slate-950">
-                Order Fulfillment Queue & Logistics Dispatch
-              </h2>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Review placed orders, generate Blue Dart AWB manifests, and advance fulfillment stages.
-            </p>
-          </div>
+      {/* --- 5-TAB SELLER NAVIGATION BAR --- */}
+      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/80 border border-slate-200/80 shadow-xs overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setActiveTab("fulfillment")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+            activeTab === "fulfillment"
+              ? "bg-slate-950 text-white shadow-sm"
+              : "text-slate-600 hover:text-slate-950 hover:bg-slate-100"
+          }`}
+        >
+          <Package className="w-3.5 h-3.5" />
+          <span>1. Order Fulfillment Pipeline ({orders.length})</span>
+        </button>
 
-          {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100/90 border border-slate-200 text-xs font-semibold">
-            {(["ALL", "PENDING", "DISPATCHED", "DELIVERED"] as const).map((filter) => (
+        <button
+          type="button"
+          onClick={() => setActiveTab("inventory")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+            activeTab === "inventory"
+              ? "bg-slate-950 text-white shadow-sm"
+              : "text-slate-600 hover:text-slate-950 hover:bg-slate-100"
+          }`}
+        >
+          <Boxes className="w-3.5 h-3.5" />
+          <span>2. Stock & Pricing Manager</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("financials")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+            activeTab === "financials"
+              ? "bg-slate-950 text-white shadow-sm"
+              : "text-slate-600 hover:text-slate-950 hover:bg-slate-100"
+          }`}
+        >
+          <Calculator className="w-3.5 h-3.5 text-emerald-500" />
+          <span>3. GST, TDS & CA Reports</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("marketing")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+            activeTab === "marketing"
+              ? "bg-slate-950 text-white shadow-sm"
+              : "text-slate-600 hover:text-slate-950 hover:bg-slate-100"
+          }`}
+        >
+          <Share2 className="w-3.5 h-3.5 text-indigo-500" />
+          <span>4. Meta Ads & WhatsApp Hub</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("b2b")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+            activeTab === "b2b"
+              ? "bg-slate-950 text-white shadow-sm"
+              : "text-slate-600 hover:text-slate-950 hover:bg-slate-100"
+          }`}
+        >
+          <Briefcase className="w-3.5 h-3.5" />
+          <span>5. B2B Wholesale Leads ({b2bQuotes.length})</span>
+        </button>
+      </div>
+
+      {/* --- TAB CONTENT 1: FULL SELLER ORDER FULFILLMENT WORKFLOW --- */}
+      {activeTab === "fulfillment" && (
+        <div className="space-y-6">
+          {/* Sub-tab Navigation */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+            <div>
+              <h2 className="text-lg font-black text-slate-950 flex items-center gap-2">
+                <Truck className="w-5 h-5 text-indigo-600" />
+                <span>Kanban Order Fulfillment Engine</span>
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Complete workflow from Pending Customer Order $\to$ Accept $\to$ Pack & Print Label $\to$ Direct Dispatch.
+              </p>
+            </div>
+
+            {/* Stepper Sub-tabs */}
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold">
               <button
-                key={filter}
                 type="button"
-                onClick={() => setOrderFilter(filter)}
-                className={`px-3 py-1.5 rounded-lg text-xs transition-all ${
-                  orderFilter === filter
+                onClick={() => setFulfillmentSubTab("pending")}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  fulfillmentSubTab === "pending"
                     ? "bg-white text-slate-950 font-bold shadow-xs"
                     : "text-slate-600 hover:text-slate-950"
                 }`}
               >
-                {filter === "ALL"
-                  ? "All Orders"
-                  : filter === "PENDING"
-                  ? "Pending Dispatch"
-                  : filter === "DISPATCHED"
-                  ? "In Transit"
-                  : "Delivered"}
+                🕒 Pending Orders ({pendingOrders.length})
               </button>
-            ))}
-          </div>
-        </div>
 
-        {/* Order Queue Table */}
-        {filteredOrders.length === 0 ? (
-          <div className="py-16 text-center space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
-              <Package className="w-6 h-6" />
+              <button
+                type="button"
+                onClick={() => setFulfillmentSubTab("ready_to_ship")}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  fulfillmentSubTab === "ready_to_ship"
+                    ? "bg-white text-slate-950 font-bold shadow-xs"
+                    : "text-slate-600 hover:text-slate-950"
+                }`}
+              >
+                📦 Ready to Ship ({readyToShipOrders.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFulfillmentSubTab("delivered")}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  fulfillmentSubTab === "delivered"
+                    ? "bg-white text-slate-950 font-bold shadow-xs"
+                    : "text-slate-600 hover:text-slate-950"
+                }`}
+              >
+                🚀 Out for Delivery & Delivered ({outForDeliveryAndDeliveredOrders.length})
+              </button>
             </div>
-            <h3 className="text-sm font-bold text-slate-950">No orders matching filter</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              Orders placed by customers in the checkout simulator will appear here live.
-            </p>
           </div>
-        ) : (
+
+          {/* Sub-tab 1: PENDING ORDERS */}
+          {fulfillmentSubTab === "pending" && (
+            <div className="rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-sm p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                  Step 1: Pending Seller Review ({pendingOrders.length})
+                </span>
+                <span className="text-[11px] text-slate-500 font-mono">
+                  Accept order to reserve inventory and begin packing
+                </span>
+              </div>
+
+              {pendingOrders.length === 0 ? (
+                <div className="py-12 text-center space-y-2">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+                  <p className="text-xs font-bold text-slate-950">No pending orders waiting for review!</p>
+                  <p className="text-[11px] text-slate-500">All customer orders have been accepted.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {pendingOrders.map((ord) => (
+                    <div
+                      key={ord.id}
+                      className="p-4 rounded-2xl border border-slate-200 bg-white shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-slate-300 transition-all"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-extrabold text-slate-950 text-sm">
+                            {ord.id}
+                          </span>
+                          <span className="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            DIRECT UPI PAID
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-700">
+                          Customer: <strong className="text-slate-950">{ord.customerName}</strong> ({ord.customerPhone}) • Destination: {ord.shippingAddress?.city}, {ord.shippingAddress?.state} ({ord.shippingAddress?.pincode})
+                        </p>
+                        <p className="text-[11px] text-slate-500 font-mono">
+                          Pieces: {ord.items.map((i) => `${i.product.title} (x${i.quantity})`).join(", ")}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="text-right font-mono pr-2">
+                          <span className="text-[10px] text-slate-400 block uppercase">Order Value</span>
+                          <span className="text-base font-black text-slate-950">{formatCurrency(ord.total)}</span>
+                        </div>
+
+                        {/* Accept Button */}
+                        <button
+                          type="button"
+                          onClick={() => acceptSellerOrder(ord.id)}
+                          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 shadow-xs active:scale-98 cursor-pointer transition-colors"
+                        >
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          <span>Accept Order</span>
+                        </button>
+
+                        {/* Reject Button */}
+                        <button
+                          type="button"
+                          onClick={() => rejectSellerOrder(ord.id)}
+                          className="px-3 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold active:scale-98 cursor-pointer transition-colors"
+                        >
+                          <span>Reject</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sub-tab 2: READY TO SHIP */}
+          {fulfillmentSubTab === "ready_to_ship" && (
+            <div className="rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-sm p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono font-bold text-indigo-700 uppercase tracking-wider bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200">
+                  Step 2: Packaged & Ready for Dispatch ({readyToShipOrders.length})
+                </span>
+                <span className="text-[11px] text-slate-500 font-mono">
+                  Print official packaging slips with your brand logo & dispatch via self or courier
+                </span>
+              </div>
+
+              {readyToShipOrders.length === 0 ? (
+                <div className="py-12 text-center space-y-2">
+                  <Package className="w-8 h-8 text-slate-400 mx-auto" />
+                  <p className="text-xs font-bold text-slate-950">No orders awaiting dispatch.</p>
+                  <p className="text-[11px] text-slate-500">Accept pending orders to bring them to this packaging stage.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {readyToShipOrders.map((ord) => (
+                    <div
+                      key={ord.id}
+                      className="p-4 rounded-2xl border border-slate-200 bg-white shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-slate-300 transition-all"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-extrabold text-slate-950 text-sm">
+                            {ord.id}
+                          </span>
+                          <span className="text-[10px] font-mono text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
+                            PACKED & LABELED
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-700">
+                          Consignee: <strong className="text-slate-950">{ord.customerName}</strong> • {ord.shippingAddress?.street}, {ord.shippingAddress?.city}
+                        </p>
+                        <p className="text-[11px] text-slate-500 font-mono">
+                          UTR Ref: {ord.paymentDetails?.utrNumber || "UPI/2026/894201"} • Net Value: {formatCurrency(ord.total)}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 shrink-0">
+                        {/* Print Packaging Slip Button */}
+                        <button
+                          type="button"
+                          onClick={() => setPackagingSlipOrder(ord)}
+                          className="px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
+                        >
+                          <Printer className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Print Slip & GST Label</span>
+                        </button>
+
+                        {/* Dispatch Button */}
+                        <button
+                          type="button"
+                          onClick={() => setDispatchModalOrder(ord)}
+                          className="px-4 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-98 cursor-pointer transition-colors"
+                        >
+                          <Truck className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Dispatch via Self / Courier 🚚</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sub-tab 3: OUT FOR DELIVERY & DELIVERED */}
+          {fulfillmentSubTab === "delivered" && (
+            <div className="rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-sm p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono font-bold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                  Step 3: Live Transit & Doorstep Deliveries ({outForDeliveryAndDeliveredOrders.length})
+                </span>
+                <span className="text-[11px] text-slate-500 font-mono">
+                  Track delivery associate route and request customer 5★ reviews
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {outForDeliveryAndDeliveredOrders.map((ord) => {
+                  const isDelivered = (ord.deliveryStage || 1) === 5;
+
+                  return (
+                    <div
+                      key={ord.id}
+                      className="p-4 rounded-2xl border border-slate-200 bg-white shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-slate-300 transition-all"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-extrabold text-slate-950 text-sm">
+                            {ord.id}
+                          </span>
+                          <span
+                            className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                              isDelivered
+                                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                : "bg-sky-50 text-sky-800 border-sky-200"
+                            }`}
+                          >
+                            {isDelivered ? "DELIVERED ✓" : "OUT FOR DELIVERY / IN TRANSIT"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-700">
+                          Customer: <strong className="text-slate-950">{ord.customerName}</strong> ({ord.shippingAddress?.city}) • Delivery Partner: {ord.courierPartner || "Blue Dart Air Priority"}
+                        </p>
+                        <p className="text-[11px] text-slate-500 font-mono">
+                          AWB: {ord.awbNumber || "BD-89472910IN"} • Total: {formatCurrency(ord.total)}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 shrink-0">
+                        {!isDelivered ? (
+                          <button
+                            type="button"
+                            onClick={() => markSellerOrderDelivered(ord.id)}
+                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-98 cursor-pointer transition-colors"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Mark Delivered & Request 5★ Review ⭐</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(`Hi ${ord.customerName}! Thank you for purchasing from ${whiteLabelConfig.brandName}. Please leave us a 5-star review: https://nexu.studio/store/review/${ord.id}`);
+                              showToast(`Copied 5★ Review WhatsApp link for ${ord.customerName}! ⭐️`, "success");
+                            }}
+                            className="px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                          >
+                            <Share2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Send 5★ Review Link</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* --- TAB CONTENT 2: INVENTORY & STOCK MANAGER --- */}
+      {activeTab === "inventory" && (
+        <div className="rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-sm p-6 sm:p-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <Boxes className="w-5 h-5 text-slate-950" />
+                <h2 className="text-lg font-extrabold text-slate-950">
+                  Seller Catalog & Real-Time Stock Control
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Adjust inventory units, tweak prices, and toggle products live on your branded storefront.
+              </p>
+            </div>
+
+            {/* Search Box */}
+            <div className="relative w-full sm:w-72">
+              <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+              <input
+                type="text"
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                placeholder="Search catalog products..."
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
+              />
+            </div>
+          </div>
+
+          {/* Products Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b-2 border-slate-100 text-[10px] font-mono uppercase text-slate-500">
-                  <th className="py-3 px-3">Order ID & Date</th>
-                  <th className="py-3 px-3">Customer & Destination</th>
-                  <th className="py-3 px-3">Itemized Pieces</th>
-                  <th className="py-3 px-3 text-right">Amount</th>
-                  <th className="py-3 px-3 text-center">Fulfillment Stage</th>
-                  <th className="py-3 px-3 text-right">Logistics Actions</th>
+                  <th className="py-3 px-3">Product Listing</th>
+                  <th className="py-3 px-3">Category</th>
+                  <th className="py-3 px-3">Retail Price (INR)</th>
+                  <th className="py-3 px-3 text-center">Stock Quantity</th>
+                  <th className="py-3 px-3 text-center">Stock Status</th>
+                  <th className="py-3 px-3 text-right">Quick Toggle</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
-                {filteredOrders.map((ord) => {
-                  const stage = ord.deliveryStage || 1;
-                  const isDispatched = stage >= 3;
+                {filteredProducts.map((p) => {
+                  const isOutOfStock = p.stock === 0;
 
                   return (
-                    <tr key={ord.id} className="hover:bg-slate-50/70 transition-colors">
-                      {/* Order ID & Date */}
-                      <td className="py-4 px-3 font-mono">
-                        <span className="font-bold text-slate-950 block">{ord.id}</span>
-                        <span className="text-[11px] text-slate-500">
-                          {formatDateTime(ord.createdAt)}
-                        </span>
-                      </td>
-
-                      {/* Customer Info */}
-                      <td className="py-4 px-3">
-                        <span className="font-bold text-slate-950 block">{ord.customerName}</span>
-                        <span className="text-[11px] text-slate-500 block truncate max-w-xs">
-                          {ord.shippingAddress?.city}, {ord.shippingAddress?.state} ({ord.shippingAddress?.pincode})
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-mono">
-                          Ph: {ord.customerPhone}
-                        </span>
-                      </td>
-
-                      {/* Items */}
-                      <td className="py-4 px-3">
-                        <div className="space-y-1 max-w-xs">
-                          {ord.items.map((item, idx) => (
-                            <div key={idx} className="text-slate-800 text-[11px] flex items-center justify-between">
-                              <span className="truncate">{item.product.title}</span>
-                              <span className="font-mono text-slate-500 font-bold ml-2">x{item.quantity}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-
-                      {/* Amount */}
-                      <td className="py-4 px-3 text-right font-mono font-bold text-slate-950">
-                        {formatCurrency(ord.total)}
-                      </td>
-
-                      {/* Fulfillment Stage */}
-                      <td className="py-4 px-3 text-center">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase ${
-                            stage === 5
-                              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                              : stage >= 3
-                              ? "bg-sky-50 text-sky-800 border border-sky-200"
-                              : "bg-amber-50 text-amber-800 border border-amber-200"
-                          }`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              stage === 5
-                                ? "bg-emerald-500"
-                                : stage >= 3
-                                ? "bg-sky-500"
-                                : "bg-amber-500 animate-pulse"
-                            }`}
-                          />
-                          <span>
-                            Stage {stage}/5: {stage === 5 ? "Delivered" : stage >= 3 ? "In Transit" : "Pending Dispatch"}
-                          </span>
-                        </span>
-                      </td>
-
-                      {/* Working Supplier Actions */}
-                      <td className="py-4 px-3 text-right space-x-2">
-                        <button
-                          type="button"
-                          onClick={() => setManifestModalOrder(ord)}
-                          className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
-                        >
-                          Manifest / Label
-                        </button>
-
-                        {!isDispatched ? (
-                          <button
-                            type="button"
-                            onClick={() => markOrderDispatched(ord.id)}
-                            className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-colors active:scale-98 cursor-pointer"
-                          >
-                            Mark as Dispatched ✈️
-                          </button>
-                        ) : (
-                          <span className="text-[11px] font-mono text-emerald-700 font-bold px-2 py-1 bg-emerald-50 rounded-lg">
-                            Consigned ✓
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* --- INVENTORY & STOCK MANAGER TABLE --- */}
-      <div className="rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-[0_15px_45px_rgba(0,0,0,0.04)] p-6 sm:p-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-          <div>
-            <div className="flex items-center gap-2">
-              <Boxes className="w-5 h-5 text-slate-950" />
-              <h2 className="text-lg font-extrabold text-slate-950">
-                Supplier Inventory & Live Stock Manager
-              </h2>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Adjust stock levels, edit retail prices inline, or toggle items in/out of stock. Changes sync to storefront live.
-            </p>
-          </div>
-
-          {/* Search Box */}
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-            <input
-              type="text"
-              value={productSearch}
-              onChange={(e) => setProductSearch(e.target.value)}
-              placeholder="Search catalog products..."
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
-            />
-          </div>
-        </div>
-
-        {/* Products Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b-2 border-slate-100 text-[10px] font-mono uppercase text-slate-500">
-                <th className="py-3 px-3">Product Listing</th>
-                <th className="py-3 px-3">Category</th>
-                <th className="py-3 px-3">Retail Price (INR)</th>
-                <th className="py-3 px-3 text-center">Stock Quantity</th>
-                <th className="py-3 px-3 text-center">Stock Status</th>
-                <th className="py-3 px-3 text-right">Quick Toggle</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
-              {filteredProducts.map((p) => {
-                const isOutOfStock = p.stock === 0;
-
-                return (
-                  <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
-                    {/* Title & Image */}
-                    <td className="py-3.5 px-3">
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
-                          <Image
-                            src={p.images[0] || "/placeholder.jpg"}
-                            alt={p.title}
-                            fill
-                            sizes="48px"
-                            className="object-cover"
-                          />
-                        </div>
-                        <div>
-                          <span className="font-bold text-slate-950 block leading-snug line-clamp-1">
-                            {p.title}
-                          </span>
-                          <span className="text-[11px] text-slate-500 font-mono">
-                            Maker: {p.supplier.name} • MOQ: {p.b2bMinMoq || 1}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Category */}
-                    <td className="py-3.5 px-3">
-                      <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-mono text-[11px] font-medium">
-                        {p.category}
-                      </span>
-                    </td>
-
-                    {/* Price with Inline Quick Editor */}
-                    <td className="py-3.5 px-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono font-bold text-slate-950 text-sm">
-                          {formatCurrency(p.price)}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const promptVal = window.prompt(`Adjust price for "${p.title}" (INR):`, p.price.toString());
-                            if (promptVal) {
-                              const num = parseInt(promptVal, 10);
-                              if (!isNaN(num) && num > 0) updateProductPrice(p.id, num);
-                            }
-                          }}
-                          className="text-[10px] text-indigo-600 hover:text-indigo-800 underline font-mono cursor-pointer"
-                        >
-                          Edit
-                        </button>
-                      </div>
-                    </td>
-
-                    {/* Stock Stepper */}
-                    <td className="py-3.5 px-3 text-center">
-                      <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white overflow-hidden text-xs">
-                        <button
-                          type="button"
-                          onClick={() => updateProductStock(p.id, p.stock - 1)}
-                          className="px-2.5 py-1 text-slate-600 hover:bg-slate-100 font-bold cursor-pointer"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="px-3 font-mono font-bold text-slate-950 min-w-8 text-center">
-                          {p.stock}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => updateProductStock(p.id, p.stock + 1)}
-                          className="px-2.5 py-1 text-slate-600 hover:bg-slate-100 font-bold cursor-pointer"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </td>
-
-                    {/* Status Badge */}
-                    <td className="py-3.5 px-3 text-center">
-                      {isOutOfStock ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                          Out of Stock
-                        </span>
-                      ) : p.stock <= 5 ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                          Low Stock ({p.stock})
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          In Stock ({p.stock})
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Quick In/Out of Stock Toggle */}
-                    <td className="py-3.5 px-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => toggleProductStatus(p.id)}
-                        className={`px-3 py-1 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
-                          isOutOfStock
-                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                            : "bg-slate-100 hover:bg-slate-200 text-slate-700"
-                        }`}
-                      >
-                        {isOutOfStock ? "Restock (+10)" : "Mark Out of Stock"}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* --- B2B WHOLESALE LEADS & PROCUREMENT INQUIRIES --- */}
-      <div className="rounded-3xl border border-white/90 ring-1 ring-slate-900/5 bg-white/90 backdrop-blur-2xl shadow-[0_15px_45px_rgba(15,23,42,0.04)] p-6 sm:p-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200/80 text-blue-700 flex items-center justify-center shrink-0">
-                <Briefcase className="w-4 h-4" />
-              </div>
-              <h2 className="text-lg font-extrabold text-slate-950">
-                B2B Wholesale Leads & Procurement Inquiries
-              </h2>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Direct volume RFQs and customized bulk allocation requests submitted by enterprise clients and studio architects.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 font-mono text-xs font-bold">
-              {b2bQuotes.length} Active Leads
-            </span>
-          </div>
-        </div>
-
-        {b2bQuotes.length === 0 ? (
-          <div className="py-12 text-center space-y-2">
-            <Briefcase className="w-8 h-8 text-slate-300 mx-auto" />
-            <p className="text-xs text-slate-500">No incoming B2B wholesale inquiries yet.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-100 text-[11px] font-mono text-slate-400 uppercase tracking-wider">
-                  <th className="py-3 px-3">Inquiry ID & Buyer</th>
-                  <th className="py-3 px-3">Requested Piece</th>
-                  <th className="py-3 px-3 text-center">Batch Units</th>
-                  <th className="py-3 px-3 text-right">Target Rate</th>
-                  <th className="py-3 px-3 text-right">Consignment Total</th>
-                  <th className="py-3 px-3 text-center">Status</th>
-                  <th className="py-3 px-3 text-right">Wholesale Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {b2bQuotes.map((q) => {
-                  const totalEst = (q.targetPriceINR || 0) * q.quantity;
-                  return (
-                    <tr key={q.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-4 px-3">
-                        <span className="font-mono text-[10px] font-bold text-slate-400 block">{q.id}</span>
-                        <span className="font-bold text-slate-900 block text-xs">{q.companyName}</span>
-                        <span className="text-[11px] text-slate-500 block">{q.buyerName} • {q.buyerPhone}</span>
-                        {q.gstin && (
-                          <span className="text-[10px] font-mono text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded inline-block mt-0.5">
-                            GSTIN: {q.gstin}
-                          </span>
-                        )}
-                      </td>
-
-                      <td className="py-4 px-3">
-                        <div className="flex items-center gap-2.5 max-w-xs">
-                          {q.productImage && (
-                            <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
-                              <Image src={q.productImage} alt={q.productTitle} fill className="object-cover" />
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <span className="font-semibold text-slate-900 block truncate">{q.productTitle}</span>
-                            <span className="text-[10px] text-slate-500 line-clamp-1 italic">{q.requirements}</span>
+                    <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3.5 px-3">
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                            <Image
+                              src={p.images[0] || "/placeholder.jpg"}
+                              alt={p.title}
+                              fill
+                              sizes="48px"
+                              className="object-cover"
+                            />
+                          </div>
+                          <div>
+                            <span className="font-bold text-slate-950 block leading-snug line-clamp-1">
+                              {p.title}
+                            </span>
+                            <span className="text-[11px] text-slate-500 font-mono">
+                              Brand: {whiteLabelConfig.brandName} • MOQ: {p.b2bMinMoq || 1}
+                            </span>
                           </div>
                         </div>
                       </td>
 
-                      <td className="py-4 px-3 text-center font-mono font-bold text-slate-900">
-                        {q.quantity} units
-                      </td>
-
-                      <td className="py-4 px-3 text-right font-mono text-slate-700">
-                        {q.targetPriceINR ? formatCurrency(q.targetPriceINR) : "RFQ"}
-                      </td>
-
-                      <td className="py-4 px-3 text-right font-mono font-bold text-slate-950">
-                        {totalEst > 0 ? formatCurrency(totalEst) : "—"}
-                      </td>
-
-                      <td className="py-4 px-3 text-center">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase ${
-                            q.status === "APPROVED"
-                              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                              : q.status === "REJECTED"
-                              ? "bg-rose-50 text-rose-800 border border-rose-200"
-                              : "bg-amber-50 text-amber-800 border border-amber-200"
-                          }`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              q.status === "APPROVED"
-                                ? "bg-emerald-500"
-                                : q.status === "REJECTED"
-                                ? "bg-rose-500"
-                                : "bg-amber-500 animate-pulse"
-                            }`}
-                          />
-                          <span>{q.status}</span>
+                      <td className="py-3.5 px-3">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-medium bg-slate-100 text-slate-700">
+                          {p.category}
                         </span>
                       </td>
 
-                      <td className="py-4 px-3 text-right space-x-2">
-                        {q.status === "PENDING" ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => updateB2BQuoteStatus(q.id, "APPROVED")}
-                              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
-                            >
-                              Approve Allocation ✓
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => updateB2BQuoteStatus(q.id, "REJECTED")}
-                              className="px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-700 text-xs font-semibold transition-colors cursor-pointer"
-                            >
-                              Decline
-                            </button>
-                          </>
-                        ) : q.status === "APPROVED" ? (
-                          <span className="text-[11px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                            Allocation Locked ✓
+                      <td className="py-3.5 px-3 font-mono font-bold text-slate-950">
+                        {formatCurrency(p.price)}
+                      </td>
+
+                      <td className="py-3.5 px-3 text-center">
+                        <div className="inline-flex items-center gap-1.5 border border-slate-200 rounded-xl bg-white p-1 shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => updateProductStock(p.id, Math.max(0, p.stock - 1))}
+                            className="w-6 h-6 rounded-lg bg-slate-50 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="w-8 text-center font-mono font-bold text-slate-900">
+                            {p.stock}
                           </span>
-                        ) : (
-                          <span className="text-[11px] font-mono font-bold text-slate-400">
-                            Closed
-                          </span>
-                        )}
+                          <button
+                            type="button"
+                            onClick={() => updateProductStock(p.id, p.stock + 1)}
+                            className="w-6 h-6 rounded-lg bg-slate-50 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-3 text-center">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                            !isOutOfStock
+                              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                              : "bg-rose-50 text-rose-800 border border-rose-200"
+                          }`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${!isOutOfStock ? "bg-emerald-500" : "bg-rose-500"}`} />
+                          <span>{!isOutOfStock ? "In Stock" : "Sold Out"}</span>
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 px-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => toggleProductStatus(p.id)}
+                          className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                        >
+                          {isOutOfStock ? "Set Available" : "Mark Out of Stock"}
+                        </button>
                       </td>
                     </tr>
                   );
@@ -829,290 +957,373 @@ export function SupplierPortalSaaS() {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* --- MODAL: ADD NEW PRODUCT --- */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative bg-white/95 backdrop-blur-2xl rounded-3xl border border-white/80 shadow-[0_25px_70px_rgba(0,0,0,0.22)] max-w-2xl w-full overflow-hidden text-slate-900 animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col justify-between">
-            {/* Header */}
-            <div className="p-6 pb-4 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-mono font-bold tracking-widest text-indigo-700 uppercase block">
-                  B2B SELLER ONBOARDING
-                </span>
-                <h3 className="text-base font-extrabold text-slate-950 flex items-center gap-1.5">
-                  <span>Publish New Product to Live Storefront</span>
-                </h3>
+      {/* --- TAB CONTENT 3: FINANCIAL & TAX REPORTS (GST, TDS, TCS & CA EXPORT) --- */}
+      {activeTab === "financials" && (
+        <div className="rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-sm p-6 sm:p-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <Calculator className="w-5 h-5 text-emerald-600" />
+                <h2 className="text-lg font-black text-slate-950">
+                  Financial & Tax Reports (1-Click CA Export)
+                </h2>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Government-compliant tax summaries with 0% platform deductions. Download monthly CSV for GST return filing.
+              </p>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-6 overflow-y-auto space-y-5">
-              {/* 1-Click Quick Preset Chips */}
-              <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-100 space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-900">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>1-Click Evaluator Presets (Auto-fill Demo Data):</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {QUICK_PRODUCT_PRESETS.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleApplyPreset(preset)}
-                      className="text-left p-2.5 rounded-xl bg-white hover:bg-indigo-100/50 border border-indigo-200 text-xs transition-all shadow-2xs cursor-pointer group"
-                    >
-                      <span className="font-bold text-slate-950 block line-clamp-1 group-hover:text-indigo-600">
-                        {preset.title}
-                      </span>
-                      <span className="text-[10px] text-slate-500 font-mono">
-                        {preset.category} • {formatCurrency(preset.price)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+            <button
+              type="button"
+              onClick={handleExportCAProfitReport}
+              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-md cursor-pointer transition-all active:scale-98 shrink-0"
+            >
+              <Download className="w-4 h-4" />
+              <span>📥 Export Complete Monthly CA & GST Report (.CSV)</span>
+            </button>
+          </div>
 
-              {/* Add Product Form */}
-              <form id="new-product-form" onSubmit={handleCreateProductSubmit} className="space-y-4 text-xs">
-                <div>
-                  <label className="font-semibold text-slate-700 block mb-1">
-                    Product Title / Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="e.g. Sony Wireless Studio Monitor Headphones"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white font-medium text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-semibold text-slate-700 block mb-1">
-                    Subtitle / Key Highlight
-                  </label>
-                  <input
-                    type="text"
-                    value={newSubtitle}
-                    onChange={(e) => setNewSubtitle(e.target.value)}
-                    placeholder="e.g. Precision 40mm Titanium Drivers with ANC"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white font-medium text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="font-semibold text-slate-700 block mb-1">
-                      Category *
-                    </label>
-                    <select
-                      value={newCategory}
-                      onChange={(e) => setNewCategory(e.target.value as any)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white font-medium text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950"
-                    >
-                      <option value="Electronics">Electronics</option>
-                      <option value="Fashion & Apparel">Fashion & Apparel</option>
-                      <option value="Home & Kitchen">Home & Kitchen</option>
-                      <option value="B2B Wholesale Packs">B2B Wholesale Packs</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold text-slate-700 block mb-1">
-                      Wholesale MOQ (Units)
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={newMoq}
-                      onChange={(e) => setNewMoq(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white font-mono text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="font-semibold text-slate-700 block mb-1">
-                      Offer Price (INR ₹) *
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min={1}
-                      value={newPrice}
-                      onChange={(e) => setNewPrice(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white font-mono font-bold text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-semibold text-slate-700 block mb-1">
-                      MRP Price (INR ₹)
-                    </label>
-                    <input
-                      type="number"
-                      value={newMrpPrice}
-                      onChange={(e) => setNewMrpPrice(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white font-mono text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-semibold text-slate-700 block mb-1">
-                      Initial Stock Units *
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min={1}
-                      value={newStock}
-                      onChange={(e) => setNewStock(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white font-mono text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="font-semibold text-slate-700 block mb-1">
-                    Product Image URL
-                  </label>
-                  <input
-                    type="url"
-                    value={newImageUrl}
-                    onChange={(e) => setNewImageUrl(e.target.value)}
-                    placeholder="https://images.unsplash.com/..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white font-mono text-[11px] text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950"
-                  />
-                </div>
-              </form>
+          {/* Tax Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-[10px] font-mono text-slate-500 uppercase block font-bold">
+                Taxable Turnover (Exclusive)
+              </span>
+              <span className="text-xl font-black font-mono text-slate-950 block">
+                {formatCurrency(grossSalesINR - totalTaxCollected)}
+              </span>
+              <span className="text-[10px] text-slate-500">Base goods sales value</span>
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(false)}
-                className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold text-xs hover:bg-slate-100 transition-colors"
-              >
-                Cancel
-              </button>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-[10px] font-mono text-slate-500 uppercase block font-bold">
+                CGST (9%) + SGST (9%) Collected
+              </span>
+              <span className="text-xl font-black font-mono text-indigo-700 block">
+                {formatCurrency(totalTaxCollected)}
+              </span>
+              <span className="text-[10px] text-slate-500">CGST: {formatCurrency(cgstCollected)} • SGST: {formatCurrency(sgstCollected)}</span>
+            </div>
 
-              <button
-                type="submit"
-                form="new-product-form"
-                className="px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all active:scale-98 cursor-pointer"
-              >
-                <Check className="w-4 h-4 text-emerald-400" />
-                <span>Publish to Live Customer Storefront</span>
-              </button>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-[10px] font-mono text-slate-500 uppercase block font-bold">
+                1% TCS / TDS Compliance
+              </span>
+              <span className="text-xl font-black font-mono text-amber-700 block">
+                {formatCurrency(tcs1PercentEstimate)}
+              </span>
+              <span className="text-[10px] text-slate-500">Section 194-O statutory tracking</span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-1">
+              <span className="text-[10px] font-mono text-emerald-800 uppercase block font-bold">
+                100% Net Bank Settlement
+              </span>
+              <span className="text-xl font-black font-mono text-emerald-800 block">
+                {formatCurrency(netSellerTakeHomeProfit)}
+              </span>
+              <span className="text-[10px] text-emerald-700 font-bold">0% Platform Cut Deducted!</span>
+            </div>
+          </div>
+
+          {/* Packing Cost Slider */}
+          <div className="p-4 rounded-2xl bg-white border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <span className="text-xs font-bold text-slate-900 block">
+                Enter Estimated Packaging & Box Cost per Order
+              </span>
+              <p className="text-[11px] text-slate-500">
+                Customizes your net profit calculation across all {orders.length} processed orders.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min="50"
+                max="500"
+                step="10"
+                value={packingCostPerOrder}
+                onChange={(e) => setPackingCostPerOrder(Number(e.target.value))}
+                className="w-36 accent-emerald-600 cursor-pointer"
+              />
+              <span className="text-xs font-mono font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded-lg">
+                ₹{packingCostPerOrder}/box
+              </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* --- MODAL: SHIPPING MANIFEST / AWB LABEL --- */}
-      {manifestModalOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden text-slate-900 animate-in zoom-in-95 duration-200">
-            {/* Manifest Header */}
-            <div className="p-6 pb-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+      {/* --- TAB CONTENT 4: META ADS & WHATSAPP MARKETING HUB --- */}
+      {activeTab === "marketing" && (
+        <div className="rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-sm p-6 sm:p-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div>
               <div className="flex items-center gap-2">
-                <Truck className="w-5 h-5 text-indigo-600" />
-                <div>
-                  <span className="text-[10px] font-mono font-bold tracking-widest text-slate-500 uppercase block">
-                    BLUE DART AIR EXPRESS • PRIORITY MANIFEST
-                  </span>
-                  <h3 className="text-sm font-extrabold text-slate-950">
-                    Air Waybill: {manifestModalOrder.awbNumber || "BD-89472910IN"}
-                  </h3>
+                <Tag className="w-5 h-5 text-indigo-600" />
+                <h2 className="text-lg font-black text-slate-950">
+                  Meta Ads & Direct WhatsApp Marketing Hub
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Connect your Meta Pixel for Instagram/Facebook ads and generate high-converting WhatsApp links.
+              </p>
+            </div>
+          </div>
+
+          {/* Meta Pixel Setup Card */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-950 flex items-center gap-1.5">
+                  <Tag className="w-4 h-4 text-indigo-600" />
+                  <span>Meta Pixel Integration (Instagram / Facebook Ads)</span>
+                </span>
+                <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-bold">
+                  ACTIVE
+                </span>
+              </div>
+              <p className="text-xs text-slate-600">
+                Enter your Meta Ads Pixel ID to track PageView, AddToCart, and Purchase conversions in real time.
+              </p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={metaPixelId}
+                  onChange={(e) => setMetaPixelId(e.target.value)}
+                  placeholder="e.g. PIXEL_982140510"
+                  className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => showToast(`Meta Pixel ${metaPixelId} synced with store!`, "success")}
+                  className="px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold shrink-0 cursor-pointer"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+
+            {/* Direct Store Link Generator */}
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-2xs">
+              <span className="text-xs font-bold text-slate-950 flex items-center gap-1.5">
+                <Share2 className="w-4 h-4 text-emerald-600" />
+                <span>Direct WhatsApp & Instagram Bio Store Link</span>
+              </span>
+              <p className="text-xs text-slate-600">
+                Share this dedicated link with your buyers to receive direct UPI orders with 0% platform cuts.
+              </p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={`https://nexu.studio/store/${whiteLabelConfig.brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                  className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 bg-slate-50 text-slate-800"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`https://nexu.studio/store/${whiteLabelConfig.brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`);
+                    showToast("Link copied to clipboard! Share on WhatsApp status 📋", "success");
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0 cursor-pointer"
+                >
+                  Copy Link
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- TAB CONTENT 5: B2B WHOLESALE LEADS --- */}
+      {activeTab === "b2b" && (
+        <div className="rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-sm p-6 sm:p-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-indigo-600" />
+                <h2 className="text-lg font-extrabold text-slate-950">
+                  B2B Wholesale Procurement Leads & Quotes
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Bulk order allocations submitted by corporate buyers and institutional patrons.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {b2bQuotes.map((q) => (
+              <div
+                key={q.id}
+                className="p-4 rounded-2xl border border-slate-200 bg-white shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-slate-950 text-xs">{q.id}</span>
+                    <span className="text-[10px] font-mono text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
+                      {q.quantity} UNITS MOQ
+                    </span>
+                    <span
+                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                        q.status === "APPROVED"
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                          : "bg-amber-50 text-amber-800 border-amber-200"
+                      }`}
+                    >
+                      {q.status}
+                    </span>
+                  </div>
+                  <h4 className="text-xs font-bold text-slate-950">{q.productTitle}</h4>
+                  <p className="text-[11px] text-slate-500">
+                    Company: <strong className="text-slate-800">{q.companyName}</strong> • Buyer: {q.buyerName} ({q.buyerPhone})
+                  </p>
                 </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="text-right font-mono pr-2">
+                    <span className="text-[10px] text-slate-400 block uppercase">Target Price</span>
+                    <span className="text-sm font-black text-slate-950">{formatCurrency(q.targetPriceINR || 0)}/unit</span>
+                  </div>
+
+                  {q.status !== "APPROVED" ? (
+                    <button
+                      type="button"
+                      onClick={() => updateB2BQuoteStatus(q.id, "APPROVED")}
+                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer"
+                    >
+                      Approve Quote ✓
+                    </button>
+                  ) : (
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                      Allocated ✓
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL: BRANDED PACKAGING SLIP --- */}
+      <BrandedPackagingSlipModal
+        order={packagingSlipOrder}
+        onClose={() => setPackagingSlipOrder(null)}
+      />
+
+      {/* --- MODAL: DISPATCH ORDER (SELF OR COURIER) --- */}
+      <DispatchOrderModal
+        order={dispatchModalOrder}
+        onClose={() => setDispatchModalOrder(null)}
+      />
+
+      {/* --- MODAL: 60-SECOND BRAND STORE LAUNCH WIZARD --- */}
+      <LaunchBrandStoreModal
+        isOpen={isLaunchStoreWizardOpen}
+        onClose={() => setIsLaunchStoreWizardOpen(false)}
+      />
+
+      {/* --- MODAL: ADD PRODUCT FORM --- */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto text-slate-900">
+            {/* Modal Header */}
+            <div className="p-6 pb-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-mono font-bold tracking-widest text-indigo-600 uppercase block">
+                  NEW LISTING ONBOARDING
+                </span>
+                <h3 className="text-lg font-extrabold text-slate-950">
+                  Publish New Product to Storefront
+                </h3>
               </div>
               <button
                 type="button"
-                onClick={() => setManifestModalOrder(null)}
-                className="w-8 h-8 rounded-full bg-white hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors"
+                onClick={() => setIsAddModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Manifest Label Details */}
-            <div className="p-6 space-y-4 text-xs font-mono">
-              {/* Simulated Barcode */}
-              <div className="p-4 rounded-xl border border-slate-300 bg-slate-50 text-center space-y-1">
-                <div className="h-12 w-full flex items-center justify-center gap-1">
-                  {[4, 2, 6, 2, 8, 3, 5, 2, 7, 3, 4, 8, 2, 5, 3, 6, 2, 8, 4, 3, 5, 2, 7, 4, 2, 6, 3, 8].map((w, i) => (
-                    <div key={i} className="bg-slate-950 h-full" style={{ width: `${w}px` }} />
+            {/* Form Body */}
+            <form id="new-product-form" onSubmit={handleCreateProductSubmit} className="p-6 space-y-4 text-xs">
+              {/* Presets */}
+              <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100 space-y-2">
+                <span className="text-[10px] font-mono font-bold text-indigo-800 uppercase flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>1-Click Presets for Fast Testing</span>
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  {QUICK_PRODUCT_PRESETS.map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleApplyPreset(preset)}
+                      className="p-2 text-left rounded-xl bg-white border border-indigo-200 hover:border-indigo-400 hover:shadow-2xs transition-all text-[11px] font-medium text-slate-800 truncate"
+                    >
+                      {preset.title}
+                    </button>
                   ))}
                 </div>
-                <span className="text-[11px] font-bold tracking-widest text-slate-800">
-                  *{manifestModalOrder.awbNumber || "BD-89472910IN"}*
-                </span>
               </div>
 
-              {/* Destination Address */}
-              <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">
-                  CONSIGNEE / DESTINATION:
-                </span>
-                <p className="font-bold text-slate-950 text-sm">{manifestModalOrder.customerName}</p>
-                <p className="text-slate-700 font-sans text-xs">
-                  {manifestModalOrder.shippingAddress?.street},{" "}
-                  {manifestModalOrder.shippingAddress?.city},{" "}
-                  {manifestModalOrder.shippingAddress?.state} — {manifestModalOrder.shippingAddress?.pincode}
-                </p>
-                <p className="text-slate-500 text-[11px]">Contact: {manifestModalOrder.customerPhone}</p>
+              {/* Title & Subtitle */}
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">Product Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="e.g. Master Carbon Acoustic Studio Monitor"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
+                />
               </div>
 
-              {/* Sender Hub */}
-              <div className="p-3.5 rounded-xl border border-slate-200 space-y-1 text-[11px]">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">
-                  ORIGIN SHIPPER HUB:
-                </span>
-                <p className="font-bold text-slate-900">Apex Electronics & Studio Central Hub</p>
-                <p className="text-slate-600 font-sans">
-                  Gate 4, Whitefield Air Cargo Logistics Park, Bangalore, KA — 560066
-                </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Retail Price (₹) *</label>
+                  <input
+                    type="number"
+                    required
+                    value={newPrice}
+                    onChange={(e) => setNewPrice(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-mono focus:outline-none focus:ring-2 focus:ring-slate-900"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Stock Quantity *</label>
+                  <input
+                    type="number"
+                    required
+                    value={newStock}
+                    onChange={(e) => setNewStock(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-mono focus:outline-none focus:ring-2 focus:ring-slate-900"
+                  />
+                </div>
               </div>
+            </form>
 
-              <div className="flex justify-between text-slate-600 pt-2 border-t border-slate-200">
-                <span>Declared Package Value:</span>
-                <span className="font-bold text-slate-950">{formatCurrency(manifestModalOrder.total)}</span>
-              </div>
-            </div>
-
-            {/* Manifest Footer */}
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => {
-                  window.print();
-                  showToast("Manifest printed successfully", "info");
-                }}
-                className="px-4 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                onClick={() => setIsAddModalOpen(false)}
+                className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold cursor-pointer"
               >
-                <Printer className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Print Official Cargo Label</span>
+                Cancel
               </button>
-
               <button
-                type="button"
-                onClick={() => setManifestModalOrder(null)}
-                className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition-colors"
+                type="submit"
+                form="new-product-form"
+                className="px-5 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer"
               >
-                Close
+                Publish to Storefront 🚀
               </button>
             </div>
           </div>
@@ -1121,4 +1332,3 @@ export function SupplierPortalSaaS() {
     </div>
   );
 }
-

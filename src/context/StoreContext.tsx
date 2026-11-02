@@ -212,6 +212,10 @@ interface StoreContextType {
   toggleSupplierVerification: (supplierId: string) => void;
   toggleSupplierPayoutHold: (supplierId: string) => void;
   markOrderDispatched: (orderId: string) => void;
+  acceptSellerOrder: (orderId: string) => void;
+  rejectSellerOrder: (orderId: string, reason?: string) => void;
+  dispatchSellerOrder: (orderId: string, deliveryDetails: { mode: "self" | "courier"; partner: string; trackingRef: string }) => void;
+  markSellerOrderDelivered: (orderId: string) => void;
   generateShippingManifest: (orderId: string) => { awb: string; manifestId: string; generatedAt: string };
   loadSampleOrders: () => void;
   resetDemoData: () => void;
@@ -1516,6 +1520,71 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     showToast(`Order Status Updated by Supplier 📦 (Dispatched #${orderId} via Blue Dart Air)`, "success");
   };
 
+  const acceptSellerOrder = (orderId: string) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          deliveryStage: 2,
+          deliveryStageName: "Packed & Ready to Ship",
+          status: "PACKED",
+        };
+      })
+    );
+    showToast(`✅ Order #${orderId} Accepted by Seller! Ready for Packaging & Label Printing`, "success");
+  };
+
+  const rejectSellerOrder = (orderId: string, reason?: string) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          deliveryStage: 0,
+          deliveryStageName: "Cancelled by Seller",
+          status: "CONFIRMED", // or keep status safe
+        };
+      })
+    );
+    showToast(`❌ Order #${orderId} Declined by Seller. Escrow payment released back to buyer.`, "warning");
+  };
+
+  const dispatchSellerOrder = (
+    orderId: string,
+    deliveryDetails: { mode: "self" | "courier"; partner: string; trackingRef: string }
+  ) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          deliveryStage: 3,
+          deliveryStageName: deliveryDetails.mode === "self" ? "Out for Local Delivery" : "Shipped via Courier Partner",
+          status: "SHIPPED",
+          courierPartner: deliveryDetails.partner,
+          awbNumber: deliveryDetails.trackingRef,
+        };
+      })
+    );
+    showToast(`🚚 Order #${orderId} Dispatched via ${deliveryDetails.partner} (Ref: ${deliveryDetails.trackingRef})`, "success");
+  };
+
+  const markSellerOrderDelivered = (orderId: string) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          deliveryStage: 5,
+          deliveryStageName: "Delivered",
+          status: "DELIVERED",
+        };
+      })
+    );
+    showToast(`🎉 Order #${orderId} Marked Delivered! 5★ WhatsApp Review request sent to patron ⭐️`, "success");
+  };
+
   const generateShippingManifest = (orderId: string) => {
     const target = orders.find((o) => o.id === orderId);
     const awb = target?.awbNumber || `BD-${Math.floor(10000000 + Math.random() * 90000000)}IN`;
@@ -1869,6 +1938,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         toggleSupplierVerification,
         toggleSupplierPayoutHold,
         markOrderDispatched,
+        acceptSellerOrder,
+        rejectSellerOrder,
+        dispatchSellerOrder,
+        markSellerOrderDelivered,
         generateShippingManifest,
         loadSampleOrders,
         resetDemoData,

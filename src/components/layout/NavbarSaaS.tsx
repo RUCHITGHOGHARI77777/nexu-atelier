@@ -214,13 +214,22 @@ export function NavbarSaaS() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
                 activeRole === "admin"
                   ? "bg-white text-slate-950 shadow-xs font-bold ring-1 ring-slate-200/80"
-                  : "text-slate-600 hover:text-slate-900"
+                  : "text-slate-600 hover:text-slate-950"
               }`}
             >
               <span>🛡️</span>
               <span className="hidden sm:inline">Admin</span>
             </button>
           </div>
+
+          {/* Quick Link to 0% Commission Branded Seller Store */}
+          <Link
+            href="/store/jaipur-heritage-handlooms"
+            className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition-all shadow-2xs shrink-0"
+            title="View 0% Commission Seller Store Example"
+          >
+            <span>0% Comm Store 🚀</span>
+          </Link>
 
           {/* 4. Wishlist & Cart Actions */}
           <div className="flex items-center gap-2 shrink-0">
