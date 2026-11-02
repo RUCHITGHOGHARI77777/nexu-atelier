@@ -109,6 +109,33 @@ export interface ToastItem {
   timestamp: number;
 }
 
+export interface WhiteLabelConfig {
+  brandName: string;
+  brandSubtitle: string;
+  merchantUpiId: string;
+  gstinNumber: string;
+  platformCommissionRate: number; // e.g. 10 for 10%
+  accentColor: "blue" | "emerald" | "slate" | "amber";
+}
+
+export const DEFAULT_WHITELABEL_CONFIG: WhiteLabelConfig = {
+  brandName: "AuraMart Enterprise",
+  brandSubtitle: "Enterprise Multi-Vendor SaaS",
+  merchantUpiId: "auramart.enterprise@icici",
+  gstinNumber: "27AABCN8942Q1Z9",
+  platformCommissionRate: 10,
+  accentColor: "blue",
+};
+
+export interface PhoneSimulatorData {
+  amount: number;
+  orderId?: string;
+  brandName?: string;
+  merchantUpiId?: string;
+  utrNumber?: string;
+  onApprove?: () => void;
+}
+
 export interface B2BQuoteRequest {
   id: string;
   productId: string;
@@ -136,6 +163,9 @@ interface StoreContextType {
   b2bQuotes: B2BQuoteRequest[];
   isB2BModalOpen: boolean;
   b2bModalProduct: StoreProduct | null;
+  whiteLabelConfig: WhiteLabelConfig;
+  isPhoneSimulatorOpen: boolean;
+  phoneSimulatorData: PhoneSimulatorData | null;
   activeRole: RoleType;
   searchQuery: string;
   selectedCategory: string;
@@ -147,6 +177,10 @@ interface StoreContextType {
   toasts: ToastItem[];
   isCartDrawerOpen: boolean;
   // Actions
+  updateWhiteLabelConfig: (config: Partial<WhiteLabelConfig>) => void;
+  resetWhiteLabelConfig: () => void;
+  openPhoneSimulator: (data: PhoneSimulatorData) => void;
+  closePhoneSimulator: () => void;
   openB2BModal: (product: StoreProduct) => void;
   closeB2BModal: () => void;
   submitB2BQuote: (quote: Omit<B2BQuoteRequest, "id" | "status" | "createdAt">) => void;
@@ -905,6 +939,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [b2bQuotes, setB2bQuotes] = useState<B2BQuoteRequest[]>(INITIAL_B2B_QUOTES);
   const [isB2BModalOpen, setIsB2BModalOpen] = useState(false);
   const [b2bModalProduct, setB2bModalProduct] = useState<StoreProduct | null>(null);
+  const [whiteLabelConfig, setWhiteLabelConfig] = useState<WhiteLabelConfig>(DEFAULT_WHITELABEL_CONFIG);
+  const [isPhoneSimulatorOpen, setIsPhoneSimulatorOpen] = useState(false);
+  const [phoneSimulatorData, setPhoneSimulatorData] = useState<PhoneSimulatorData | null>(null);
   const [activeRole, setActiveRole] = useState<RoleType>("customer");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -937,6 +974,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
       const savedOrders = localStorage.getItem("nexu_saas_orders");
       if (savedOrders) setOrders(JSON.parse(savedOrders));
+
+      const savedWhiteLabel = localStorage.getItem("nexu_whitelabel_config");
+      if (savedWhiteLabel) {
+        setWhiteLabelConfig((prev) => ({ ...prev, ...JSON.parse(savedWhiteLabel) }));
+      }
 
       const savedRole = localStorage.getItem("nexu_saas_role");
       if (savedRole && ["customer", "supplier", "admin"].includes(savedRole)) {
@@ -988,6 +1030,38 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("nexu_saas_orders", JSON.stringify(orders));
     } catch {}
   }, [orders]);
+
+  // Save white-label config to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem("nexu_whitelabel_config", JSON.stringify(whiteLabelConfig));
+    } catch {}
+  }, [whiteLabelConfig]);
+
+  const updateWhiteLabelConfig = (config: Partial<WhiteLabelConfig>) => {
+    setWhiteLabelConfig((prev) => {
+      const updated = { ...prev, ...config };
+      return updated;
+    });
+    showToast(`⚙️ White-Label Branding Updated to "${config.brandName || whiteLabelConfig.brandName}"`, "success");
+  };
+
+  const resetWhiteLabelConfig = () => {
+    setWhiteLabelConfig(DEFAULT_WHITELABEL_CONFIG);
+    try {
+      localStorage.removeItem("nexu_whitelabel_config");
+    } catch {}
+    showToast("White-Label Branding reset to AuraMart Enterprise defaults", "info");
+  };
+
+  const openPhoneSimulator = (data: PhoneSimulatorData) => {
+    setPhoneSimulatorData(data);
+    setIsPhoneSimulatorOpen(true);
+  };
+
+  const closePhoneSimulator = () => {
+    setIsPhoneSimulatorOpen(false);
+  };
 
   const showToast = (message: string, type: "success" | "info" | "warning" = "info") => {
     setToast({ show: true, message, type });
@@ -1567,6 +1641,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         b2bQuotes,
         isB2BModalOpen,
         b2bModalProduct,
+        whiteLabelConfig,
+        isPhoneSimulatorOpen,
+        phoneSimulatorData,
+        updateWhiteLabelConfig,
+        resetWhiteLabelConfig,
+        openPhoneSimulator,
+        closePhoneSimulator,
         activeRole,
         searchQuery,
         selectedCategory,

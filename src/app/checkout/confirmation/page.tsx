@@ -550,17 +550,17 @@ function ConfirmationContent() {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-slate-950 text-white flex items-center justify-center font-bold text-sm">
-                N
+                {store.whiteLabelConfig.brandName.charAt(0).toUpperCase()}
               </div>
               <h3 className="text-xl font-extrabold text-slate-950 tracking-tight">
-                NEXU ATELIER
+                {store.whiteLabelConfig.brandName}
               </h3>
             </div>
             <p className="text-[11px] text-slate-500 font-mono">
-              Architectural Multi-Vendor Marketplace • GSTIN: 27AABCN8942Q1Z9
+              {store.whiteLabelConfig.brandSubtitle} • GSTIN: {store.whiteLabelConfig.gstinNumber}
             </p>
             <p className="text-[10px] text-slate-400 font-mono">
-              Registered Studio: 401 Nariman Point Financial Center, Mumbai, Maharashtra 400021
+              Official Merchant VPA: {store.whiteLabelConfig.merchantUpiId} • Registered Central Operations Hub
             </p>
           </div>
 

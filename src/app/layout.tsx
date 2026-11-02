@@ -16,6 +16,7 @@ import { CartDrawerSaaS } from "@/components/cart/CartDrawerSaaS";
 import { ProductQuickViewModal } from "@/components/storefront/ProductQuickViewModal";
 import { B2BQuoteModal } from "@/components/storefront/B2BQuoteModal";
 import { EvaluatorDemoControlBar } from "@/components/demo/EvaluatorDemoControlBar";
+import { FloatingPhoneSimulator } from "@/components/demo/FloatingPhoneSimulator";
 import { LiquidGlassToastStack } from "@/components/ui/LiquidGlassToastStack";
 import { FloatingCompareBar } from "@/components/compare/FloatingCompareBar";
 import { ServiceWorkerRegister } from "@/components/layout/ServiceWorkerRegister";
@@ -122,6 +123,9 @@ export default function RootLayout({
 
                       {/* Floating Evaluator 1-Click Demo Simulator Control Bar */}
                       <EvaluatorDemoControlBar />
+
+                      {/* Floating Smartphone Notification & UPI PIN Simulator */}
+                      <FloatingPhoneSimulator />
 
                       {/* Floating comparison bar */}
                       <FloatingCompareBar />

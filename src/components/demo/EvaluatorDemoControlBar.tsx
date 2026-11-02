@@ -29,6 +29,9 @@ export function EvaluatorDemoControlBar() {
     resetDemoData,
     showToast,
     orders,
+    whiteLabelConfig,
+    updateWhiteLabelConfig,
+    openPhoneSimulator,
   } = useStore();
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -105,6 +108,12 @@ export function EvaluatorDemoControlBar() {
     };
 
     addOrder(demoOrder);
+    openPhoneSimulator({
+      amount: demoOrder.total,
+      brandName: whiteLabelConfig.brandName,
+      merchantUpiId: whiteLabelConfig.merchantUpiId,
+      utrNumber: utr,
+    });
     showToast("Demo: Mobile UPI Payment Approved! UTR Generated & Invoice Securing Escrow ✅", "success");
     router.push(`/checkout/confirmation?orderId=${newOrderId}`);
   };
@@ -132,7 +141,27 @@ export function EvaluatorDemoControlBar() {
     if (pathname !== "/") {
       router.push("/");
     }
-    showToast("Demo: Switched to Admin Command Center — 10% Platform Fee Captured 🛡️", "success");
+    showToast("Demo: Switched to Admin Command Center — Platform Fee Captured 🛡️", "success");
+  };
+
+  // ACTION 5: Launch On-Screen Smartphone Notification Simulator
+  const handleAction5_LaunchPhoneSimulator = () => {
+    openPhoneSimulator({
+      amount: 26990,
+      brandName: whiteLabelConfig.brandName,
+      merchantUpiId: whiteLabelConfig.merchantUpiId,
+      utrNumber: `UPI/2026/${Math.floor(100000 + Math.random() * 900000)}`,
+    });
+    showToast("📱 On-Screen iPhone 16 Pro Simulator Launched!", "info");
+  };
+
+  // ACTION 6: Switch to Admin White-Label Brand Engine
+  const handleAction6_SwitchWhiteLabelEngine = () => {
+    setActiveRole("admin");
+    if (pathname !== "/") {
+      router.push("/");
+    }
+    showToast("Switched to Admin Command Center • White-Label Brand Engine ⚙️", "info");
   };
 
   return (
@@ -266,14 +295,58 @@ export function EvaluatorDemoControlBar() {
                 </div>
                 <div className="min-w-0">
                   <span className="text-xs font-bold text-slate-900 block truncate group-hover:text-purple-700 transition-colors">
-                    4. Admin Console & 10% Fee
+                    4. Admin Console & Platform Fee
                   </span>
                   <span className="text-[10px] text-slate-500 block">
-                    Inspects GMV, platform fee & UTR ledger
+                    Inspects GMV, {whiteLabelConfig.platformCommissionRate}% fee & UTR ledger
                   </span>
                 </div>
               </div>
               <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-purple-700 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+            </button>
+
+            {/* Action 5: Smartphone Simulator */}
+            <button
+              type="button"
+              onClick={handleAction5_LaunchPhoneSimulator}
+              className="w-full text-left p-3 rounded-2xl bg-gradient-to-r from-emerald-50/80 to-teal-50/80 hover:from-emerald-50 hover:to-teal-50 border border-emerald-200/90 shadow-2xs hover:shadow-sm transition-all duration-200 flex items-center justify-between group cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Smartphone className="w-3.5 h-3.5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-emerald-950 block truncate group-hover:text-emerald-700 transition-colors">
+                    5. 📱 Floating iPhone Simulator
+                  </span>
+                  <span className="text-[10px] text-emerald-700 block">
+                    Dynamic island, push collect & UPI PIN keypad
+                  </span>
+                </div>
+              </div>
+              <ArrowRight className="w-3.5 h-3.5 text-emerald-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+            </button>
+
+            {/* Action 6: White-Label Reseller Brand Engine */}
+            <button
+              type="button"
+              onClick={handleAction6_SwitchWhiteLabelEngine}
+              className="w-full text-left p-3 rounded-2xl bg-gradient-to-r from-blue-50/80 to-indigo-50/80 hover:from-blue-50 hover:to-indigo-50 border border-blue-200/90 shadow-2xs hover:shadow-sm transition-all duration-200 flex items-center justify-between group cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-blue-950 block truncate group-hover:text-blue-700 transition-colors">
+                    6. ⚙️ White-Label Reseller Engine
+                  </span>
+                  <span className="text-[10px] text-blue-700 block">
+                    Rebrand Store, VPA, GSTIN & theme color
+                  </span>
+                </div>
+              </div>
+              <ArrowRight className="w-3.5 h-3.5 text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
             </button>
           </div>
 

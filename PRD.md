@@ -110,11 +110,27 @@ flowchart TD
 
 ### Module F: Floating Evaluator Demo Mode ("⚡ Evaluator Quick-Test")
 - **Persistent Bottom-Left Glass Pill:** Collapsible liquid glass widget with a pulsating emerald indicator.
-- **4 Instant 1-Click Simulation Workflows:**
+- **6 Instant 1-Click Simulation Workflows:**
   1. `[1. Auto-Fill Cart & Checkout]`: Injects 2 flagship bestsellers into cart and transitions to checkout.
   2. `[2. Instant Mobile UPI Payment & Invoice]`: Executes mobile UPI approval, creates order with unique UTR, and displays the branded invoice.
   3. `[3. Switch to Supplier & Dispatch Order]`: Transitions to Supplier Hub, generates Blue Dart manifest, and marks consignment `SHIPPED`.
-  4. `[4. Switch to Admin & Verify Commission]`: Transitions to Admin Console, highlights 10% commission revenue, and audits the transaction record.
+  4. `[4. Switch to Admin & Verify Commission]`: Transitions to Admin Console, highlights commission revenue, and audits the transaction record.
+  5. `[5. Floating iPhone Simulator]`: Launches the on-screen iPhone 16 Pro mockup with Dynamic Island and keypad.
+  6. `[6. White-Label Reseller Engine]`: Opens the brand customization console in the Admin Command Center.
+
+### Module G: Commercial White-Label Reseller Brand Engine (Phase 8)
+- **Multi-Brand Deployment Framework:** Enables agencies and software consultants to white-label the platform in under 10 seconds.
+- **Dynamic Parameters:** Store Brand Name, Subtitle, Merchant UPI ID, GSTIN Number, Platform Commission Rate (1% - 25%), and Accent Palette (Royal Blue, Emerald, Obsidian, Amber).
+- **1-Click Turnkey Presets:** *AuraMart Enterprise*, *Tata Luxury Hub*, *FabIndia Atelier*, *Zara Studio Luxe*.
+- **Reactive Propagation:** Updates the Navbar, Checkout Gateway, and Printable Tax Invoice with persistent `localStorage` synchronization.
+
+### Module H: Floating Smartphone Notification & PIN Simulator (Phase 8)
+- **High-Fidelity iPhone 16 Pro Mockup:** Precision bezel, Dynamic Island with pulsating activity dot, iOS wall clock, 5G wireless icon, and battery percentage.
+- **Interactive Multi-Stage Handshake:**
+  1. *Push Collect Banner*: Google Pay / PhonePe collect notification from the active white-label brand.
+  2. *UPI PIN Entry*: 4-digit PIN dot indicators with numeric keypad and 1-click `"⚡ Tap to Auto-Enter PIN (4921)"` shortcut.
+  3. *Bank SMS Debit Alert*: Authentic HDFC Bank SMS push banner confirming debit and order creation.
+- **Background Orchestration:** Approving payment in the phone simulator programmatically completes the web checkout and routes to the official invoice.
 
 ---
 

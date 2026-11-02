@@ -56,7 +56,7 @@ export function InteractivePaymentModal({
   customerPhone = "+91 98765 43210",
   onPaymentSuccess,
 }: InteractivePaymentModalProps) {
-  const { showToast } = useStore();
+  const { showToast, whiteLabelConfig, openPhoneSimulator } = useStore();
   const [stage, setStage] = useState<"IDLE" | "AUTHORIZING" | "SUCCESS">("IDLE");
   const [secondsLeft, setSecondsLeft] = useState(299); // 4m 59s overall expiry
   const [authCountdown, setAuthCountdown] = useState(4); // 4s auto-approval timer
@@ -134,7 +134,7 @@ export function InteractivePaymentModal({
   };
 
   const handleCopyVpa = () => {
-    navigator.clipboard.writeText("nexu.atelier@okhdfcbank");
+    navigator.clipboard.writeText(whiteLabelConfig.merchantUpiId || "auramart.enterprise@icici");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -218,6 +218,15 @@ export function InteractivePaymentModal({
     setShowPushNotification(true);
     setStage("AUTHORIZING");
     showToast("UPI Payment Request Sent to Mobile 📱", "info");
+
+    // Launch floating Smartphone Notification & PIN Simulator
+    openPhoneSimulator({
+      amount: payableAmountINR,
+      brandName: whiteLabelConfig.brandName,
+      merchantUpiId: whiteLabelConfig.merchantUpiId,
+      onApprove: triggerSuccess,
+    });
+
     setTimeout(() => {
       setShowPushNotification(false);
     }, 8000);
@@ -259,7 +268,7 @@ export function InteractivePaymentModal({
                 Payment Request: {formatCurrency(payableAmountINR)}
               </p>
               <p className="text-[11px] text-zinc-600 line-clamp-1 mt-0.5">
-                Nexu Atelier has requested payment. Tap below to verify and complete transaction.
+                {whiteLabelConfig.brandName} has requested payment. Tap below or use Smartphone Simulator to authorize.
               </p>
             </div>
             <button
@@ -282,11 +291,11 @@ export function InteractivePaymentModal({
         <div className="p-6 pb-4 border-b border-zinc-100 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-zinc-950 text-white flex items-center justify-center font-bold text-sm tracking-tight shadow-sm">
-              N
+              {whiteLabelConfig.brandName.charAt(0).toUpperCase()}
             </div>
             <div>
               <span className="text-[10px] font-mono font-bold tracking-widest text-zinc-500 uppercase block">
-                NEXU ATELIER PAY • ESCROW GATEWAY
+                {whiteLabelConfig.brandName.toUpperCase()} PAY • ESCROW GATEWAY
               </span>
               <h3 className="text-sm font-extrabold text-zinc-950 flex items-center gap-1.5">
                 <span>
@@ -510,7 +519,7 @@ export function InteractivePaymentModal({
                             Official Merchant VPA:
                           </span>
                           <span className="font-mono font-bold text-zinc-950">
-                            nexu.atelier@okhdfcbank
+                            {whiteLabelConfig.merchantUpiId}
                           </span>
                         </div>
                         <button

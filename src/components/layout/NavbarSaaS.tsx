@@ -35,6 +35,7 @@ export function NavbarSaaS() {
     cartSubtotal,
     setIsCartDrawerOpen,
     showToast,
+    whiteLabelConfig,
   } = useStore();
 
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
@@ -79,7 +80,7 @@ export function NavbarSaaS() {
           </div>
 
           <div className="flex items-center gap-4 font-mono text-[10px]">
-            <span>GSTIN: 27AABCN8942Q1Z9</span>
+            <span>GSTIN: {whiteLabelConfig.gstinNumber}</span>
             <span className="text-slate-300">•</span>
             <Link href="/account" className="hover:text-slate-900 transition-colors">
               Patron Account Hub
@@ -91,22 +92,30 @@ export function NavbarSaaS() {
       {/* Main Navbar Body */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex items-center justify-between gap-4">
-          {/* 1. Brand Logo */}
+          {/* 1. Brand Logo (White-Label Dynamic) */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="w-9 h-9 rounded-xl bg-slate-950 text-white flex items-center justify-center font-bold text-sm shadow-md group-hover:scale-102 transition-transform">
-              N
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shadow-md group-hover:scale-102 transition-transform ${
+              whiteLabelConfig.accentColor === "emerald"
+                ? "bg-emerald-600 text-white"
+                : whiteLabelConfig.accentColor === "amber"
+                ? "bg-amber-600 text-white"
+                : whiteLabelConfig.accentColor === "slate"
+                ? "bg-slate-900 text-white"
+                : "bg-blue-600 text-white"
+            }`}>
+              {whiteLabelConfig.brandName.charAt(0).toUpperCase()}
             </div>
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-base sm:text-lg text-slate-950 tracking-tight">
-                  NEXU ATELIER
+                  {whiteLabelConfig.brandName}
                 </span>
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
                   Enterprise
                 </span>
               </div>
               <span className="text-[10px] text-slate-500 tracking-wider block font-mono">
-                Bespoke Multi-Vendor Marketplace
+                {whiteLabelConfig.brandSubtitle}
               </span>
             </div>
           </Link>

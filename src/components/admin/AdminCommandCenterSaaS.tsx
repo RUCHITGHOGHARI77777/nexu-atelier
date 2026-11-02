@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   ShieldCheck,
   TrendingUp,
@@ -24,6 +24,8 @@ import {
   BadgeCheck,
   Lock,
   Unlock,
+  Smartphone,
+  RotateCcw,
 } from "lucide-react";
 import { useStore, SupplierInfo, StoreOrder } from "@/context/StoreContext";
 import { formatCurrency, formatDateTime } from "@/lib/formatters";
@@ -39,12 +41,33 @@ export function AdminCommandCenterSaaS() {
     loadSampleOrders,
     resetDemoData,
     showToast,
+    whiteLabelConfig,
+    updateWhiteLabelConfig,
+    resetWhiteLabelConfig,
+    openPhoneSimulator,
   } = store;
 
   // Search & Filter states
   const [transactionSearch, setTransactionSearch] = useState("");
   const [supplierSearch, setSupplierSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"METRICS" | "SUPPLIERS" | "TRANSACTIONS">("METRICS");
+  const [activeTab, setActiveTab] = useState<"METRICS" | "SUPPLIERS" | "TRANSACTIONS" | "WHITE_LABEL">("METRICS");
+
+  // Local White-Label Form State
+  const [wlBrandName, setWlBrandName] = useState(whiteLabelConfig.brandName);
+  const [wlBrandSubtitle, setWlBrandSubtitle] = useState(whiteLabelConfig.brandSubtitle);
+  const [wlMerchantUpiId, setWlMerchantUpiId] = useState(whiteLabelConfig.merchantUpiId);
+  const [wlGstinNumber, setWlGstinNumber] = useState(whiteLabelConfig.gstinNumber);
+  const [wlPlatformCommission, setWlPlatformCommission] = useState(whiteLabelConfig.platformCommissionRate);
+  const [wlAccentColor, setWlAccentColor] = useState(whiteLabelConfig.accentColor);
+
+  useEffect(() => {
+    setWlBrandName(whiteLabelConfig.brandName);
+    setWlBrandSubtitle(whiteLabelConfig.brandSubtitle);
+    setWlMerchantUpiId(whiteLabelConfig.merchantUpiId);
+    setWlGstinNumber(whiteLabelConfig.gstinNumber);
+    setWlPlatformCommission(whiteLabelConfig.platformCommissionRate);
+    setWlAccentColor(whiteLabelConfig.accentColor);
+  }, [whiteLabelConfig]);
 
   // Executive Metric Calculations
   const grossMerchandiseValue = useMemo(() => {
@@ -52,9 +75,8 @@ export function AdminCommandCenterSaaS() {
   }, [orders]);
 
   const platformCommissionEarned = useMemo(() => {
-    // 10% marketplace commission
-    return Math.round(grossMerchandiseValue * 0.1);
-  }, [grossMerchandiseValue]);
+    return Math.round(grossMerchandiseValue * (whiteLabelConfig.platformCommissionRate / 100));
+  }, [grossMerchandiseValue, whiteLabelConfig.platformCommissionRate]);
 
   const activeVerifiedSuppliers = useMemo(() => {
     return suppliers.filter((s) => s.verified).length;
@@ -172,7 +194,7 @@ export function AdminCommandCenterSaaS() {
         {/* Metric 2: Platform Commission Earned */}
         <div className="rounded-2xl border border-white/90 ring-1 ring-slate-900/5 bg-white/75 backdrop-blur-2xl p-5 shadow-[0_8px_30px_rgb(15,23,42,0.04)] space-y-2 hover:shadow-[0_20px_50px_rgb(37,99,235,0.08)] hover:-translate-y-1 transition-all duration-300 ease-out">
           <div className="flex items-center justify-between text-xs text-slate-500 font-mono">
-            <span>Platform Commission (10%)</span>
+            <span>Platform Commission ({whiteLabelConfig.platformCommissionRate}%)</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-700">
               <Landmark className="w-4 h-4" />
             </div>
@@ -182,7 +204,7 @@ export function AdminCommandCenterSaaS() {
               {formatCurrency(platformCommissionEarned)}
             </span>
             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-              Net Revenue
+              {whiteLabelConfig.platformCommissionRate}% Nodal Split
             </span>
           </div>
           <p className="text-[11px] text-slate-500">
@@ -233,8 +255,64 @@ export function AdminCommandCenterSaaS() {
         </div>
       </div>
 
-      {/* --- EXECUTIVE ANALYTICS: GMV TREND & CATEGORY REVENUE DISTRIBUTION --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* --- ADMIN NAVIGATION TABS (INCLUDING WHITE-LABEL RESELLER ENGINE) --- */}
+      <div className="flex items-center gap-2 border-b border-slate-200/80 pb-3 overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setActiveTab("METRICS")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === "METRICS"
+              ? "bg-slate-950 text-white shadow-sm"
+              : "bg-white/80 text-slate-600 hover:text-slate-900 border border-slate-200"
+          }`}
+        >
+          <TrendingUp className="w-3.5 h-3.5" />
+          <span>📊 Executive Overview & Analytics</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("SUPPLIERS")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === "SUPPLIERS"
+              ? "bg-slate-950 text-white shadow-sm"
+              : "bg-white/80 text-slate-600 hover:text-slate-900 border border-slate-200"
+          }`}
+        >
+          <Building2 className="w-3.5 h-3.5" />
+          <span>🏢 Supplier Governance ({suppliers.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("TRANSACTIONS")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === "TRANSACTIONS"
+              ? "bg-slate-950 text-white shadow-sm"
+              : "bg-white/80 text-slate-600 hover:text-slate-900 border border-slate-200"
+          }`}
+        >
+          <Landmark className="w-3.5 h-3.5" />
+          <span>📜 NPCI UTR Audit Log ({orders.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("WHITE_LABEL")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === "WHITE_LABEL"
+              ? "bg-blue-600 text-white shadow-sm ring-2 ring-blue-500/20"
+              : "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 hover:text-blue-900 border border-blue-200"
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+          <span>⚙️ White-Label Reseller Brand Engine</span>
+        </button>
+      </div>
+
+      {/* --- TAB CONTENT: 1. EXECUTIVE ANALYTICS --- */}
+      {(activeTab === "METRICS") && (
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-200">
         {/* GMV 7-Day Trend Chart */}
         <div className="lg:col-span-8 rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-[0_15px_45px_rgba(0,0,0,0.04)] p-6 space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -333,8 +411,10 @@ export function AdminCommandCenterSaaS() {
           </div>
         </div>
       </div>
+      )}
 
       {/* --- SUPPLIER VERIFICATION & APPROVAL TABLE --- */}
+      {(activeTab === "SUPPLIERS" || activeTab === "METRICS") && (
       <div className="rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-[0_15px_45px_rgba(0,0,0,0.04)] p-6 sm:p-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div>
@@ -464,8 +544,10 @@ export function AdminCommandCenterSaaS() {
           </table>
         </div>
       </div>
+      )}
 
       {/* --- REAL-TIME TRANSACTION & UTR AUDIT LOG --- */}
+      {(activeTab === "TRANSACTIONS" || activeTab === "METRICS") && (
       <div className="rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-[0_15px_45px_rgba(0,0,0,0.04)] p-6 sm:p-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div>
@@ -513,7 +595,7 @@ export function AdminCommandCenterSaaS() {
                   <th className="py-3 px-3">UPI VPA Debited</th>
                   <th className="py-3 px-3">Bank UTR Number</th>
                   <th className="py-3 px-3 text-right">Gross Total</th>
-                  <th className="py-3 px-3 text-right">Platform Fee (10%)</th>
+                  <th className="py-3 px-3 text-right">Platform Fee ({whiteLabelConfig.platformCommissionRate}%)</th>
                   <th className="py-3 px-3 text-center">Escrow Status</th>
                 </tr>
               </thead>
@@ -553,9 +635,9 @@ export function AdminCommandCenterSaaS() {
                       {formatCurrency(ord.total)}
                     </td>
 
-                    {/* 10% Fee */}
+                    {/* Commission Fee */}
                     <td className="py-3.5 px-3 text-right font-bold text-emerald-700">
-                      {formatCurrency(Math.round(ord.total * 0.1))}
+                      {formatCurrency(Math.round(ord.total * (whiteLabelConfig.platformCommissionRate / 100)))}
                     </td>
 
                     {/* Escrow Status */}
@@ -572,6 +654,358 @@ export function AdminCommandCenterSaaS() {
           </div>
         )}
       </div>
+      )}
+
+      {/* --- TAB CONTENT: 4. COMMERCIAL WHITE-LABEL RESELLER BRAND ENGINE --- */}
+      {activeTab === "WHITE_LABEL" && (
+        <div className="rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-[0_15px_45px_rgba(0,0,0,0.04)] p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-500" />
+                <h2 className="text-lg font-extrabold text-slate-950">
+                  Commercial White-Label Reseller Engine
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Rebrand and customize the entire platform for your enterprise client in seconds with live global state propagation.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={resetWhiteLabelConfig}
+                className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
+                <span>Reset to Defaults</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Client Rebrand Presets */}
+          <div className="space-y-2">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500 font-bold block">
+              1-Click Enterprise Client Presets:
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                {
+                  name: "AuraMart Enterprise",
+                  subtitle: "Enterprise Multi-Vendor SaaS",
+                  upi: "auramart.enterprise@icici",
+                  gstin: "27AABCN8942Q1Z9",
+                  commission: 10,
+                  color: "blue" as const,
+                  badge: "Default Flagship",
+                },
+                {
+                  name: "Tata Luxury Hub",
+                  subtitle: "Bespoke Heritage & Fine Living",
+                  upi: "tata.luxury@hdfcbank",
+                  gstin: "27AAACT2727Q1ZT",
+                  commission: 12,
+                  color: "slate" as const,
+                  badge: "Conglomerate",
+                },
+                {
+                  name: "FabIndia Atelier",
+                  subtitle: "Handcrafted Textiles & Organic Living",
+                  upi: "fabindia.atelier@sbi",
+                  gstin: "07AAACF1234F1Z8",
+                  commission: 8,
+                  color: "emerald" as const,
+                  badge: "Artisan B2B",
+                },
+                {
+                  name: "Zara Studio Luxe",
+                  subtitle: "Contemporary Runway & Minimalist Tech",
+                  upi: "zara.studio@axisbank",
+                  gstin: "33AABCZ9876P1ZV",
+                  commission: 15,
+                  color: "amber" as const,
+                  badge: "Retail Global",
+                },
+              ].map((preset) => (
+                <button
+                  key={preset.name}
+                  type="button"
+                  onClick={() => {
+                    setWlBrandName(preset.name);
+                    setWlBrandSubtitle(preset.subtitle);
+                    setWlMerchantUpiId(preset.upi);
+                    setWlGstinNumber(preset.gstin);
+                    setWlPlatformCommission(preset.commission);
+                    setWlAccentColor(preset.color);
+                    updateWhiteLabelConfig({
+                      brandName: preset.name,
+                      brandSubtitle: preset.subtitle,
+                      merchantUpiId: preset.upi,
+                      gstinNumber: preset.gstin,
+                      platformCommissionRate: preset.commission,
+                      accentColor: preset.color,
+                    });
+                  }}
+                  className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                    wlBrandName === preset.name
+                      ? "border-blue-600 bg-blue-50/50 shadow-sm ring-1 ring-blue-500/30"
+                      : "border-slate-200/90 bg-white/70 hover:bg-white hover:border-slate-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold text-slate-950">{preset.name}</span>
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-bold">
+                      {preset.badge}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 line-clamp-1">{preset.subtitle}</p>
+                  <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-mono text-slate-600">
+                    <span>Fee: {preset.commission}%</span>
+                    <span className="text-blue-600 font-semibold">{preset.color}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Form & Live Specular Glass Preview Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
+            {/* Left 7 Columns: Form Controls */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateWhiteLabelConfig({
+                  brandName: wlBrandName,
+                  brandSubtitle: wlBrandSubtitle,
+                  merchantUpiId: wlMerchantUpiId,
+                  gstinNumber: wlGstinNumber,
+                  platformCommissionRate: Number(wlPlatformCommission),
+                  accentColor: wlAccentColor,
+                });
+              }}
+              className="lg:col-span-7 space-y-4"
+            >
+              {/* Brand Name & Subtitle */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-mono font-bold text-slate-700 uppercase">
+                    Store Brand Name
+                  </label>
+                  <input
+                    type="text"
+                    value={wlBrandName}
+                    onChange={(e) => setWlBrandName(e.target.value)}
+                    placeholder="e.g. AuraMart Enterprise"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-mono font-bold text-slate-700 uppercase">
+                    Tagline / Subtitle
+                  </label>
+                  <input
+                    type="text"
+                    value={wlBrandSubtitle}
+                    onChange={(e) => setWlBrandSubtitle(e.target.value)}
+                    placeholder="e.g. Enterprise Multi-Vendor SaaS"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Merchant UPI ID & GSTIN */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-mono font-bold text-slate-700 uppercase">
+                    Merchant Official UPI ID
+                  </label>
+                  <input
+                    type="text"
+                    value={wlMerchantUpiId}
+                    onChange={(e) => setWlMerchantUpiId(e.target.value)}
+                    placeholder="e.g. merchant@icici"
+                    className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-mono font-bold text-slate-700 uppercase">
+                    Merchant GSTIN Number
+                  </label>
+                  <input
+                    type="text"
+                    value={wlGstinNumber}
+                    onChange={(e) => setWlGstinNumber(e.target.value)}
+                    placeholder="e.g. 27AABCN8942Q1Z9"
+                    className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Commission % & Theme Accent Color */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-mono font-bold text-slate-700 uppercase">
+                      Platform Commission Rate
+                    </label>
+                    <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      {wlPlatformCommission}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="25"
+                    step="1"
+                    value={wlPlatformCommission}
+                    onChange={(e) => setWlPlatformCommission(Number(e.target.value))}
+                    className="w-full accent-slate-950 cursor-pointer"
+                  />
+                  <div className="flex justify-between text-[10px] font-mono text-slate-400">
+                    <span>1% (Wholesale)</span>
+                    <span>10% (Standard)</span>
+                    <span>25% (Luxury)</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-mono font-bold text-slate-700 uppercase block">
+                    Accent Theme Palette
+                  </label>
+                  <div className="flex items-center gap-2 pt-1">
+                    {[
+                      { id: "blue" as const, label: "Royal Blue", bg: "bg-blue-600" },
+                      { id: "emerald" as const, label: "Emerald", bg: "bg-emerald-600" },
+                      { id: "slate" as const, label: "Obsidian", bg: "bg-slate-900" },
+                      { id: "amber" as const, label: "Amber", bg: "bg-amber-600" },
+                    ].map((col) => (
+                      <button
+                        key={col.id}
+                        type="button"
+                        onClick={() => setWlAccentColor(col.id)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[11px] font-semibold transition-all cursor-pointer ${
+                          wlAccentColor === col.id
+                            ? "border-slate-900 bg-slate-900 text-white shadow-xs"
+                            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        }`}
+                      >
+                        <span className={`w-3 h-3 rounded-full ${col.bg}`} />
+                        <span>{col.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="pt-3 flex items-center gap-3">
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-2xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-md active:scale-98 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span>Apply White-Label Settings Across Whole App</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    openPhoneSimulator({
+                      amount: 26990,
+                      brandName: wlBrandName,
+                      merchantUpiId: wlMerchantUpiId,
+                      utrNumber: `UPI/2026/${Math.floor(100000 + Math.random() * 900000)}`,
+                    });
+                    showToast("📱 iPhone Simulator Launched with New Brand!", "success");
+                  }}
+                  className="px-4 py-2.5 rounded-2xl border border-indigo-200 bg-indigo-50/80 hover:bg-indigo-100 text-indigo-800 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Smartphone className="w-4 h-4 text-indigo-600" />
+                  <span>Test Floating Phone Simulator</span>
+                </button>
+              </div>
+            </form>
+
+            {/* Right 5 Columns: Live Specular Glass Preview Card */}
+            <div className="lg:col-span-5 rounded-2xl border border-slate-200/90 bg-slate-50/70 p-4 space-y-4 font-mono text-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Live Brand Preview
+                </span>
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                  Real-Time Sync
+                </span>
+              </div>
+
+              {/* Navbar Preview */}
+              <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-1">
+                <span className="text-[9px] uppercase tracking-widest text-slate-400 block font-bold">
+                  Header Branding:
+                </span>
+                <div className="flex items-center gap-2 pt-0.5">
+                  <div
+                    className={`w-7 h-7 rounded-lg text-white font-bold text-xs flex items-center justify-center ${
+                      wlAccentColor === "emerald"
+                        ? "bg-emerald-600"
+                        : wlAccentColor === "amber"
+                        ? "bg-amber-600"
+                        : wlAccentColor === "slate"
+                        ? "bg-slate-900"
+                        : "bg-blue-600"
+                    }`}
+                  >
+                    {wlBrandName.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <span className="font-extrabold text-slate-950 font-sans text-xs block">
+                      {wlBrandName}
+                    </span>
+                    <span className="text-[9px] text-slate-500 block truncate max-w-[190px]">
+                      {wlBrandSubtitle}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payout & Financial Split Preview */}
+              <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
+                <span className="text-[9px] uppercase tracking-widest text-slate-400 block font-bold">
+                  Commission Escrow Split (on ₹10,000 Order):
+                </span>
+                <div className="space-y-1 text-[11px]">
+                  <div className="flex justify-between text-emerald-800">
+                    <span>Platform Revenue ({wlPlatformCommission}%):</span>
+                    <span className="font-bold">₹{(10000 * wlPlatformCommission / 100).toLocaleString("en-IN")}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Supplier Settlement ({100 - wlPlatformCommission}%):</span>
+                    <span className="font-bold">₹{(10000 - (10000 * wlPlatformCommission / 100)).toLocaleString("en-IN")}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Merchant VPA & Tax Identity */}
+              <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-1 text-[10px]">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Merchant VPA:</span>
+                  <span className="font-bold text-slate-900">{wlMerchantUpiId}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">GSTIN:</span>
+                  <span className="font-bold text-slate-900">{wlGstinNumber}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

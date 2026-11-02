@@ -135,6 +135,16 @@ flowchart TD
   - `Request Bulk / B2B Quote` modal on every product card with 50+ unit MOQ stepper, target unit price, and 1-click corporate buyer data filler.
   - Submissions sync instantly to the Supplier Portal's **B2B Wholesale Leads** table with live `Approve Allocation ✓` and `Decline` controls.
 
+### 8. Commercial White-Label Reseller Engine & Floating Smartphone Simulator (Phase 8)
+- **⚙️ White-Label Reseller Engine**:
+  - Fully dynamic rebrand configuration: Store Brand Name, Brand Subtitle, Merchant UPI ID, GSTIN Number, Platform Commission Rate (1% - 25%), and Accent Palette (Royal Blue, Emerald, Obsidian Slate, Sunset Amber).
+  - 1-Click presets for instant client demonstrations: *AuraMart Enterprise*, *Tata Luxury Hub*, *FabIndia Atelier*, *Zara Studio Luxe*.
+  - Global state synchronization updating the Sticky Navbar, Payment Collect Modal, and Official Printable PDF Tax Invoice without a page reload.
+- **📱 Floating iPhone 16 Pro Smartphone Notification & PIN Simulator**:
+  - Embedded metallic hardware shell with Dynamic Island, live status clock, 5G wireless icon, and battery percentage.
+  - Interactive multi-stage payment handshake: Google Pay push collect request $\to$ 4-digit UPI PIN numeric keypad (with 1-click `"⚡ Tap to Auto-Enter PIN"` shortcut) $\to$ Instant HDFC Bank SMS debited alert banner.
+  - Seamless two-way handshake resolving background checkouts and issuing branded receipts.
+
 ---
 
 ## ⚡ 2-Minute Evaluator Quickstart
