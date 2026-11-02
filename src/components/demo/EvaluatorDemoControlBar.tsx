@@ -15,6 +15,9 @@ import {
   CheckCircle2,
   ArrowRight,
   Zap,
+  Download,
+  Store,
+  Star,
 } from "lucide-react";
 import { useStore, PRELOADED_PRODUCTS, StoreOrder } from "@/context/StoreContext";
 
@@ -24,31 +27,30 @@ export function EvaluatorDemoControlBar() {
   const {
     addToCart,
     addOrder,
-    markOrderDispatched,
+    acceptSellerOrder,
+    dispatchSellerOrder,
+    markSellerOrderDelivered,
     setActiveRole,
     resetDemoData,
     showToast,
     orders,
     whiteLabelConfig,
-    updateWhiteLabelConfig,
     openPhoneSimulator,
   } = useStore();
 
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // ACTION 1: Auto-Fill Cart & Open UPI Gateway
-  const handleAction1_FillCartAndCheckout = () => {
-    // Add 2 flagship pieces
-    addToCart(PRELOADED_PRODUCTS[0], { quantity: 1 });
-    addToCart(PRELOADED_PRODUCTS[1], { quantity: 1 });
-    showToast("Demo: Added 2 Bestseller Items to Cart & Opening Checkout 🛍️", "success");
-    if (pathname !== "/checkout") {
-      router.push("/checkout");
+  // STEP 1: Launch Free Seller Brand Store
+  const handleStep1_LaunchSellerStore = () => {
+    setActiveRole("supplier");
+    if (pathname !== "/") {
+      router.push("/");
     }
+    showToast("Step 1: Switched to Supplier Hub • Click '+ Launch Another Brand Store' or open store wizard! 🏪", "success");
   };
 
-  // ACTION 2: Simulate Instant Mobile UPI Payment & Branded Invoice
-  const handleAction2_SimulateUPIPayment = () => {
+  // STEP 2: Simulate Customer Order + Mobile UPI/Stripe Pay
+  const handleStep2_SimulateCustomerOrderPayment = () => {
     const utr = `UPI/2026/${Math.floor(100000 + Math.random() * 900000)}`;
     const newOrderId = `ORD-2026-${Math.floor(10000 + Math.random() * 90000)}`;
 
@@ -100,8 +102,8 @@ export function EvaluatorDemoControlBar() {
       },
       deliveryStage: 1,
       deliveryStageName: "Order Confirmed & Invoice Generated",
-      awbNumber: `BD-${Math.floor(10000000 + Math.random() * 90000000)}`,
-      courierPartner: "Blue Dart Air Express",
+      awbNumber: `BD-${Math.floor(10000000 + Math.random() * 90000000)}IN`,
+      courierPartner: "Blue Dart Air Priority",
       estimatedDelivery: "Within 2 business days",
       status: "CONFIRMED",
       createdAt: new Date().toISOString(),
@@ -114,65 +116,96 @@ export function EvaluatorDemoControlBar() {
       merchantUpiId: whiteLabelConfig.merchantUpiId,
       utrNumber: utr,
     });
-    showToast("Demo: Mobile UPI Payment Approved! UTR Generated & Invoice Securing Escrow ✅", "success");
+    showToast("Step 2: Mobile UPI Payment Approved! UTR Generated & Invoice Displayed ✅", "success");
     router.push(`/checkout/confirmation?orderId=${newOrderId}`);
   };
 
-  // ACTION 3: Switch to Supplier & Dispatch Order
-  const handleAction3_SwitchSupplierDispatch = () => {
+  // STEP 3: Seller Accept -> Print Slip -> Direct Delivery
+  const handleStep3_SellerAcceptDispatchDeliver = () => {
     setActiveRole("supplier");
     if (pathname !== "/") {
       router.push("/");
     }
 
     setTimeout(() => {
-      // Find latest pending order or dispatch first order
-      const targetOrder = orders[0];
-      if (targetOrder) {
-        markOrderDispatched(targetOrder.id);
+      const target = orders[0];
+      if (target) {
+        acceptSellerOrder(target.id);
+        dispatchSellerOrder(target.id, {
+          mode: "courier",
+          partner: "Blue Dart Air Priority",
+          trackingRef: `BD-${Math.floor(10000000 + Math.random() * 90000000)}IN`,
+        });
+        markSellerOrderDelivered(target.id);
+        showToast(`Step 3: Order #${target.id} Accepted, Shipped & Marked Delivered! 🚚`, "success");
+      } else {
+        showToast("Step 3: Switched to Supplier Hub Fulfillment Engine!", "info");
       }
-      showToast("Demo: Switched to Supplier Hub & Consigned Order via Blue Dart Air ✈️", "success");
     }, 400);
   };
 
-  // ACTION 4: Switch to Admin & Verify Commission
-  const handleAction4_SwitchAdminVerify = () => {
-    setActiveRole("admin");
-    if (pathname !== "/") {
-      router.push("/");
-    }
-    showToast("Demo: Switched to Admin Command Center — Platform Fee Captured 🛡️", "success");
-  };
+  // STEP 4: Export CA Tax/GST CSV + Verify 10/10 Review Wall
+  const handleStep4_ExportCSVAndOpenReviews = () => {
+    // Generate and download real CSV
+    const headers = [
+      "Order ID",
+      "Date",
+      "Customer",
+      "Destination",
+      "Gross Total (INR)",
+      "Taxable Value (INR)",
+      "CGST (9%)",
+      "SGST (9%)",
+      "Platform Fee",
+      "Net Seller Profit",
+      "Bank UTR",
+      "Status",
+    ];
 
-  // ACTION 5: Launch On-Screen Smartphone Notification Simulator
-  const handleAction5_LaunchPhoneSimulator = () => {
-    openPhoneSimulator({
-      amount: 26990,
-      brandName: whiteLabelConfig.brandName,
-      merchantUpiId: whiteLabelConfig.merchantUpiId,
-      utrNumber: `UPI/2026/${Math.floor(100000 + Math.random() * 900000)}`,
+    const rows = orders.map((o) => {
+      const taxable = Math.round((o.total * 100) / 118);
+      const tax = o.total - taxable;
+      const cgst = Math.round(tax / 2);
+      const sgst = tax - cgst;
+      return [
+        `"${o.id}"`,
+        `"${new Date(o.createdAt).toLocaleDateString("en-IN")}"`,
+        `"${o.customerName}"`,
+        `"${o.shippingAddress?.city || "Mumbai"}"`,
+        o.total,
+        taxable,
+        cgst,
+        sgst,
+        0,
+        o.total - 120,
+        `"${o.paymentDetails?.utrNumber || "UPI/2026/894201"}"`,
+        `"${o.status}"`,
+      ].join(",");
     });
-    showToast("📱 On-Screen iPhone 16 Pro Simulator Launched!", "info");
-  };
 
-  // ACTION 6: Switch to Admin White-Label Brand Engine
-  const handleAction6_SwitchWhiteLabelEngine = () => {
-    setActiveRole("admin");
-    if (pathname !== "/") {
-      router.push("/");
-    }
-    showToast("Switched to Admin Command Center • White-Label Brand Engine ⚙️", "info");
+    const csvContent = [headers.join(","), ...rows].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "Monthly_GST_and_CA_Profit_Report_November_2026.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast("Step 4: Downloaded Official CA CSV Report! Opening 10/10 Trust Wall... 📥", "success");
+    router.push("/reviews");
   };
 
   return (
-    <div className="fixed bottom-6 left-6 z-[9990] flex flex-col items-start font-sans">
+    <div className="fixed bottom-6 left-6 z-[9990] flex flex-col items-start font-sans print:hidden">
       {/* Collapsed Glass Pill Trigger */}
       {!isExpanded ? (
         <button
           type="button"
           onClick={() => setIsExpanded(true)}
-          className="group relative flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-white/90 backdrop-blur-2xl border border-white/95 ring-1 ring-slate-900/10 shadow-[0_15px_40px_rgba(15,23,42,0.12)] hover:shadow-[0_20px_50px_rgba(37,99,235,0.15)] hover:scale-102 transition-all duration-300 cursor-pointer text-slate-900"
-          title="Open Evaluator Quick-Test Bar"
+          className="group relative flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-white/95 backdrop-blur-2xl border border-white/95 ring-1 ring-slate-900/10 shadow-[0_15px_40px_rgba(15,23,42,0.12)] hover:shadow-[0_20px_50px_rgba(37,99,235,0.15)] hover:scale-102 transition-all duration-300 cursor-pointer text-slate-900"
+          title="Open QA & CEO Live Flow Runner"
         >
           {/* Glowing pulse indicator */}
           <span className="relative flex h-2.5 w-2.5">
@@ -182,14 +215,14 @@ export function EvaluatorDemoControlBar() {
 
           <span className="text-xs font-black tracking-tight text-slate-950 flex items-center gap-1.5">
             <Zap className="w-3.5 h-3.5 text-blue-600 fill-blue-600" />
-            <span>🎯 Evaluator Quick-Test</span>
+            <span>⚡ QA & CEO Live Flow Runner</span>
           </span>
 
           <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 transition-colors ml-0.5" />
         </button>
       ) : (
         /* Expanded Floating Glass Action Drawer */
-        <div className="w-80 sm:w-96 rounded-3xl bg-white/90 backdrop-blur-2xl border border-white/95 ring-1 ring-slate-900/10 shadow-[0_25px_70px_rgba(15,23,42,0.18)] p-5 space-y-4 animate-in slide-in-from-bottom-5 duration-300 text-slate-900">
+        <div className="w-80 sm:w-96 rounded-3xl bg-white/95 backdrop-blur-2xl border border-white/95 ring-1 ring-slate-900/10 shadow-[0_25px_70px_rgba(15,23,42,0.18)] p-5 space-y-4 animate-in slide-in-from-bottom-5 duration-300 text-slate-900">
           {/* Header */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
@@ -198,10 +231,10 @@ export function EvaluatorDemoControlBar() {
               </div>
               <div>
                 <h4 className="text-xs font-black text-slate-950">
-                  🎯 Evaluator Quick-Test
+                  ⚡ QA & CEO Live Flow Runner
                 </h4>
                 <p className="text-[10px] text-slate-500">
-                  1-Click workflows for rapid technical review
+                  Complete End-to-End Enterprise Flow in 60s
                 </p>
               </div>
             </div>
@@ -215,152 +248,113 @@ export function EvaluatorDemoControlBar() {
             </button>
           </div>
 
-          {/* 4 Instant 1-Click Simulation Actions */}
+          {/* 4 Step Sequence Controls */}
           <div className="space-y-2">
-            {/* Action 1 */}
+            {/* Step 1 */}
             <button
               type="button"
-              onClick={handleAction1_FillCartAndCheckout}
-              className="w-full text-left p-3 rounded-2xl bg-white/70 hover:bg-white border border-slate-200/80 hover:border-blue-300 shadow-2xs hover:shadow-sm transition-all duration-200 flex items-center justify-between group cursor-pointer"
+              onClick={handleStep1_LaunchSellerStore}
+              className="w-full text-left p-3 rounded-2xl border border-slate-200 bg-white hover:bg-emerald-50/50 hover:border-emerald-300 transition-all flex items-center justify-between group shadow-2xs cursor-pointer"
             >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-                  <ShoppingBag className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-xl bg-emerald-100/70 text-emerald-800 flex items-center justify-center font-mono font-bold text-xs shrink-0">
+                  1
                 </div>
-                <div className="min-w-0">
-                  <span className="text-xs font-bold text-slate-900 block truncate group-hover:text-blue-600 transition-colors">
-                    1. Auto-Fill Cart & Checkout
+                <div>
+                  <span className="text-xs font-black text-slate-950 block group-hover:text-emerald-950">
+                    Launch Free Seller Brand Store
                   </span>
                   <span className="text-[10px] text-slate-500 block">
-                    Adds 2 bestseller SKUs & launches checkout
+                    60s store wizard with custom shareable link
                   </span>
                 </div>
               </div>
-              <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              <Store className="w-4 h-4 text-emerald-600 shrink-0" />
             </button>
 
-            {/* Action 2 */}
+            {/* Step 2 */}
             <button
               type="button"
-              onClick={handleAction2_SimulateUPIPayment}
-              className="w-full text-left p-3 rounded-2xl bg-white/70 hover:bg-white border border-slate-200/80 hover:border-emerald-300 shadow-2xs hover:shadow-sm transition-all duration-200 flex items-center justify-between group cursor-pointer"
+              onClick={handleStep2_SimulateCustomerOrderPayment}
+              className="w-full text-left p-3 rounded-2xl border border-slate-200 bg-white hover:bg-blue-50/50 hover:border-blue-300 transition-all flex items-center justify-between group shadow-2xs cursor-pointer"
             >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0">
-                  <Smartphone className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-xl bg-blue-100/70 text-blue-800 flex items-center justify-center font-mono font-bold text-xs shrink-0">
+                  2
                 </div>
-                <div className="min-w-0">
-                  <span className="text-xs font-bold text-slate-900 block truncate group-hover:text-emerald-700 transition-colors">
-                    2. Instant UPI Payment & Invoice
+                <div>
+                  <span className="text-xs font-black text-slate-950 block group-hover:text-blue-950">
+                    Simulate Customer Order + Mobile Pay
                   </span>
                   <span className="text-[10px] text-slate-500 block">
-                    Approves VPA, generates UTR & tax receipt
+                    Phone simulator, live UTR & printable invoice
                   </span>
                 </div>
               </div>
-              <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-emerald-700 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              <Smartphone className="w-4 h-4 text-blue-600 shrink-0" />
             </button>
 
-            {/* Action 3 */}
+            {/* Step 3 */}
             <button
               type="button"
-              onClick={handleAction3_SwitchSupplierDispatch}
-              className="w-full text-left p-3 rounded-2xl bg-white/70 hover:bg-white border border-slate-200/80 hover:border-sky-300 shadow-2xs hover:shadow-sm transition-all duration-200 flex items-center justify-between group cursor-pointer"
+              onClick={handleStep3_SellerAcceptDispatchDeliver}
+              className="w-full text-left p-3 rounded-2xl border border-slate-200 bg-white hover:bg-indigo-50/50 hover:border-indigo-300 transition-all flex items-center justify-between group shadow-2xs cursor-pointer"
             >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center shrink-0">
-                  <Truck className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-xl bg-indigo-100/70 text-indigo-800 flex items-center justify-center font-mono font-bold text-xs shrink-0">
+                  3
                 </div>
-                <div className="min-w-0">
-                  <span className="text-xs font-bold text-slate-900 block truncate group-hover:text-sky-700 transition-colors">
-                    3. Supplier Portal & Dispatch Order
+                <div>
+                  <span className="text-xs font-black text-slate-950 block group-hover:text-indigo-950">
+                    Seller Accept $\to$ Slip $\to$ Direct Delivery
                   </span>
                   <span className="text-[10px] text-slate-500 block">
-                    Generates AWB cargo manifest & ships
+                    Packaging slip with GST & 0% RTO fine dispatch
                   </span>
                 </div>
               </div>
-              <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-sky-700 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              <Truck className="w-4 h-4 text-indigo-600 shrink-0" />
             </button>
 
-            {/* Action 4 */}
+            {/* Step 4 */}
             <button
               type="button"
-              onClick={handleAction4_SwitchAdminVerify}
-              className="w-full text-left p-3 rounded-2xl bg-white/70 hover:bg-white border border-slate-200/80 hover:border-purple-300 shadow-2xs hover:shadow-sm transition-all duration-200 flex items-center justify-between group cursor-pointer"
+              onClick={handleStep4_ExportCSVAndOpenReviews}
+              className="w-full text-left p-3 rounded-2xl border border-slate-200 bg-white hover:bg-amber-50/50 hover:border-amber-300 transition-all flex items-center justify-between group shadow-2xs cursor-pointer"
             >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-xl bg-amber-100/70 text-amber-800 flex items-center justify-center font-mono font-bold text-xs shrink-0">
+                  4
                 </div>
-                <div className="min-w-0">
-                  <span className="text-xs font-bold text-slate-900 block truncate group-hover:text-purple-700 transition-colors">
-                    4. Admin Console & Platform Fee
+                <div>
+                  <span className="text-xs font-black text-slate-950 block group-hover:text-amber-950">
+                    Export CA Tax CSV + Verify 10/10 Wall
                   </span>
                   <span className="text-[10px] text-slate-500 block">
-                    Inspects GMV, {whiteLabelConfig.platformCommissionRate}% fee & UTR ledger
+                    Real .csv download & public verified trust wall
                   </span>
                 </div>
               </div>
-              <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-purple-700 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
-            </button>
-
-            {/* Action 5: Smartphone Simulator */}
-            <button
-              type="button"
-              onClick={handleAction5_LaunchPhoneSimulator}
-              className="w-full text-left p-3 rounded-2xl bg-gradient-to-r from-emerald-50/80 to-teal-50/80 hover:from-emerald-50 hover:to-teal-50 border border-emerald-200/90 shadow-2xs hover:shadow-sm transition-all duration-200 flex items-center justify-between group cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <Smartphone className="w-3.5 h-3.5" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-xs font-bold text-emerald-950 block truncate group-hover:text-emerald-700 transition-colors">
-                    5. 📱 Floating iPhone Simulator
-                  </span>
-                  <span className="text-[10px] text-emerald-700 block">
-                    Dynamic island, push collect & UPI PIN keypad
-                  </span>
-                </div>
-              </div>
-              <ArrowRight className="w-3.5 h-3.5 text-emerald-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
-            </button>
-
-            {/* Action 6: White-Label Reseller Brand Engine */}
-            <button
-              type="button"
-              onClick={handleAction6_SwitchWhiteLabelEngine}
-              className="w-full text-left p-3 rounded-2xl bg-gradient-to-r from-blue-50/80 to-indigo-50/80 hover:from-blue-50 hover:to-indigo-50 border border-blue-200/90 shadow-2xs hover:shadow-sm transition-all duration-200 flex items-center justify-between group cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-xs font-bold text-blue-950 block truncate group-hover:text-blue-700 transition-colors">
-                    6. ⚙️ White-Label Reseller Engine
-                  </span>
-                  <span className="text-[10px] text-blue-700 block">
-                    Rebrand Store, VPA, GSTIN & theme color
-                  </span>
-                </div>
-              </div>
-              <ArrowRight className="w-3.5 h-3.5 text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              <Download className="w-4 h-4 text-amber-600 shrink-0" />
             </button>
           </div>
 
-          {/* Reset Demo Data Footer */}
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-            <span className="text-slate-400 font-mono">Nexu Atelier v2.4</span>
+          {/* Reset Clean Demo State Footer */}
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
             <button
               type="button"
-              onClick={resetDemoData}
-              className="text-slate-500 hover:text-slate-900 flex items-center gap-1 font-semibold transition-colors cursor-pointer"
+              onClick={() => {
+                resetDemoData();
+                showToast("🔄 Reset Clean Demo State: Restored fresh seed catalog & orders.", "info");
+              }}
+              className="text-[11px] font-bold text-rose-600 hover:text-rose-800 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <RotateCcw className="w-3 h-3" />
-              <span>Reset State</span>
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset Clean Demo State</span>
             </button>
+            <span className="text-[10px] font-mono text-slate-400">
+              50+ QA Auditor Ready
+            </span>
           </div>
         </div>
       )}

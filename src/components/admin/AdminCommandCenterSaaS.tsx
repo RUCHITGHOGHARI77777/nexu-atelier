@@ -536,30 +536,65 @@ export function AdminCommandCenterSaaS() {
                   </td>
 
                   {/* Action Toggles */}
-                  <td className="py-3.5 px-3 text-right space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => toggleSupplierVerification(sup.id)}
-                      className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                        sup.verified
-                          ? "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
-                          : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs"
-                      }`}
-                    >
-                      {sup.verified ? "Revoke Badge" : "Approve & Verify ✓"}
-                    </button>
+                  <td className="py-3.5 px-3 text-right">
+                    <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                      {/* 1. Grant Verified Brand Tick / Revoke */}
+                      <button
+                        type="button"
+                        onClick={() => toggleSupplierVerification(sup.id)}
+                        title={sup.verified ? "Revoke Verification" : "Grant Verified Brand Tick"}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-semibold transition-all cursor-pointer ${
+                          sup.verified
+                            ? "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
+                            : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs"
+                        }`}
+                      >
+                        <BadgeCheck className="w-3 h-3" />
+                        <span>{sup.verified ? "Revoke Badge" : "Grant Verified ✓"}</span>
+                      </button>
 
-                    <button
-                      type="button"
-                      onClick={() => toggleSupplierPayoutHold(sup.id)}
-                      className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                        sup.payoutOnHold
-                          ? "bg-rose-600 hover:bg-rose-700 text-white"
-                          : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
-                      }`}
-                    >
-                      {sup.payoutOnHold ? "Release Hold" : "Hold Payout"}
-                    </button>
+                      {/* 2. Open Seller's Public Storefront */}
+                      <a
+                        href={`/store/${sup.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Open Seller's Public Storefront"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 transition-all cursor-pointer"
+                      >
+                        <ExternalLink className="w-3 h-3 text-slate-500" />
+                        <span>Public Store</span>
+                      </a>
+
+                      {/* 3. Audit UTR & Tax Ledger */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab("TRANSACTIONS");
+                          setTransactionSearch(sup.name);
+                          showToast(`Showing UTR transactions & audit ledger for ${sup.name}`, "info");
+                        }}
+                        title="Audit UTR & Tax Ledger"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-all cursor-pointer"
+                      >
+                        <ShieldCheck className="w-3 h-3 text-indigo-600" />
+                        <span>Audit UTR</span>
+                      </button>
+
+                      {/* 4. Suspend Listing / Hold */}
+                      <button
+                        type="button"
+                        onClick={() => toggleSupplierPayoutHold(sup.id)}
+                        title={sup.payoutOnHold ? "Release Payout Escrow" : "Suspend / Hold Payout"}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-semibold transition-all cursor-pointer ${
+                          sup.payoutOnHold
+                            ? "bg-rose-600 hover:bg-rose-700 text-white"
+                            : "bg-white text-rose-700 hover:bg-rose-50 border border-rose-200"
+                        }`}
+                      >
+                        <AlertTriangle className="w-3 h-3" />
+                        <span>{sup.payoutOnHold ? "Release Hold" : "Hold / Suspend"}</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1148,6 +1183,73 @@ export function AdminCommandCenterSaaS() {
               <p className="text-[11px] text-slate-500">
                 Firebase Spark & Postgres free tier handles up to 50k MAU
               </p>
+            </div>
+          </div>
+
+          {/* Global Multi-Currency GMV & Firebase Sponsorship Telemetry */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Global GMV Multi-Currency Breakdown */}
+            <div className="rounded-2xl border border-white/90 ring-1 ring-slate-900/5 bg-white/80 backdrop-blur-2xl p-5 shadow-[0_8px_30px_rgb(15,23,42,0.04)] space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-emerald-600" />
+                  <span className="text-xs font-bold text-slate-900">Global GMV Multi-Currency Breakdown</span>
+                </div>
+                <span className="text-[10px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-bold">
+                  Zero Platform Skim
+                </span>
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 text-center">
+                <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[10px] text-slate-400 block font-mono">🇮🇳 INR</span>
+                  <span className="text-xs font-bold font-mono text-slate-900">₹3,45,800</span>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[10px] text-slate-400 block font-mono">🇺🇸 USD</span>
+                  <span className="text-xs font-bold font-mono text-slate-900">$4,120</span>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[10px] text-slate-400 block font-mono">🇪🇺 EUR</span>
+                  <span className="text-xs font-bold font-mono text-slate-900">€3,810</span>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[10px] text-slate-400 block font-mono">🇬🇧 GBP</span>
+                  <span className="text-xs font-bold font-mono text-slate-900">£3,290</span>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[10px] text-slate-400 block font-mono">🇦🇪 AED</span>
+                  <span className="text-xs font-bold font-mono text-slate-900">د.إ 15,130</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-500 font-mono">
+                Direct merchant settlements audited across 5 international fiat regions.
+              </p>
+            </div>
+
+            {/* Firebase Sponsorship & Infrastructure Telemetry */}
+            <div className="rounded-2xl border border-white/90 ring-1 ring-slate-900/5 bg-white/80 backdrop-blur-2xl p-5 shadow-[0_8px_30px_rgb(15,23,42,0.04)] space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Server className="w-4 h-4 text-purple-600" />
+                  <span className="text-xs font-bold text-slate-900">Firebase Sponsorship Tracker</span>
+                </div>
+                <span className="text-[10px] font-mono text-purple-800 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200 font-bold">
+                  $0.004 / merchant / mo
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-slate-500">Daily Firestore Read Quota:</span>
+                  <span className="font-bold text-slate-900">42,910 / 50,000 (85.8%)</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-full" style={{ width: "85.8%" }} />
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 pt-1">
+                <span>Free Tier Coverage: <strong className="text-emerald-700">99.98%</strong></span>
+                <span>Hybrid Local Cache Hit: <strong className="text-slate-900">94.2%</strong></span>
+              </div>
             </div>
           </div>
 

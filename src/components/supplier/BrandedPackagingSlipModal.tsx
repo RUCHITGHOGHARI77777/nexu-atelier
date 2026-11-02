@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X, Printer, Package, QrCode, CheckCircle2, Building2, MapPin, Phone } from "lucide-react";
+import { X, Printer, Package, QrCode, CheckCircle2, Building2, MapPin, Phone, Sparkles } from "lucide-react";
 import { StoreOrder, useStore } from "@/context/StoreContext";
 import { formatCurrency, formatDateTime } from "@/lib/formatters";
 
@@ -179,8 +179,19 @@ export function BrandedPackagingSlipModal({ order, onClose }: BrandedPackagingSl
             </div>
           </div>
 
+          {/* Seller-Led Viral Referral Loop Footer */}
+          <div className="pt-3 border-t border-slate-200 p-2.5 rounded-xl bg-slate-50 border border-slate-200/90 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-700">
+            <div className="flex items-center gap-1.5 font-medium">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>Loved your direct studio purchase? <strong>Powered by Nexu Atelier</strong></span>
+            </div>
+            <span className="font-mono text-[10px] text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded font-bold">
+              Launch Your Own 0%-Commission Brand Store Free in 60s
+            </span>
+          </div>
+
           {/* Footer Declaration */}
-          <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px] text-slate-500 font-mono">
+          <div className="pt-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px] text-slate-500 font-mono">
             <span>Declaration: Authentic Handcrafted Goods Packed & Inspected by Seller</span>
             <span className="text-slate-800 font-bold">Authorized Signatory / Seal</span>
           </div>

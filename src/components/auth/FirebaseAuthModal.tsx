@@ -438,3 +438,4 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
     </div>
   );
 }
+

@@ -206,3 +206,4 @@ export async function signOutUser(): Promise<void> {
   }
   saveAuthUserLocally(null);
 }
+

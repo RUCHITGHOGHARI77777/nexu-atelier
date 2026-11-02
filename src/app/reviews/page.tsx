@@ -109,33 +109,50 @@ export default function TrustWallPage() {
           </div>
         </div>
 
-        {/* Quick Highlights Strip */}
-        <div className="pt-4 border-t border-slate-200/80 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-          <div className="p-3 rounded-2xl bg-white/80 border border-slate-200/80 space-y-0.5">
+        {/* 4 Core Satisfaction Breakdown Metrics */}
+        <div className="pt-4 border-t border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <div className="p-3.5 rounded-2xl bg-white/90 border border-slate-200/90 space-y-1 shadow-2xs">
             <span className="text-[10px] font-mono text-slate-500 uppercase block font-bold">
-              Commission Saved for Sellers
+              1. Seller Profit Satisfaction
             </span>
-            <span className="text-base font-black font-mono text-emerald-700">
-              {formatCurrency(totalCommissionsSaved)}+
-            </span>
+            <div className="flex items-baseline justify-between">
+              <span className="text-xl font-black font-mono text-emerald-700">10 / 10</span>
+              <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">0% Fee</span>
+            </div>
+            <p className="text-[10px] text-slate-500 font-mono">₹0 RTO return penalties</p>
           </div>
 
-          <div className="p-3 rounded-2xl bg-white/80 border border-slate-200/80 space-y-0.5">
+          <div className="p-3.5 rounded-2xl bg-white/90 border border-slate-200/90 space-y-1 shadow-2xs">
             <span className="text-[10px] font-mono text-slate-500 uppercase block font-bold">
-              Seller Empowerment Score
+              2. Direct Payout Speed
             </span>
-            <span className="text-base font-black font-mono text-slate-950">
-              10 / 10 Flawless
-            </span>
+            <div className="flex items-baseline justify-between">
+              <span className="text-xl font-black font-mono text-indigo-700">10 / 10</span>
+              <span className="text-[10px] text-indigo-700 font-bold bg-indigo-50 px-1.5 py-0.5 rounded">Instant</span>
+            </div>
+            <p className="text-[10px] text-slate-500 font-mono">0-second UPI / Bank wire</p>
           </div>
 
-          <div className="p-3 rounded-2xl bg-white/80 border border-slate-200/80 space-y-0.5">
+          <div className="p-3.5 rounded-2xl bg-white/90 border border-slate-200/90 space-y-1 shadow-2xs">
             <span className="text-[10px] font-mono text-slate-500 uppercase block font-bold">
-              Payment Dispute Rate
+              3. Tax & GST Automation
             </span>
-            <span className="text-base font-black font-mono text-emerald-700">
-              0.0% (Direct UPI P2P)
+            <div className="flex items-baseline justify-between">
+              <span className="text-xl font-black font-mono text-amber-700">9.9 / 10</span>
+              <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded">1-Click</span>
+            </div>
+            <p className="text-[10px] text-slate-500 font-mono">CA-ready CSV & P&L print</p>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-white/90 border border-slate-200/90 space-y-1 shadow-2xs">
+            <span className="text-[10px] font-mono text-slate-500 uppercase block font-bold">
+              4. Buyer Delivery Experience
             </span>
+            <div className="flex items-baseline justify-between">
+              <span className="text-xl font-black font-mono text-slate-950">9.9 / 10</span>
+              <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">Fast Air</span>
+            </div>
+            <p className="text-[10px] text-slate-500 font-mono">Direct artisan packaging</p>
           </div>
         </div>
       </div>
@@ -280,9 +297,11 @@ export default function TrustWallPage() {
                 </div>
               </div>
 
-              <div className="text-right font-mono text-[11px] text-slate-400">
-                <span>{rev.date}</span>
-                <span className="block text-emerald-700 font-bold">Verified ✓</span>
+              <div className="text-right font-mono text-[11px]">
+                <span className="text-slate-400 block">{rev.date}</span>
+                <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 inline-block">
+                  {rev.type === "SELLER" ? "0% Forced RTO Penalty ✅" : "Verified UTR Transaction ✅"}
+                </span>
               </div>
             </div>
           </div>
