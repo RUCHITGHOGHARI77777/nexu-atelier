@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { SafeImage } from "@/components/ui/SafeImage";
 import {
   Heart,
   Eye,
@@ -41,12 +41,14 @@ export function ProductCardSaaS({ product }: { product: StoreProduct }) {
       className="group relative rounded-2xl bg-white/75 backdrop-blur-2xl border border-white/90 ring-1 ring-slate-900/5 shadow-[0_8px_30px_rgb(15,23,42,0.04)] hover:shadow-[0_20px_50px_rgb(37,99,235,0.08)] hover:-translate-y-1 transition-all duration-300 ease-out p-4 flex flex-col justify-between overflow-hidden"
     >
       {/* Top Media Container */}
-      <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-slate-100 border border-slate-200/50 mb-3.5">
-        <Image
-          src={imgSrc}
+      <div
+        onClick={() => setQuickViewProduct(product)}
+        className="relative aspect-square w-full rounded-xl overflow-hidden bg-slate-100 border border-slate-200/50 mb-3.5 cursor-pointer"
+      >
+        <SafeImage
+          src={product.images[0] || imgSrc}
           alt={product.title}
           fill
-          onError={() => setImgSrc("https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80")}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
           className="object-cover group-hover:scale-106 transition-transform duration-500 ease-out"
         />

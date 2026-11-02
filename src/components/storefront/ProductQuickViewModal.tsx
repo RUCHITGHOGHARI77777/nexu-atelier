@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import Image from "next/image";
+import React, { useState, useRef } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   X,
@@ -19,9 +19,34 @@ import {
   Sparkles,
   Info,
   Briefcase,
+  Maximize2,
+  Ruler,
+  RotateCcw,
+  Layers,
+  ExternalLink,
 } from "lucide-react";
 import { useStore, StoreProduct } from "@/context/StoreContext";
-import { formatCurrency } from "@/lib/formatters";
+import { SafeImage } from "@/components/ui/SafeImage";
+
+// Standard Slot Labels for the 6-Slot Gallery
+const GALLERY_SLOT_LABELS = [
+  "Primary Hero",
+  "Back / Angle",
+  "Texture & Weave",
+  "Craftsmanship Detail",
+  "Scale & Dimensions",
+  "Studio Packaging",
+];
+
+// Interactive Size Guide Matrix (Chest, Length, Shoulder, Waist in inches and cm)
+const SIZE_GUIDE_ROWS = [
+  { size: "XS", chestIn: "36\"", chestCm: "91 cm", lengthIn: "27\"", lengthCm: "68 cm", shoulderIn: "17\"", shoulderCm: "43 cm" },
+  { size: "S", chestIn: "38\"", chestCm: "96 cm", lengthIn: "28\"", lengthCm: "71 cm", shoulderIn: "17.5\"", shoulderCm: "44 cm" },
+  { size: "M", chestIn: "40\"", chestCm: "102 cm", lengthIn: "29\"", lengthCm: "74 cm", shoulderIn: "18\"", shoulderCm: "46 cm" },
+  { size: "L", chestIn: "42\"", chestCm: "107 cm", lengthIn: "30\"", lengthCm: "76 cm", shoulderIn: "18.5\"", shoulderCm: "47 cm" },
+  { size: "XL", chestIn: "44\"", chestCm: "112 cm", lengthIn: "31\"", lengthCm: "79 cm", shoulderIn: "19\"", shoulderCm: "48 cm" },
+  { size: "XXL", chestIn: "46\"", chestCm: "117 cm", lengthIn: "32\"", lengthCm: "81 cm", shoulderIn: "19.5\"", shoulderCm: "50 cm" },
+];
 
 export function ProductQuickViewModal() {
   const router = useRouter();
@@ -43,7 +68,13 @@ export function ProductQuickViewModal() {
   const [quantity, setQuantity] = useState(1);
   const [pincodeInput, setPincodeInput] = useState("");
   const [pincodeResult, setPincodeResult] = useState<{ checked: boolean; serviceable: boolean; message: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<"specs" | "reviews">("specs");
+  const [activeTab, setActiveTab] = useState<"specs" | "origin" | "reviews">("specs");
+  const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
+
+  // Hover Lens Zoom State
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomCoords, setZoomCoords] = useState({ x: 50, y: 50 });
+  const imageContainerRef = useRef<HTMLDivElement>(null);
 
   if (!quickViewProduct) return null;
 
@@ -52,11 +83,23 @@ export function ProductQuickViewModal() {
 
   // Initialize selected variants if not chosen yet
   const currentColor = selectedColor || (product.colors?.[0] ? { name: product.colors[0].name, hex: product.colors[0].hex } : undefined);
-  const currentSize = selectedSize || product.sizes?.[0];
+  const availableSizes = product.sizes && product.sizes.length > 0 ? product.sizes : ["XS", "S", "M", "L", "XL", "XXL"];
+  const currentSize = selectedSize || availableSizes[0];
 
   const discountPercent = Math.round(
     ((product.mrpPrice - product.price) / product.mrpPrice) * 100
   );
+
+  const sellerSlug = product.supplier.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+  // Mouse move handler for lens magnification
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!imageContainerRef.current) return;
+    const { left, top, width, height } = imageContainerRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((e.clientX - left) / width) * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - top) / height) * 100));
+    setZoomCoords({ x, y });
+  };
 
   const handleCheckPincode = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,12 +124,12 @@ export function ProductQuickViewModal() {
       "38": "Ahmedabad, GJ",
     };
     const prefix = pin.substring(0, 2);
-    const location = cityMap[prefix] || "Metro Delivery Zone";
+    const location = cityMap[prefix] || "Metro Air Delivery Zone";
 
     setPincodeResult({
       checked: true,
       serviceable: true,
-      message: `Delivery available to ${location}. Express Air Dispatch: Estimated arrival Thursday, Nov 6 (Free Courier).`,
+      message: `Direct Dispatch to ${location}: Expected arrival Thursday, Nov 6 (Free Priority Courier).`,
     });
   };
 
@@ -109,126 +152,214 @@ export function ProductQuickViewModal() {
     router.push("/checkout");
   };
 
+  const currentMainImage = product.images[activeImageIdx] || product.images[0] || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200">
       {/* Modal Container */}
-      <div className="relative bg-white/90 backdrop-blur-2xl rounded-3xl border border-white/95 ring-1 ring-slate-900/10 shadow-[0_25px_70px_rgba(15,23,42,0.18)] max-w-4xl w-full max-h-[92vh] overflow-y-auto text-slate-900 animate-in zoom-in-95 duration-200">
-        {/* Header Close Bar */}
-        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md px-6 py-3.5 border-b border-slate-100 flex items-center justify-between">
+      <div className="relative bg-white/95 backdrop-blur-2xl rounded-3xl border border-white/95 ring-1 ring-slate-900/10 shadow-[0_25px_70px_rgba(15,23,42,0.22)] max-w-5xl w-full max-h-[94vh] overflow-y-auto text-slate-900 animate-in zoom-in-95 duration-200">
+        
+        {/* Header Close & Breadcrumb Bar */}
+        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-6 py-3.5 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
-              {product.category}
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+              NIKE / APPLE FLAGSHIP SPEC
             </span>
-            <span className="text-xs font-semibold text-slate-700 truncate max-w-[280px] sm:max-w-md">
+            <span className="text-xs font-semibold text-slate-700 truncate max-w-[240px] sm:max-w-md">
               {product.title}
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setQuickViewProduct(null)}
-            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/store/${sellerSlug}`}
+              onClick={() => setQuickViewProduct(null)}
+              className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200"
+            >
+              <Building2 className="w-3 h-3" />
+              <span>Visit Seller Store</span>
+              <ExternalLink className="w-3 h-3" />
+            </Link>
+            <button
+              type="button"
+              onClick={() => setQuickViewProduct(null)}
+              className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        {/* Modal Body */}
-        <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-12 gap-8">
-          {/* Left Column: Image Gallery (5 Cols) */}
-          <div className="md:col-span-5 space-y-4">
-            {/* Primary Hero Image */}
-            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/80 shadow-xs">
-              <Image
-                src={product.images[activeImageIdx] || product.images[0]}
-                alt={product.title}
-                fill
-                sizes="(max-width: 768px) 100vw, 400px"
-                className="object-cover transition-all duration-300"
-              />
+        {/* Modal Body: Two-Column Studio Layout */}
+        <div className="p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Left Column: 6-Slot Interactive Studio Gallery (6 Cols) */}
+          <div className="lg:col-span-6 space-y-4">
+            
+            {/* Primary Hero Image with Hover Lens Magnification */}
+            <div
+              ref={imageContainerRef}
+              onMouseEnter={() => setIsZooming(true)}
+              onMouseLeave={() => setIsZooming(false)}
+              onMouseMove={handleMouseMove}
+              className="relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-sm cursor-crosshair group"
+            >
+              <div
+                className="w-full h-full transition-transform duration-150 ease-out"
+                style={{
+                  transformOrigin: `${zoomCoords.x}% ${zoomCoords.y}%`,
+                  transform: isZooming ? "scale(2.2)" : "scale(1)",
+                }}
+              >
+                <SafeImage
+                  src={currentMainImage}
+                  alt={product.title}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 550px"
+                  className="object-cover"
+                />
+              </div>
+
+              {/* Floating Lens Badge */}
+              <div className="absolute top-3 right-3 z-10 pointer-events-none">
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-white/90 backdrop-blur-md text-slate-700 shadow-sm border border-slate-200 flex items-center gap-1">
+                  <Maximize2 className="w-3 h-3 text-indigo-600" />
+                  <span>{isZooming ? "2.2x Macro Lens" : "Hover to Zoom"}</span>
+                </span>
+              </div>
+
               {discountPercent > 0 && (
-                <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md text-xs font-bold font-mono bg-emerald-600 text-white shadow-xs">
+                <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md text-xs font-bold font-mono bg-emerald-600 text-white shadow-xs z-10 pointer-events-none">
                   {discountPercent}% OFF
                 </span>
               )}
+
+              {/* Current Slot Label Overlay */}
+              <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
+                <span className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold bg-slate-950/80 text-white backdrop-blur-md">
+                  View {activeImageIdx + 1}/6: {GALLERY_SLOT_LABELS[activeImageIdx] || "Studio Angle"}
+                </span>
+              </div>
             </div>
 
-            {/* Thumbnail Strip */}
-            {product.images.length > 1 && (
-              <div className="flex gap-2.5 overflow-x-auto pb-1">
-                {product.images.map((img, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setActiveImageIdx(idx)}
-                    className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${
-                      activeImageIdx === idx
-                        ? "border-slate-950 ring-2 ring-slate-950/20 shadow-xs"
-                        : "border-slate-200 opacity-70 hover:opacity-100"
-                    }`}
-                  >
-                    <Image src={img} alt={`Thumb ${idx}`} fill sizes="64px" className="object-cover" />
-                  </button>
-                ))}
+            {/* 6-Slot Thumbnail Switcher Strip */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-500">
+                <span>Studio Multi-Angle Views ({product.images.length} Loaded):</span>
+                <span className="text-emerald-700 font-bold">Apple / Nike Studio Lighting</span>
               </div>
-            )}
+              <div className="grid grid-cols-6 gap-2">
+                {Array.from({ length: 6 }).map((_, idx) => {
+                  const img = product.images[idx] || product.images[0];
+                  const hasImage = Boolean(product.images[idx]);
+                  const isSelected = activeImageIdx === idx;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => hasImage && setActiveImageIdx(idx)}
+                      disabled={!hasImage}
+                      className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all p-0.5 cursor-pointer ${
+                        isSelected
+                          ? "border-slate-950 ring-2 ring-slate-950/20 scale-105 shadow-md"
+                          : hasImage
+                          ? "border-slate-200 hover:border-slate-400 opacity-80 hover:opacity-100"
+                          : "border-dashed border-slate-200 opacity-30 cursor-not-allowed bg-slate-50"
+                      }`}
+                      title={GALLERY_SLOT_LABELS[idx]}
+                    >
+                      {hasImage ? (
+                        <SafeImage src={img} alt={`Slot ${idx + 1}`} fill sizes="80px" className="object-cover rounded-lg" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[10px] font-mono text-slate-400">
+                          {idx + 1}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-            {/* Supplier Trust Dossier Card */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs">
+            {/* Transparency & Origin Summary Box */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-50 to-blue-50/30 border border-slate-200/80 space-y-2.5 text-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono uppercase text-slate-500 font-semibold">
-                  Verified Maker Studio
+                <span className="text-[10px] font-mono uppercase text-slate-500 font-bold tracking-wider">
+                  Artisan Maker Transparency
                 </span>
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" />
-                  <span>Escrow Guaranteed</span>
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1 font-mono">
+                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                  <span>100% Escrow Backed</span>
                 </span>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-slate-950 text-sm">{product.supplier.name}</h4>
-                  <p className="text-[11px] text-slate-500">{product.supplier.location}</p>
+                  <h4 className="font-extrabold text-slate-950 text-sm flex items-center gap-1.5">
+                    <span>{product.supplier.name}</span>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 fill-blue-100" />
+                  </h4>
+                  <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                    Dispatch Hub: {product.warehouseLocation?.city || product.supplier.location}, {product.warehouseLocation?.pincode || "302020"}
+                  </p>
                 </div>
                 <div className="text-right">
-                  <span className="font-extrabold text-slate-950 font-mono text-sm block">
+                  <span className="font-black text-slate-950 font-mono text-sm block">
                     {product.supplier.rating} ★
                   </span>
                   <span className="text-[10px] text-slate-500 font-mono">
-                    {product.supplier.fulfillmentRate} On-Time
+                    {product.supplier.fulfillmentRate} On-Time Dispatch
                   </span>
                 </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-600">
+                <span className="flex items-center gap-1">
+                  <RotateCcw className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>7-Day Direct Studio Exchange</span>
+                </span>
+                <span className="font-mono text-slate-900 font-bold">₹0 Return Penalty</span>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Specifications & Purchasing (7 Cols) */}
-          <div className="md:col-span-7 space-y-5">
-            {/* Title & Subtitle */}
+          {/* Right Column: Pricing, Size Selector, Delivery & Order Actions (6 Cols) */}
+          <div className="lg:col-span-6 space-y-5">
+            
+            {/* Header Title & Badges */}
             <div className="space-y-1.5 pb-3 border-b border-slate-100">
-              <h1 className="text-lg sm:text-xl font-extrabold text-slate-950 tracking-tight leading-snug">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono text-slate-500 uppercase tracking-widest font-semibold">
+                  {product.category}
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">
+                  SKU: {product.specs?.["Supplier SKU"] || `NEXU-${product.id.slice(-4).toUpperCase()}`}
+                </span>
+              </div>
+
+              <h1 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight leading-snug">
                 {product.title}
               </h1>
               <p className="text-xs text-slate-600 leading-relaxed">
                 {product.subtitle}
               </p>
 
-              {/* Star Rating & Stock Pill */}
+              {/* Star Rating & Studio Inventory */}
               <div className="flex items-center justify-between pt-1 text-xs">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <div className="flex items-center text-amber-500">
                     <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
                     <span className="font-bold text-slate-950 ml-1">{product.rating}</span>
                   </div>
-                  <span className="text-slate-400">•</span>
+                  <span className="text-slate-300">|</span>
                   <span className="text-slate-500 font-medium">
-                    {product.reviewCount} customer reviews
+                    {product.reviewCount} verified studio reviews
                   </span>
                 </div>
 
                 {product.stock <= 5 ? (
-                  <span className="text-[11px] font-bold font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                    Only {product.stock} Units Left in Studio
+                  <span className="text-[11px] font-bold font-mono text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                    Low Stock: {product.stock} pieces left
                   </span>
                 ) : (
                   <span className="text-[11px] font-semibold text-emerald-700 flex items-center gap-1">
@@ -239,28 +370,72 @@ export function ProductQuickViewModal() {
               </div>
             </div>
 
-            {/* Pricing Section */}
-            <div className="flex items-baseline gap-3">
-              <span className="text-2xl sm:text-3xl font-extrabold text-slate-950 font-mono tracking-tight">
-                {formatPrice(product.price)}
-              </span>
-              {product.mrpPrice > product.price && (
-                <span className="text-sm text-slate-400 line-through font-mono">
-                  {formatPrice(product.mrpPrice)}
+            {/* Pricing Section with Transparent Breakdown */}
+            <div className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-1">
+              <div className="flex items-baseline gap-3">
+                <span className="text-2xl sm:text-3xl font-black text-slate-950 font-mono tracking-tight">
+                  {formatPrice(product.price)}
                 </span>
-              )}
-              {discountPercent > 0 && (
-                <span className="text-xs font-bold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
-                  Save {formatPrice(product.mrpPrice - product.price)} ({discountPercent}% OFF)
-                </span>
-              )}
+                {product.mrpPrice > product.price && (
+                  <span className="text-sm text-slate-400 line-through font-mono">
+                    {formatPrice(product.mrpPrice)}
+                  </span>
+                )}
+                {discountPercent > 0 && (
+                  <span className="text-xs font-bold font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    {discountPercent}% OFF
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-500 font-mono">
+                {product.deliveryChargeMode === "CUSTOM" && product.deliveryCharge
+                  ? `+ ₹${product.deliveryCharge} Priority Air Courier • All Taxes (GST/VAT) Included`
+                  : "FREE Studio Delivery Across India • All Taxes (GST/VAT) Included"}
+              </p>
             </div>
 
-            {/* Color Variant Selector */}
+            {/* Interactive Size Selector & Size Guide Modal Trigger */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-900">
+                  Select Size: <strong className="font-mono text-indigo-700">{currentSize}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsSizeGuideOpen(true)}
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <Ruler className="w-3.5 h-3.5" />
+                  <span>Size Guide & Fit Table</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-6 gap-2">
+                {availableSizes.map((s) => {
+                  const isSelected = currentSize === s;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setSelectedSize(s)}
+                      className={`py-2 px-1 text-center rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-slate-950 text-white shadow-md ring-2 ring-slate-950/20"
+                          : "bg-white hover:bg-slate-100 text-slate-800 border border-slate-200"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Color Shade Selector (if available) */}
             {product.colors && product.colors.length > 0 && (
               <div className="space-y-2">
-                <span className="text-xs font-semibold text-slate-700 block">
-                  Color Shade: <strong className="text-slate-950">{currentColor?.name}</strong>
+                <span className="text-xs font-bold text-slate-900 block">
+                  Studio Color: <strong className="text-slate-700">{currentColor?.name}</strong>
                 </span>
                 <div className="flex items-center gap-2.5">
                   {product.colors.map((c) => {
@@ -270,7 +445,7 @@ export function ProductQuickViewModal() {
                         key={c.name}
                         type="button"
                         onClick={() => setSelectedColor(c)}
-                        className={`w-8 h-8 rounded-full border-2 transition-all p-0.5 flex items-center justify-center ${
+                        className={`w-8 h-8 rounded-full border-2 transition-all p-0.5 flex items-center justify-center cursor-pointer ${
                           isSelected
                             ? "border-slate-950 ring-2 ring-slate-950/30 scale-105 shadow-xs"
                             : "border-slate-300 hover:border-slate-500"
@@ -288,40 +463,15 @@ export function ProductQuickViewModal() {
               </div>
             )}
 
-            {/* Size Variant Selector */}
-            {product.sizes && product.sizes.length > 0 && (
-              <div className="space-y-2">
-                <span className="text-xs font-semibold text-slate-700 block">
-                  Select Size: <strong className="text-slate-950">{currentSize}</strong>
-                </span>
-                <div className="flex items-center gap-2">
-                  {product.sizes.map((s) => {
-                    const isSelected = currentSize === s;
-                    return (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setSelectedSize(s)}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-mono transition-all ${
-                          isSelected
-                            ? "bg-slate-950 text-white shadow-xs"
-                            : "bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200/80"
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
             {/* Pincode Delivery Estimator */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-              <span className="text-[11px] font-semibold text-slate-700 flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-slate-500" />
-                <span>Estimate Courier Delivery Date</span>
-              </span>
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700">
+                <span className="flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Check Delivery Date to Your Pincode</span>
+                </span>
+                <span className="font-mono text-emerald-700 text-[10px] font-bold">Blue Dart Priority</span>
+              </div>
 
               <form onSubmit={handleCheckPincode} className="flex gap-2">
                 <input
@@ -329,21 +479,21 @@ export function ProductQuickViewModal() {
                   maxLength={6}
                   value={pincodeInput}
                   onChange={(e) => setPincodeInput(e.target.value)}
-                  placeholder="Enter 6-digit PIN code (e.g. 400001)"
-                  className="px-3 py-1.5 text-xs rounded-xl border border-slate-300 bg-white text-slate-950 font-mono tracking-wider w-full focus:outline-none focus:ring-1 focus:ring-slate-950"
+                  placeholder="Enter 6-digit PIN (e.g. 400001, 110001)"
+                  className="px-3 py-1.5 text-xs rounded-xl border border-slate-300 bg-white text-slate-950 font-mono tracking-wider w-full focus:outline-none focus:ring-2 focus:ring-slate-950"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-xl bg-slate-950 text-white text-xs font-bold hover:bg-slate-800 transition-colors shrink-0"
+                  className="px-4 py-1.5 rounded-xl bg-slate-950 text-white text-xs font-bold hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
                 >
-                  Check
+                  Verify PIN
                 </button>
               </form>
 
               {pincodeResult && (
                 <p
                   className={`text-[11px] font-medium leading-snug ${
-                    pincodeResult.serviceable ? "text-emerald-700" : "text-rose-600"
+                    pincodeResult.serviceable ? "text-emerald-700 font-semibold" : "text-rose-600"
                   }`}
                 >
                   {pincodeResult.message}
@@ -351,7 +501,7 @@ export function ProductQuickViewModal() {
               )}
             </div>
 
-            {/* Quantity Stepper & Instant Buttons */}
+            {/* Quantity Stepper & Instant Purchase Buttons */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center gap-3">
                 <span className="text-xs font-semibold text-slate-700">Quantity:</span>
@@ -359,7 +509,7 @@ export function ProductQuickViewModal() {
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => (q > 1 ? q - 1 : 1))}
-                    className="px-3 py-1.5 text-slate-600 hover:bg-slate-100 font-bold"
+                    className="px-3 py-1.5 text-slate-600 hover:bg-slate-100 font-bold cursor-pointer"
                   >
                     -
                   </button>
@@ -369,7 +519,7 @@ export function ProductQuickViewModal() {
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => (q < product.stock ? q + 1 : q))}
-                    className="px-3 py-1.5 text-slate-600 hover:bg-slate-100 font-bold"
+                    className="px-3 py-1.5 text-slate-600 hover:bg-slate-100 font-bold cursor-pointer"
                   >
                     +
                   </button>
@@ -380,101 +530,202 @@ export function ProductQuickViewModal() {
                 <button
                   type="button"
                   onClick={handleAddAndClose}
-                  className="py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold flex items-center justify-center gap-2 transition-colors active:scale-98"
+                  className="py-3 px-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xs font-bold flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-98 cursor-pointer"
                 >
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>Add to Shopping Bag</span>
+                  <ShoppingBag className="w-4 h-4 text-slate-700" />
+                  <span>Add to Bag</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleBuyNowAndNavigate}
-                  className="py-3 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-98"
+                  className="py-3 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
                 >
-                  <span>Instant Escrow Buy Now</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <span>Direct UPI / Card Checkout</span>
+                  <ArrowRight className="w-4 h-4 text-emerald-400" />
                 </button>
               </div>
 
-              {/* B2B Wholesale Quote Trigger Button */}
-              <button
-                type="button"
-                onClick={() => {
-                  setQuickViewProduct(null);
-                  openB2BModal(product);
-                }}
-                className="w-full mt-2.5 py-2.5 px-4 rounded-xl border border-blue-200/90 bg-blue-50/70 hover:bg-blue-100/80 text-blue-900 text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
-              >
-                <Briefcase className="w-4 h-4 text-blue-600" />
-                <span>Request Bulk / B2B Wholesale Quote (50+ Units)</span>
-              </button>
+              {/* Wishlist and B2B quote triggers */}
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  onClick={() => toggleWishlist(product.id)}
+                  className="text-xs font-medium text-slate-600 hover:text-rose-600 flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Heart className={`w-3.5 h-3.5 ${wishlisted ? "fill-rose-600 text-rose-600" : ""}`} />
+                  <span>{wishlisted ? "Saved in Wishlist" : "Save to Wishlist"}</span>
+                </button>
+
+                {product.b2bMinMoq && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuickViewProduct(null);
+                      openB2BModal(product);
+                    }}
+                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+                  >
+                    <Briefcase className="w-3.5 h-3.5" />
+                    <span>Request B2B Bulk Price (MOQ {product.b2bMinMoq})</span>
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Specifications & Verified Reviews Tabs */}
-            <div className="pt-3 border-t border-slate-100 space-y-3">
-              <div className="flex gap-4 border-b border-slate-200 text-xs">
+            {/* Specifications Tab Switcher */}
+            <div className="pt-4 border-t border-slate-200">
+              <div className="flex gap-4 border-b border-slate-200 text-xs font-semibold mb-3">
                 <button
                   type="button"
                   onClick={() => setActiveTab("specs")}
-                  className={`pb-2 border-b-2 font-bold transition-colors ${
+                  className={`pb-2 border-b-2 cursor-pointer transition-colors ${
                     activeTab === "specs"
-                      ? "border-slate-950 text-slate-950"
+                      ? "border-slate-950 text-slate-950 font-bold"
                       : "border-transparent text-slate-500 hover:text-slate-800"
                   }`}
                 >
-                  Specifications ({Object.keys(product.specs).length})
+                  Materials & Specs
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("origin")}
+                  className={`pb-2 border-b-2 cursor-pointer transition-colors ${
+                    activeTab === "origin"
+                      ? "border-slate-950 text-slate-950 font-bold"
+                      : "border-transparent text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  Studio Origin & Care
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab("reviews")}
-                  className={`pb-2 border-b-2 font-bold transition-colors ${
+                  className={`pb-2 border-b-2 cursor-pointer transition-colors ${
                     activeTab === "reviews"
-                      ? "border-slate-950 text-slate-950"
+                      ? "border-slate-950 text-slate-950 font-bold"
                       : "border-transparent text-slate-500 hover:text-slate-800"
                   }`}
                 >
-                  Verified Reviews ({product.reviews.length})
+                  Patron Reviews ({product.reviewCount})
                 </button>
               </div>
 
-              {activeTab === "specs" ? (
+              {activeTab === "specs" && (
                 <div className="space-y-1.5 text-xs">
-                  {Object.entries(product.specs).map(([label, val]) => (
-                    <div key={label} className="grid grid-cols-2 py-1 border-b border-slate-50">
-                      <span className="text-slate-500 font-medium">{label}:</span>
-                      <span className="text-slate-900 font-semibold text-right">{val}</span>
+                  {Object.entries(product.specs).map(([key, value]) => (
+                    <div key={key} className="flex justify-between py-1 border-b border-slate-100 font-mono">
+                      <span className="text-slate-500">{key}:</span>
+                      <span className="font-semibold text-slate-900 text-right">{value}</span>
                     </div>
                   ))}
                 </div>
-              ) : (
+              )}
+
+              {activeTab === "origin" && (
+                <div className="space-y-2 text-xs text-slate-600 leading-relaxed">
+                  <p>
+                    <strong>Artisan Studio:</strong> {product.supplier.name} located in {product.supplier.location}.
+                  </p>
+                  <p>
+                    {product.description}
+                  </p>
+                  <p className="text-[11px] text-slate-500 font-mono pt-1">
+                    Certified 100% genuine studio production. Direct dispatch prevents middleman markups and shelf degradation.
+                  </p>
+                </div>
+              )}
+
+              {activeTab === "reviews" && (
                 <div className="space-y-3 text-xs">
                   {product.reviews.map((rev) => (
                     <div key={rev.id} className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-950 flex items-center gap-1.5">
-                          <span>{rev.author}</span>
-                          {rev.verified && (
-                            <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 font-mono">
-                              Verified Patron
-                            </span>
-                          )}
-                        </span>
-                        <div className="flex items-center text-amber-500 font-bold">
-                          <Star className="w-3 h-3 fill-amber-400 text-amber-400 mr-0.5" />
-                          <span>{rev.rating}.0</span>
+                        <span className="font-bold text-slate-900">{rev.author}</span>
+                        <div className="flex items-center text-amber-500 font-bold text-[11px]">
+                          {"★".repeat(rev.rating)}
                         </div>
                       </div>
-                      <p className="text-slate-600 text-[11px] leading-relaxed">{rev.comment}</p>
-                      <span className="text-[10px] text-slate-400 font-mono block pt-0.5">{rev.date}</span>
+                      <p className="text-slate-600 text-[11px]">{rev.comment}</p>
+                      <span className="text-[10px] text-emerald-700 font-mono font-semibold flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Verified Direct Buyer</span>
+                      </span>
                     </div>
                   ))}
                 </div>
               )}
             </div>
+
           </div>
         </div>
+
+        {/* --- INLINE SIZE GUIDE MODAL POPUP --- */}
+        {isSizeGuideOpen && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="relative bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 text-slate-900 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Ruler className="w-5 h-5 text-indigo-600" />
+                  <h3 className="font-black text-base text-slate-950">
+                    Architectural Size & Fit Guide
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsSizeGuideOpen(false)}
+                  className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-slate-600">
+                All garments are cut with precision tailored ease. Measurements taken flat in inches and centimeters.
+              </p>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs font-mono border-collapse">
+                  <thead>
+                    <tr className="border-b-2 border-slate-900 text-[10px] uppercase text-slate-500">
+                      <th className="py-2">Size</th>
+                      <th className="py-2">Chest</th>
+                      <th className="py-2">Length</th>
+                      <th className="py-2">Shoulder</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {SIZE_GUIDE_ROWS.map((row) => (
+                      <tr key={row.size} className="hover:bg-slate-50">
+                        <td className="py-2 font-bold text-indigo-700">{row.size}</td>
+                        <td className="py-2">{row.chestIn} ({row.chestCm})</td>
+                        <td className="py-2">{row.lengthIn} ({row.lengthCm})</td>
+                        <td className="py-2">{row.shoulderIn} ({row.shoulderCm})</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1">
+                <p className="font-bold text-slate-900">💡 Fit Recommendation:</p>
+                <p>
+                  Regular relaxed drop-shoulder cut. If you prefer a tailored slim silhouette, we recommend sizing down one size.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsSizeGuideOpen(false)}
+                className="w-full py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer transition-colors"
+              >
+                Close Fit Table
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
 }
-

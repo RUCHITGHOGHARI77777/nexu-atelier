@@ -32,6 +32,11 @@ import {
   Zap,
   Server,
   Share2,
+  Database,
+  HardDrive,
+  Cpu,
+  Activity,
+  Cloud,
 } from "lucide-react";
 import { useStore, SupplierInfo, StoreOrder } from "@/context/StoreContext";
 import { formatCurrency, formatDateTime } from "@/lib/formatters";
@@ -53,14 +58,27 @@ export function AdminCommandCenterSaaS() {
     updateWhiteLabelConfig,
     resetWhiteLabelConfig,
     openPhoneSimulator,
+    clusterTier,
+    upgradeDatabaseCluster,
+    resetDatabaseCluster,
   } = store;
 
   // Search & Filter states
   const [transactionSearch, setTransactionSearch] = useState("");
   const [supplierSearch, setSupplierSearch] = useState("");
   const [activeTab, setActiveTab] = useState<
-    "METRICS" | "SUPPLIERS" | "TRANSACTIONS" | "WHITE_LABEL" | "IMPACT_GOVERNANCE"
+    "METRICS" | "SUPPLIERS" | "TRANSACTIONS" | "WHITE_LABEL" | "IMPACT_GOVERNANCE" | "INFRASTRUCTURE"
   >("METRICS");
+
+  const [isUpgradingCluster, setIsUpgradingCluster] = useState(false);
+
+  const handleUpgradeCluster = () => {
+    setIsUpgradingCluster(true);
+    setTimeout(() => {
+      upgradeDatabaseCluster();
+      setIsUpgradingCluster(false);
+    }, 950);
+  };
 
   // Local White-Label Form State
   const [wlBrandName, setWlBrandName] = useState(whiteLabelConfig.brandName);
@@ -265,7 +283,40 @@ export function AdminCommandCenterSaaS() {
         </div>
       </div>
 
-      {/* --- ADMIN NAVIGATION TABS (INCLUDING WHITE-LABEL RESELLER ENGINE) --- */}
+      {/* --- CLOUD CAPACITY WARNING BANNER (STANDARD TIER THRESHOLD ALERT) --- */}
+      {clusterTier === "STANDARD_100GB" && (
+        <div className="rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-white p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-300">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-800 shrink-0">
+              <AlertTriangle className="w-5 h-5 text-amber-600 animate-pulse" />
+            </div>
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
+                  CAPACITY ALERT • 82.4% EXCEEDED
+                </span>
+              </div>
+              <p className="text-xs font-bold text-slate-950">
+                ⚠️ Database Cluster approaching capacity limit (82.4%). Storage threshold exceeded. Upgrade node to prevent seller downtime.
+              </p>
+              <p className="text-[11px] text-slate-600">
+                Prisma storage: 82.4 GB / 100 GB • Active Connection Pools: 42 / 50 • CDN: 412.8 GB / 500 GB
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={upgradeDatabaseCluster}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-md active:scale-98 transition-all shrink-0 cursor-pointer"
+          >
+            <Zap className="w-4 h-4 text-amber-300" />
+            <span>⚡ 1-Click Auto-Upgrade (1 TB Node)</span>
+          </button>
+        </div>
+      )}
+
+      {/* --- ADMIN NAVIGATION TABS (INCLUDING WHITE-LABEL & INFRASTRUCTURE) --- */}
       <div className="flex items-center gap-2 border-b border-slate-200/80 pb-3 overflow-x-auto">
         <button
           type="button"
@@ -330,6 +381,19 @@ export function AdminCommandCenterSaaS() {
         >
           <HeartHandshake className="w-3.5 h-3.5 text-emerald-600" />
           <span>🛡️ Social Impact & Governance (9.9/10)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("INFRASTRUCTURE")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === "INFRASTRUCTURE"
+              ? "bg-purple-700 text-white shadow-sm ring-2 ring-purple-500/20"
+              : "bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-800 hover:text-purple-950 border border-purple-200"
+          }`}
+        >
+          <Server className="w-3.5 h-3.5 text-purple-600" />
+          <span>☁️ Cloud & Capacity Auto-Scale</span>
         </button>
       </div>
 
@@ -1065,7 +1129,7 @@ export function AdminCommandCenterSaaS() {
         </div>
       )}
 
-      {/* --- TAB CONTENT: 5. SOCIAL IMPACT & PLATFORM GOVERNANCE --- */}
+            {/* --- TAB CONTENT: 5. SOCIAL IMPACT & PLATFORM GOVERNANCE --- */}
       {activeTab === "IMPACT_GOVERNANCE" && (
         <div className="space-y-8 animate-in fade-in duration-200">
           {/* Hero Banner */}
@@ -1464,6 +1528,299 @@ export function AdminCommandCenterSaaS() {
                 <p className="text-[11px] text-slate-300">
                   Small sellers share deals directly to WhatsApp Status and collect 5-star reviews with repeat coupons, eliminating \$100k marketing overhead.
                 </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. CLOUD INFRASTRUCTURE & DATABASE AUTO-SCALE TAB */}
+      {activeTab === "INFRASTRUCTURE" && (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="p-6 rounded-2xl bg-white/80 backdrop-blur-2xl border border-slate-200/80 shadow-[0_8px_30px_rgb(15,23,42,0.04)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  <Database className="w-4 h-4" />
+                </span>
+                <h3 className="text-base font-bold text-slate-900">
+                  Cloud Infrastructure & Database Capacity Auto-Scaler
+                </h3>
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
+                  clusterTier === "ENTERPRISE_1TB"
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                    : "bg-amber-50 text-amber-800 border-amber-200"
+                }`}>
+                  {clusterTier === "ENTERPRISE_1TB" ? "ENTERPRISE 1 TB ACTIVE" : "STANDARD 100 GB (ALERT)"}
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 max-w-2xl">
+                High-availability PostgreSQL 16 node with Prisma ORM connection pooling, distributed Edge CDN, and automatic 0ms downtime NVMe volume scaling.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              {clusterTier === "STANDARD_100GB" ? (
+                <button
+                  type="button"
+                  onClick={handleUpgradeCluster}
+                  disabled={isUpgradingCluster}
+                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-bold text-xs shadow-md hover:from-emerald-700 hover:to-teal-800 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                >
+                  {isUpgradingCluster ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Provisioning Multi-AZ 1 TB NVMe...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-3.5 h-3.5 text-amber-300" />
+                      <span>⚡ 1-Click Auto-Upgrade to 1 TB Enterprise</span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={resetDatabaseCluster}
+                  className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                  <span>🔄 Reset Cluster to Standard 100GB (Demo Test)</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* 4 Telemetry Gauges Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Gauge 1: PostgreSQL / Prisma Database Storage */}
+            <div className={`p-5 rounded-2xl bg-white/80 backdrop-blur-2xl border transition-all ${
+              clusterTier === "STANDARD_100GB" ? "border-amber-300 bg-amber-50/20" : "border-emerald-300 bg-emerald-50/20"
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-mono uppercase font-bold text-slate-500 flex items-center gap-1.5">
+                  <Database className="w-3.5 h-3.5 text-indigo-600" />
+                  PostgreSQL / Prisma
+                </span>
+                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                  clusterTier === "STANDARD_100GB" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
+                }`}>
+                  {clusterTier === "STANDARD_100GB" ? "82.4% Full" : "8.2% Optimal"}
+                </span>
+              </div>
+              <div className="text-xl font-bold font-mono text-slate-900 tabular-nums">
+                {clusterTier === "STANDARD_100GB" ? "82.4 GB / 100 GB" : "82.4 GB / 1,000 GB"}
+              </div>
+              {/* Progress bar */}
+              <div className="w-full bg-slate-100 rounded-full h-2 my-2.5 overflow-hidden">
+                <div
+                  className={`h-2 rounded-full transition-all duration-700 ${
+                    clusterTier === "STANDARD_100GB" ? "w-[82.4%] bg-amber-500" : "w-[8.2%] bg-emerald-500"
+                  }`}
+                />
+              </div>
+              <p className="text-[11px] text-slate-600 leading-tight">
+                {clusterTier === "STANDARD_100GB"
+                  ? "⚠️ Upgrade recommended before database read/write throttling threshold."
+                  : "✓ Enterprise Multi-AZ NVMe SSD storage with automated partition balancing."}
+              </p>
+            </div>
+
+            {/* Gauge 2: Database Connection Pool */}
+            <div className={`p-5 rounded-2xl bg-white/80 backdrop-blur-2xl border transition-all ${
+              clusterTier === "STANDARD_100GB" ? "border-amber-300 bg-amber-50/20" : "border-emerald-300 bg-emerald-50/20"
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-mono uppercase font-bold text-slate-500 flex items-center gap-1.5">
+                  <Activity className="w-3.5 h-3.5 text-teal-600" />
+                  Connection Pool
+                </span>
+                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                  clusterTier === "STANDARD_100GB" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
+                }`}>
+                  {clusterTier === "STANDARD_100GB" ? "84.0% Pool" : "8.4% Optimal"}
+                </span>
+              </div>
+              <div className="text-xl font-bold font-mono text-slate-900 tabular-nums">
+                {clusterTier === "STANDARD_100GB" ? "42 / 50 Active" : "42 / 500 Active"}
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-2 my-2.5 overflow-hidden">
+                <div
+                  className={`h-2 rounded-full transition-all duration-700 ${
+                    clusterTier === "STANDARD_100GB" ? "w-[84%] bg-amber-500" : "w-[8.4%] bg-emerald-500"
+                  }`}
+                />
+              </div>
+              <p className="text-[11px] text-slate-600 leading-tight">
+                {clusterTier === "STANDARD_100GB"
+                  ? "⚠️ Concurrency spike near saturation (50 client connection limit)."
+                  : "✓ PgBouncer high-throughput pooler active with 500 max client slots."}
+              </p>
+            </div>
+
+            {/* Gauge 3: Product Image CDN & S3/GCS Object Storage */}
+            <div className={`p-5 rounded-2xl bg-white/80 backdrop-blur-2xl border transition-all ${
+              clusterTier === "STANDARD_100GB" ? "border-amber-300 bg-amber-50/20" : "border-emerald-300 bg-emerald-50/20"
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-mono uppercase font-bold text-slate-500 flex items-center gap-1.5">
+                  <HardDrive className="w-3.5 h-3.5 text-sky-600" />
+                  CDN & Object Storage
+                </span>
+                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                  clusterTier === "STANDARD_100GB" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
+                }`}>
+                  {clusterTier === "STANDARD_100GB" ? "82.5% Used" : "8.2% Optimal"}
+                </span>
+              </div>
+              <div className="text-xl font-bold font-mono text-slate-900 tabular-nums">
+                {clusterTier === "STANDARD_100GB" ? "412.8 GB / 500 GB" : "412.8 GB / 5,000 GB"}
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-2 my-2.5 overflow-hidden">
+                <div
+                  className={`h-2 rounded-full transition-all duration-700 ${
+                    clusterTier === "STANDARD_100GB" ? "w-[82.5%] bg-amber-500" : "w-[8.2%] bg-emerald-500"
+                  }`}
+                />
+              </div>
+              <p className="text-[11px] text-slate-600 leading-tight">
+                {clusterTier === "STANDARD_100GB"
+                  ? "Cloudflare Edge cache hit ratio 94.2% • Storage threshold warning."
+                  : "✓ 5 TB Distributed S3/GCS multi-zone object lake with AVIF compression."}
+              </p>
+            </div>
+
+            {/* Gauge 4: Serverless API & Real-time Webhook Bandwidth */}
+            <div className={`p-5 rounded-2xl bg-white/80 backdrop-blur-2xl border transition-all ${
+              clusterTier === "STANDARD_100GB" ? "border-amber-300 bg-amber-50/20" : "border-emerald-300 bg-emerald-50/20"
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-mono uppercase font-bold text-slate-500 flex items-center gap-1.5">
+                  <Cpu className="w-3.5 h-3.5 text-purple-600" />
+                  API & Webhook Egress
+                </span>
+                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                  clusterTier === "STANDARD_100GB" ? "bg-rose-100 text-rose-800" : "bg-emerald-100 text-emerald-800"
+                }`}>
+                  {clusterTier === "STANDARD_100GB" ? "92.0% Bandwidth" : "9.2% Optimal"}
+                </span>
+              </div>
+              <div className="text-xl font-bold font-mono text-slate-900 tabular-nums">
+                {clusterTier === "STANDARD_100GB" ? "1.84 TB / 2.0 TB" : "1.84 TB / 20.0 TB"}
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-2 my-2.5 overflow-hidden">
+                <div
+                  className={`h-2 rounded-full transition-all duration-700 ${
+                    clusterTier === "STANDARD_100GB" ? "w-[92%] bg-rose-500" : "w-[9.2%] bg-emerald-500"
+                  }`}
+                />
+              </div>
+              <p className="text-[11px] text-slate-600 leading-tight">
+                {clusterTier === "STANDARD_100GB"
+                  ? "⚠️ Approaching 2 TB monthly quota limit across serverless edge invocations."
+                  : "✓ 20 TB Enterprise high-speed egress unmetered pipeline with priority routing."}
+              </p>
+            </div>
+          </div>
+
+          {/* Topology & SLA Breakdown Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Multi-Region Replication Table */}
+            <div className="lg:col-span-2 p-6 rounded-2xl bg-white/80 backdrop-blur-2xl border border-slate-200/80 shadow-[0_8px_30px_rgb(15,23,42,0.04)] space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Server className="w-4 h-4 text-indigo-600" />
+                  <h4 className="font-bold text-slate-900 text-sm">
+                    Multi-Region Database Replication Topology
+                  </h4>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  ALL REPLICAS IN SYNC
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  {
+                    region: "ap-south-1 (Mumbai, India)",
+                    role: "PRIMARY READ / WRITE NODE",
+                    latency: "12ms",
+                    status: "ONLINE",
+                    specs: clusterTier === "ENTERPRISE_1TB" ? "16 vCPU • 64 GB RAM • NVMe 1 TB" : "4 vCPU • 16 GB RAM • SSD 100 GB",
+                  },
+                  {
+                    region: "eu-central-1 (Frankfurt, Germany)",
+                    role: "HOT STANDBY / READ REPLICA",
+                    latency: "108ms",
+                    status: "SYNCHRONIZED",
+                    specs: clusterTier === "ENTERPRISE_1TB" ? "8 vCPU • 32 GB RAM • NVMe 1 TB" : "2 vCPU • 8 GB RAM • SSD 100 GB",
+                  },
+                  {
+                    region: "us-west-2 (Oregon, USA)",
+                    role: "ANALYTICS & READ REPLICA",
+                    latency: "142ms",
+                    status: "SYNCHRONIZED",
+                    specs: clusterTier === "ENTERPRISE_1TB" ? "8 vCPU • 32 GB RAM • NVMe 1 TB" : "2 vCPU • 8 GB RAM • SSD 100 GB",
+                  },
+                ].map((node, idx) => (
+                  <div key={idx} className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-900">{node.region}</span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600 font-semibold">
+                          {node.role}
+                        </span>
+                      </div>
+                      <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+                        Hardware: {node.specs}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-mono font-bold text-slate-700">
+                        {node.latency}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        {node.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* High Availability & Disaster Recovery SLA */}
+            <div className="p-6 rounded-2xl bg-white/80 backdrop-blur-2xl border border-slate-200/80 shadow-[0_8px_30px_rgb(15,23,42,0.04)] space-y-4">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <h4 className="font-bold text-slate-900 text-sm">
+                  Enterprise SLA & Security Guarantees
+                </h4>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                  <div className="font-bold text-slate-900 mb-0.5">99.999% SLA Uptime Commitment</div>
+                  <p className="text-[11px] text-slate-600">
+                    Dual active-active failover with sub-250ms DNS failover and continuous WAL streaming.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                  <div className="font-bold text-slate-900 mb-0.5">Zero-Downtime Live Migration</div>
+                  <p className="text-[11px] text-slate-600">
+                    Scaling from 100 GB to 1 TB executes via live volume replica swap with 0 seconds downtime and zero dropped queries.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                  <div className="font-bold text-slate-900 mb-0.5">Continuous Point-in-Time Recovery</div>
+                  <p className="text-[11px] text-slate-600">
+                    Automated snapshots every 5 minutes with 35-day retention and one-click database rollback.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

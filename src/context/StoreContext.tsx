@@ -55,6 +55,35 @@ export interface StoreProduct {
   specs: Record<string, string>;
   reviews: ReviewItem[];
   b2bMinMoq?: number;
+  customDiscount?: { type: "percent" | "flat"; value: number };
+  deliveryChargeMode?: "FREE" | "CUSTOM";
+  deliveryCharge?: number;
+  internalCosts?: {
+    sourcingCost: number;
+    packagingCost: number;
+    actualCourierCost: number;
+  };
+  warehouseLocation?: {
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  returnPolicy?: string;
+}
+
+export interface ReturnLogisticsTimeline {
+  status: "NONE" | "REQUESTED" | "APPROVED" | "PICKED_UP" | "IN_TRANSIT" | "REFUNDED";
+  reason?: string;
+  returnRequestedAt?: string;
+  pickupScheduledAt?: string;
+  pickupRiderName?: string;
+  pickupRiderPhone?: string;
+  pickedUpAt?: string;
+  inTransitAt?: string;
+  receivedAtHubAt?: string;
+  refundedAt?: string;
+  refundUtr?: string;
+  refundAmount?: number;
 }
 
 export interface StoreCartItem {
@@ -103,6 +132,20 @@ export interface StoreOrder {
   estimatedDelivery: string;
   status: "CONFIRMED" | "PACKED" | "SHIPPED" | "OUT_FOR_DELIVERY" | "DELIVERED";
   createdAt: string;
+  // Bidirectional Forward & Reverse Logistics Timelines
+  riderName?: string;
+  riderPhone?: string;
+  currentHubLocation?: string;
+  etaWindow?: string;
+  outboundTimestamps?: {
+    placedAt: string;
+    packedAt?: string;
+    packingLocation?: string;
+    shippedAt?: string;
+    outForDeliveryAt?: string;
+    deliveredAt?: string;
+  };
+  returnLogistics?: ReturnLogisticsTimeline;
 }
 
 export interface ToastState {
@@ -259,6 +302,13 @@ interface StoreContextType {
   markSellerOrderOutForDelivery: (orderId: string) => void;
   markSellerOrderDelivered: (orderId: string) => void;
   generateShippingManifest: (orderId: string) => { awb: string; manifestId: string; generatedAt: string };
+  initiateOrderReturn: (orderId: string, reason: string) => void;
+  advanceOrderReturnStage: (orderId: string) => void;
+  assignOrderRider: (orderId: string, riderName: string, riderPhone: string, hubLocation?: string) => void;
+  updateOrderEta: (orderId: string, etaWindow: string) => void;
+  clusterTier: "STANDARD_100GB" | "ENTERPRISE_1TB";
+  upgradeDatabaseCluster: () => void;
+  resetDatabaseCluster: () => void;
   loadSampleOrders: () => void;
   resetDemoData: () => void;
   filteredProducts: StoreProduct[];
@@ -444,12 +494,16 @@ export const PRELOADED_PRODUCTS: StoreProduct[] = [
       verified: true,
     },
     images: [
-      "https://images.unsplash.com/photo-1539533018447-63fcce667883?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1000&q=80",
       "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=1000&q=80",
     ],
     sizes: ["S", "M", "L", "XL"],
     colors: [
-      { name: "Raw Ecru", hex: "#FAF8F5", image: "https://images.unsplash.com/photo-1539533018447-63fcce667883?auto=format&fit=crop&w=1000&q=80" },
+      { name: "Raw Ecru", hex: "#FAF8F5", image: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1000&q=80" },
       { name: "Mineral Sage", hex: "#CBD5E1", image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1000&q=80" },
     ],
     specs: {
@@ -725,8 +779,12 @@ export const PRELOADED_PRODUCTS: StoreProduct[] = [
       verified: true,
     },
     images: [
-      "https://images.unsplash.com/photo-1608248597359-bb436a539fa9?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1000&q=80",
       "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1617897903246-719242758050?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=1000&q=80",
     ],
     specs: {
       "Pack Quantity": "50 Glass Bottles + 50 Matte Black Lotion Pumps",
@@ -958,7 +1016,7 @@ export const INITIAL_B2B_QUOTES: B2BQuoteRequest[] = [
     id: "quote_2026_8813",
     productId: "prod_b2b_01",
     productTitle: "Wholesale Case (x50): Matte Amber Glass Apothecary Bottles (500ml)",
-    productImage: "https://images.unsplash.com/photo-1608248597359-bb436a539fa9?auto=format&fit=crop&w=800&q=80",
+    productImage: "https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?auto=format&fit=crop&w=800&q=80",
     supplierId: "sup_glass",
     supplierName: "Industrial Glass Packaging Solutions",
     quantity: 120,
@@ -1562,38 +1620,176 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     showToast(`Order #${newOrder.id} logged & secured via Escrow`, "success");
   };
 
+  const [clusterTier, setClusterTier] = useState<"STANDARD_100GB" | "ENTERPRISE_1TB">("STANDARD_100GB");
+
+  useEffect(() => {
+    try {
+      const savedTier = localStorage.getItem("nexu_cluster_tier");
+      if (savedTier === "ENTERPRISE_1TB" || savedTier === "STANDARD_100GB") {
+        setClusterTier(savedTier);
+      }
+    } catch {}
+  }, []);
+
+  const upgradeDatabaseCluster = () => {
+    setClusterTier("ENTERPRISE_1TB");
+    try {
+      localStorage.setItem("nexu_cluster_tier", "ENTERPRISE_1TB");
+    } catch {}
+    showToast("⚡ Database Cluster Auto-Scaled: 100 GB -> 1 TB Enterprise Node (0ms Downtime)!", "success");
+  };
+
+  const resetDatabaseCluster = () => {
+    setClusterTier("STANDARD_100GB");
+    try {
+      localStorage.setItem("nexu_cluster_tier", "STANDARD_100GB");
+    } catch {}
+    showToast("Cluster telemetry reset to Standard 100 GB tier", "info");
+  };
+
   const advanceOrderDeliveryStage = (orderId: string) => {
     let nextStage = 1;
     let nextStageName = "Order Confirmed & Invoice Generated";
     let nextStatus: StoreOrder["status"] = "CONFIRMED";
+    const nowTime = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 
     setOrders((prev) =>
       prev.map((order) => {
         if (order.id !== orderId) return order;
         nextStage = Math.min(5, (order.deliveryStage || 1) + 1);
+        const outbound = { ...(order.outboundTimestamps || { placedAt: order.createdAt || "Today 10:30 AM" }) };
+
         if (nextStage === 2) {
           nextStageName = "Packed at Supplier Warehouse";
           nextStatus = "PACKED";
+          outbound.packedAt = nowTime;
+          outbound.packingLocation = "Jaipur Artisan Studio Hub";
         } else if (nextStage === 3) {
           nextStageName = "Shipped via Express Logistics";
           nextStatus = "SHIPPED";
+          outbound.shippedAt = nowTime;
         } else if (nextStage === 4) {
           nextStageName = "Out for Delivery";
           nextStatus = "OUT_FOR_DELIVERY";
+          outbound.outForDeliveryAt = nowTime;
         } else if (nextStage === 5) {
           nextStageName = "Delivered";
           nextStatus = "DELIVERED";
+          outbound.deliveredAt = nowTime;
         }
         return {
           ...order,
           deliveryStage: nextStage,
           deliveryStageName: nextStageName,
           status: nextStatus,
+          outboundTimestamps: outbound,
+          riderName: order.riderName || "Ramesh Sharma",
+          riderPhone: order.riderPhone || "+91 98200 12345",
+          currentHubLocation: order.currentHubLocation || (nextStage >= 3 ? "Blue Dart Air Transit Hub - Sector 18" : undefined),
+          etaWindow: order.etaWindow || (nextStage === 4 ? "Arriving Today by 4:30 PM" : order.estimatedDelivery),
         };
       })
     );
     showToast(`Fulfillment: ${nextStageName} (Stage ${nextStage}/5)`, "success");
     return { currentStage: nextStage, stageName: nextStageName };
+  };
+
+  const initiateOrderReturn = (orderId: string, reason: string) => {
+    const now = new Date().toLocaleDateString("en-IN", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          returnLogistics: {
+            status: "REQUESTED",
+            reason: reason || "Size or craftsmanship inspection exchange",
+            returnRequestedAt: now,
+            pickupScheduledAt: "Tomorrow between 10:00 AM - 1:00 PM",
+            pickupRiderName: "Vikram Negi",
+            pickupRiderPhone: "+91 98110 54321",
+            refundAmount: o.total,
+          },
+        };
+      })
+    );
+    showToast(`Return requested for Order #${orderId}. Pickup scheduled!`, "info");
+  };
+
+  const advanceOrderReturnStage = (orderId: string) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        const current = o.returnLogistics?.status || "NONE";
+        let nextStatus: ReturnLogisticsTimeline["status"] = "APPROVED";
+        const now = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+        const updated: ReturnLogisticsTimeline = {
+          status: "APPROVED",
+          reason: o.returnLogistics?.reason || "Customer exchange",
+          returnRequestedAt: o.returnLogistics?.returnRequestedAt || "Earlier today",
+          refundAmount: o.total,
+          ...(o.returnLogistics || {}),
+        };
+
+        if (current === "NONE" || current === "REQUESTED") {
+          nextStatus = "APPROVED";
+          updated.pickupScheduledAt = "Scheduled: Today by 3:30 PM";
+          updated.pickupRiderName = "Vikram Negi";
+          updated.pickupRiderPhone = "+91 98110 54321";
+        } else if (current === "APPROVED") {
+          nextStatus = "PICKED_UP";
+          updated.pickedUpAt = now;
+        } else if (current === "PICKED_UP") {
+          nextStatus = "IN_TRANSIT";
+          updated.inTransitAt = now;
+        } else if (current === "IN_TRANSIT" || current === "REFUNDED") {
+          nextStatus = "REFUNDED";
+          updated.receivedAtHubAt = now;
+          updated.refundedAt = now;
+          updated.refundUtr = `REF/UPI/${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+        }
+
+        updated.status = nextStatus;
+        return {
+          ...o,
+          returnLogistics: updated,
+        };
+      })
+    );
+    showToast(`Return status updated for Order #${orderId}`, "success");
+  };
+
+  const assignOrderRider = (orderId: string, riderName: string, riderPhone: string, hubLocation?: string) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          riderName: riderName.trim(),
+          riderPhone: riderPhone.trim(),
+          currentHubLocation: hubLocation || o.currentHubLocation || "Central Logistics Hub",
+        };
+      })
+    );
+    showToast(`Assigned courier rider ${riderName} to Order #${orderId}`, "success");
+  };
+
+  const updateOrderEta = (orderId: string, etaWindow: string) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          etaWindow: etaWindow.trim(),
+        };
+      })
+    );
+    showToast(`Delivery ETA updated for Order #${orderId}: "${etaWindow}"`, "info");
   };
 
   const getOrderById = (orderId: string) => {
@@ -2148,6 +2344,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         markSellerOrderOutForDelivery,
         markSellerOrderDelivered,
         generateShippingManifest,
+        initiateOrderReturn,
+        advanceOrderReturnStage,
+        assignOrderRider,
+        updateOrderEta,
+        clusterTier,
+        upgradeDatabaseCluster,
+        resetDatabaseCluster,
         loadSampleOrders,
         resetDemoData,
         filteredProducts,

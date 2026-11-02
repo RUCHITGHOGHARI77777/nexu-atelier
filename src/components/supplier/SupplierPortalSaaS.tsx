@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Package,
   Boxes,
@@ -49,54 +50,7 @@ import { BrandedPackagingSlipModal } from "./BrandedPackagingSlipModal";
 import { DispatchOrderModal } from "./DispatchOrderModal";
 import { SellerProfitLossModal } from "./SellerProfitLossModal";
 import { LaunchBrandStoreModal } from "../seller/LaunchBrandStoreModal";
-
-// Quick Preset Samples for instant 1-click product creation
-const QUICK_PRODUCT_PRESETS = [
-  {
-    title: "Titan 65W GaN Fast Charging Station",
-    subtitle: "Triple USB-C + Dual USB-A High Efficiency Power Delivery",
-    category: "Electronics" as const,
-    price: 3499,
-    mrpPrice: 5999,
-    stock: 25,
-    b2bMinMoq: 1,
-    imageUrl: "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&q=80",
-    description: "Compact next-gen Gallium Nitride charging station with intelligent thermal distribution and aerospace-grade casing.",
-  },
-  {
-    title: "Raw Khadi Silk Minimalist Studio Blazer",
-    subtitle: "Single-breasted unlined tailored piece in organic tussar weave",
-    category: "Fashion & Apparel" as const,
-    price: 8990,
-    mrpPrice: 14500,
-    stock: 12,
-    b2bMinMoq: 1,
-    imageUrl: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=800&q=80",
-    description: "Hand-spun breathable khadi silk blazer crafted by heritage weavers in Varanasi. Finished with mother-of-pearl buttons.",
-  },
-  {
-    title: "Handmade Terracotta Slow Pour-Over Dripper",
-    subtitle: "Architectural conic dripper with matte porous clay body",
-    category: "Home & Kitchen" as const,
-    price: 1850,
-    mrpPrice: 2800,
-    stock: 30,
-    b2bMinMoq: 2,
-    imageUrl: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80",
-    description: "Wheel-thrown porous clay pour-over dripper designed for thermal stability and high-clarity extraction.",
-  },
-  {
-    title: "B2B Wholesale: Architectural Panel Pack (10x Units)",
-    subtitle: "Certified Class-A sound absorption studio baffle cartons",
-    category: "B2B Wholesale Packs" as const,
-    price: 42000,
-    mrpPrice: 65000,
-    stock: 15,
-    b2bMinMoq: 5,
-    imageUrl: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80",
-    description: "Direct-from-factory pallet of 10 acoustic cloud modules for recording studios and enterprise executive suites.",
-  },
-];
+import { SellerProductOnboardingModal } from "../seller/SellerProductOnboardingModal";
 
 export function SupplierPortalSaaS() {
   const store = useStore();
@@ -145,21 +99,6 @@ export function SupplierPortalSaaS() {
   const [adSpendInput, setAdSpendInput] = useState<number>(5000);
   const [adRoasMultiplier, setAdRoasMultiplier] = useState<number>(4.2);
   const [utmChannel, setUtmChannel] = useState<"instagram" | "facebook" | "whatsapp" | "google">("instagram");
-
-  // New Product Form fields
-  const [newTitle, setNewTitle] = useState("");
-  const [newSubtitle, setNewSubtitle] = useState("");
-  const [newCategory, setNewCategory] = useState<StoreProduct["category"]>("Electronics");
-  const [newPrice, setNewPrice] = useState("2999");
-  const [newMrpPrice, setNewMrpPrice] = useState("4999");
-  const [newStock, setNewStock] = useState("20");
-  const [newMoq, setNewMoq] = useState("1");
-  const [newImageUrl, setNewImageUrl] = useState(
-    "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80"
-  );
-  const [newDescription, setNewDescription] = useState(
-    "Enterprise precision crafted drop. Guaranteed authentic and inspected for quality."
-  );
 
   // Seller packaging cost estimate per order for net profit calculation
   const [packingCostPerOrder, setPackingCostPerOrder] = useState<number>(120);
@@ -233,71 +172,6 @@ export function SupplierPortalSaaS() {
         p.supplier.name.toLowerCase().includes(q)
     );
   }, [products, productSearch]);
-
-  // Handle Quick Fill Preset
-  const handleApplyPreset = (preset: (typeof QUICK_PRODUCT_PRESETS)[0]) => {
-    setNewTitle(preset.title);
-    setNewSubtitle(preset.subtitle);
-    setNewCategory(preset.category);
-    setNewPrice(preset.price.toString());
-    setNewMrpPrice(preset.mrpPrice.toString());
-    setNewStock(preset.stock.toString());
-    setNewMoq(preset.b2bMinMoq.toString());
-    setNewImageUrl(preset.imageUrl);
-    setNewDescription(preset.description);
-    showToast(`Loaded preset: "${preset.title}"`, "info");
-  };
-
-  // Handle Add Product Submit
-  const handleCreateProductSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim()) return;
-
-    const parsedPrice = parseInt(newPrice, 10) || 1999;
-    const parsedMrp = parseInt(newMrpPrice, 10) || Math.round(parsedPrice * 1.3);
-    const parsedStock = parseInt(newStock, 10) || 10;
-    const parsedMoq = parseInt(newMoq, 10) || 1;
-
-    addProduct({
-      title: newTitle.trim(),
-      subtitle: newSubtitle.trim() || "Curated Studio Release",
-      description: newDescription.trim(),
-      category: newCategory,
-      price: parsedPrice,
-      mrpPrice: parsedMrp,
-      stock: parsedStock,
-      b2bMinMoq: parsedMoq,
-      badge: "New Drop",
-      images: [newImageUrl.trim()],
-      supplier: {
-        id: "sup_apex",
-        name: whiteLabelConfig.brandName,
-        location: "Jaipur / Bangalore Artisan Hub",
-        rating: 4.98,
-        fulfillmentRate: "100%",
-        verified: true,
-      },
-      specs: {
-        "Supplier SKU": `APEX-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        "Quality Inspection": "100% Passed Direct Seller Verification",
-        "Dispatched From": "Verified Artisan Warehouse Hub",
-      },
-      reviews: [
-        {
-          id: `rev_${Date.now()}`,
-          author: "Verified Patron",
-          rating: 5,
-          date: "Just now",
-          comment: "Direct from artisan maker. Unmatched quality and rapid delivery.",
-          verified: true,
-        },
-      ],
-    });
-
-    setIsAddModalOpen(false);
-    setNewTitle("");
-    setNewSubtitle("");
-  };
 
   // Export Real CA & GST CSV File
   const handleExportCAProfitReport = () => {
@@ -402,6 +276,16 @@ export function SupplierPortalSaaS() {
 
         {/* Top Actions */}
         <div className="flex flex-wrap items-center gap-2.5">
+          <Link
+            href="/store/jaipur-heritage-handlooms"
+            target="_blank"
+            className="px-3.5 py-2.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-800 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+          >
+            <Store className="w-3.5 h-3.5 text-blue-600" />
+            <span>View My Brand Storefront</span>
+            <ExternalLink className="w-3 h-3 text-blue-500" />
+          </Link>
+
           <button
             type="button"
             onClick={() => setIsLaunchStoreWizardOpen(true)}
@@ -417,7 +301,7 @@ export function SupplierPortalSaaS() {
             className="px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-md transition-all active:scale-98 cursor-pointer"
           >
             <Plus className="w-4 h-4 text-emerald-400" />
-            <span>+ Add Product to Store</span>
+            <span>+ Add Product (6-Slot & Pricing)</span>
           </button>
         </div>
       </div>
@@ -1832,107 +1716,11 @@ export function SupplierPortalSaaS() {
         packingCostPerOrder={packingCostPerOrder}
       />
 
-      {/* --- MODAL: ADD PRODUCT FORM --- */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto text-slate-900">
-            {/* Modal Header */}
-            <div className="p-6 pb-4 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-mono font-bold tracking-widest text-indigo-600 uppercase block">
-                  NEW LISTING ONBOARDING
-                </span>
-                <h3 className="text-lg font-extrabold text-slate-950">
-                  Publish New Product to Storefront
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Form Body */}
-            <form id="new-product-form" onSubmit={handleCreateProductSubmit} className="p-6 space-y-4 text-xs">
-              {/* Presets */}
-              <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100 space-y-2">
-                <span className="text-[10px] font-mono font-bold text-indigo-800 uppercase flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>1-Click Presets for Fast Testing</span>
-                </span>
-                <div className="grid grid-cols-2 gap-2">
-                  {QUICK_PRODUCT_PRESETS.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleApplyPreset(preset)}
-                      className="p-2 text-left rounded-xl bg-white border border-indigo-200 hover:border-indigo-400 hover:shadow-2xs transition-all text-[11px] font-medium text-slate-800 truncate"
-                    >
-                      {preset.title}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Title & Subtitle */}
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">Product Title *</label>
-                <input
-                  type="text"
-                  required
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="e.g. Master Carbon Acoustic Studio Monitor"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Retail Price (₹) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={newPrice}
-                    onChange={(e) => setNewPrice(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-mono focus:outline-none focus:ring-2 focus:ring-slate-900"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Stock Quantity *</label>
-                  <input
-                    type="number"
-                    required
-                    value={newStock}
-                    onChange={(e) => setNewStock(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-mono focus:outline-none focus:ring-2 focus:ring-slate-900"
-                  />
-                </div>
-              </div>
-            </form>
-
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="new-product-form"
-                className="px-5 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer"
-              >
-                Publish to Storefront 🚀
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* --- MODAL: 6-SLOT IMAGE & PRICING ONBOARDING FORM --- */}
+      <SellerProductOnboardingModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+      />
     </div>
   );
 }

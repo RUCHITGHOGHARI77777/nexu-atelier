@@ -20,6 +20,10 @@ import {
   ArrowRight,
   Navigation,
   Phone,
+  RotateCcw,
+  AlertCircle,
+  X,
+  Layers,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useStore, StoreOrder } from "@/context/StoreContext";
@@ -63,6 +67,44 @@ const FIVE_DELIVERY_STAGES = [
     label: "Delivered",
     subtitle: "Handed over to patron. 100% verified & Escrow payout released to maker.",
     icon: CheckCircle2,
+  },
+];
+
+const FIVE_RETURN_STAGES = [
+  {
+    stage: 1,
+    key: "REQUESTED",
+    label: "R1. Return Requested",
+    subtitle: "Pickup request logged. Zero penalty authorization.",
+    icon: RotateCcw,
+  },
+  {
+    stage: 2,
+    key: "APPROVED",
+    label: "R2. Approved & Scheduled",
+    subtitle: "Artisan studio approved. Doorstep pickup scheduled.",
+    icon: CheckCircle2,
+  },
+  {
+    stage: 3,
+    key: "PICKED_UP",
+    label: "R3. Picked Up from Patron",
+    subtitle: "Handed to courier associate (Vikram Negi: +91 98110 54321).",
+    icon: Package,
+  },
+  {
+    stage: 4,
+    key: "IN_TRANSIT",
+    label: "R4. In-Transit to Studio",
+    subtitle: "Reverse air priority cargo transit back to maker hub.",
+    icon: Truck,
+  },
+  {
+    stage: 5,
+    key: "REFUNDED",
+    label: "R5. Hub Inspected & Refunded",
+    subtitle: "Piece received. 100% instant refund released to UPI bank account.",
+    icon: ShieldCheck,
   },
 ];
 
@@ -256,12 +298,33 @@ function ConfirmationContent() {
     };
   }, [storeOrder, dbOrder, orderId, store.products]);
 
+  const [logisticsTab, setLogisticsTab] = useState<"FORWARD" | "RETURN">("FORWARD");
+  const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+  const [returnReason, setReturnReason] = useState("Size or fit adjustment required");
+
   // Current active stage (1 to 5)
   const activeDeliveryStage = currentStageOverride ?? displayOrder.deliveryStage ?? 1;
+  const returnTimeline = displayOrder.returnLogistics;
+  const isReturnActive = Boolean(returnTimeline && returnTimeline.status !== "NONE");
 
   // Print Invoice Handler
   const handlePrintInvoice = () => {
     window.print();
+  };
+
+  const handleInitiateReturnSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (displayOrder.id) {
+      store.initiateOrderReturn(displayOrder.id, returnReason);
+      setLogisticsTab("RETURN");
+      setIsReturnModalOpen(false);
+    }
+  };
+
+  const handleAdvanceReturn = () => {
+    if (displayOrder.id) {
+      store.advanceOrderReturnStage(displayOrder.id);
+    }
   };
 
   // Simulate Next Delivery Stage Handler
@@ -365,168 +428,434 @@ function ConfirmationContent() {
         </div>
       </div>
 
-      {/* --- LIVE 5-STAGE DELIVERY PROGRESSION TRACKER --- */}
+      {/* --- BIDIRECTIONAL LOGISTICS STATE MACHINE (FORWARD & REVERSE RETURN) --- */}
       <div className="max-w-4xl mx-auto rounded-3xl border border-white/80 bg-white/95 backdrop-blur-2xl shadow-[0_15px_45px_rgba(0,0,0,0.05)] p-6 sm:p-8 space-y-6 print:hidden">
-        {/* Tracker Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
-          <div>
-            <div className="flex items-center gap-2">
-              <Truck className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-base font-extrabold text-slate-950">
-                Live 5-Stage Order Processing & Delivery Tracker
-              </h2>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Carrier: <strong className="text-slate-800">Blue Dart Express (Air Priority)</strong> • Tracking AWB:{" "}
-              <span className="font-mono font-bold text-slate-900">
-                {displayOrder.awbNumber}
-              </span>
-            </p>
+        
+        {/* Navigation Tabs: Forward Outbound vs Reverse Return */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setLogisticsTab("FORWARD")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                logisticsTab === "FORWARD"
+                  ? "bg-slate-950 text-white shadow-sm"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+            >
+              <Truck className="w-3.5 h-3.5" />
+              <span>🚚 Outbound Delivery (Stage {activeDeliveryStage}/5)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setLogisticsTab("RETURN")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                logisticsTab === "RETURN"
+                  ? "bg-amber-600 text-white shadow-sm ring-2 ring-amber-500/20"
+                  : "bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100"
+              }`}
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-amber-500" />
+              <span>🔄 Return & Exchange ({isReturnActive ? returnTimeline?.status : "Eligible"})</span>
+            </button>
           </div>
 
           <div className="text-left sm:text-right">
             <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block">
-              Estimated Delivery
+              {logisticsTab === "FORWARD" ? "Courier SLA" : "Reverse Transit SLA"}
             </span>
             <span className="text-xs font-bold text-emerald-700 font-mono">
-              {displayOrder.estimatedDelivery}
+              {logisticsTab === "FORWARD" ? displayOrder.estimatedDelivery : "Same-Day Doorstep Pickup"}
             </span>
           </div>
         </div>
 
-        {/* 5-Stage Visual Stepper Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-          {FIVE_DELIVERY_STAGES.map((stg) => {
-            const isCompleted = stg.stage <= activeDeliveryStage;
-            const isCurrent = stg.stage === activeDeliveryStage;
-            const Icon = stg.icon;
+        {/* --- VIEW 1: FORWARD OUTBOUND JOURNEY --- */}
+        {logisticsTab === "FORWARD" && (
+          <div className="space-y-6">
+            {/* Header Metadata */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-600 font-mono">
+              <p>
+                Consignment Partner: <strong className="text-slate-950">Blue Dart Express (Air Priority)</strong> • AWB:{" "}
+                <span className="font-bold text-indigo-700">{displayOrder.awbNumber}</span>
+              </p>
+              <p>
+                Rider: <strong className="text-slate-950">{displayOrder.riderName || "Ramesh Sharma"}</strong> ({displayOrder.riderPhone || "+91 98200 12345"})
+              </p>
+            </div>
 
-            return (
-              <div
-                key={stg.key}
-                className={`p-3.5 rounded-2xl border transition-all ${
-                  isCurrent
-                    ? "bg-emerald-50/80 border-emerald-300 ring-2 ring-emerald-500/20 shadow-sm"
-                    : isCompleted
-                    ? "bg-slate-50/90 border-slate-200"
-                    : "bg-white/60 border-slate-100 opacity-60"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
+            {/* 5-Stage Visual Stepper Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+              {FIVE_DELIVERY_STAGES.map((stg) => {
+                const isCompleted = stg.stage <= activeDeliveryStage;
+                const isCurrent = stg.stage === activeDeliveryStage;
+                const Icon = stg.icon;
+
+                let stageTime = "";
+                if (stg.stage === 1) stageTime = displayOrder.paymentDetails?.paidAt || "Today 10:30 AM";
+                else if (stg.stage === 2) stageTime = displayOrder.outboundTimestamps?.packedAt || (isCompleted ? "Today 11:20 AM" : "Pending");
+                else if (stg.stage === 3) stageTime = displayOrder.outboundTimestamps?.shippedAt || (isCompleted ? "Today 01:45 PM" : "Pending");
+                else if (stg.stage === 4) stageTime = displayOrder.outboundTimestamps?.outForDeliveryAt || (isCompleted ? "Today 03:30 PM" : "Expected 04:30 PM");
+                else if (stg.stage === 5) stageTime = displayOrder.outboundTimestamps?.deliveredAt || (isCompleted ? "Today 04:18 PM" : "Pending");
+
+                return (
                   <div
-                    className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold transition-colors ${
-                      isCompleted
-                        ? "bg-emerald-600 text-white shadow-xs"
-                        : "bg-slate-200 text-slate-600"
+                    key={stg.key}
+                    className={`p-3.5 rounded-2xl border transition-all ${
+                      isCurrent
+                        ? "bg-emerald-50/80 border-emerald-300 ring-2 ring-emerald-500/20 shadow-sm"
+                        : isCompleted
+                        ? "bg-slate-50/90 border-slate-200"
+                        : "bg-white/60 border-slate-100 opacity-60"
                     }`}
                   >
-                    {isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : stg.stage}
+                    <div className="flex items-center justify-between mb-2">
+                      <div
+                        className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold transition-colors ${
+                          isCompleted
+                            ? "bg-emerald-600 text-white shadow-xs"
+                            : "bg-slate-200 text-slate-600"
+                        }`}
+                      >
+                        {isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : stg.stage}
+                      </div>
+                      {isCurrent && (
+                        <span className="flex h-2 w-2 relative">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Icon className={`w-3.5 h-3.5 ${isCurrent ? "text-emerald-700" : isCompleted ? "text-slate-800" : "text-slate-400"}`} />
+                      <span className="text-[10px] font-mono font-bold text-slate-500">
+                        STAGE {stg.stage}
+                      </span>
+                    </div>
+
+                    <h4 className="text-xs font-bold text-slate-950 leading-snug">
+                      {stg.label}
+                    </h4>
+                    <p className="text-[10px] text-slate-500 mt-1 leading-normal line-clamp-2">
+                      {stg.subtitle}
+                    </p>
+
+                    <div className="mt-2 pt-2 border-t border-slate-200/60 text-[10px] font-mono text-emerald-800 font-semibold truncate">
+                      ⏱️ {stageTime}
+                    </div>
                   </div>
-                  {isCurrent && (
-                    <span className="flex h-2 w-2 relative">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                );
+              })}
+            </div>
+
+            {/* Stage 4 Dynamic Visual: Live Map & Delivery Associate Route */}
+            {activeDeliveryStage >= 4 && (
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-sky-50/80 to-indigo-50/80 border border-sky-200/80 space-y-3 animate-in fade-in duration-300">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <Navigation className="w-4 h-4 text-indigo-600 animate-spin" />
+                    <span className="font-bold text-slate-900">
+                      Live Delivery Van Progress (Blue Dart Dedicated Transit)
                     </span>
-                  )}
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-600 font-mono text-[11px]">
+                    <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Rider: <strong>{displayOrder.riderName || "Ramesh Sharma"}</strong> ({displayOrder.riderPhone || "+91 98200 12345"})</span>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Icon className={`w-3.5 h-3.5 ${isCurrent ? "text-emerald-700" : isCompleted ? "text-slate-800" : "text-slate-400"}`} />
-                  <span className="text-[10px] font-mono font-bold text-slate-500">
-                    STAGE {stg.stage}
+                <div className="relative pt-3 pb-1">
+                  <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-sky-500 via-indigo-600 to-emerald-500 transition-all duration-700 rounded-full"
+                      style={{ width: activeDeliveryStage === 5 ? "100%" : "78%" }}
+                    />
+                  </div>
+
+                  <div
+                    className="absolute top-0 -translate-y-1 transition-all duration-700"
+                    style={{ left: activeDeliveryStage === 5 ? "96%" : "74%" }}
+                  >
+                    <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-md animate-pulse">
+                      <Truck className="w-4 h-4" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono pt-1">
+                  <span>Mumbai Central Cargo Hub</span>
+                  <span className="text-emerald-700 font-bold">
+                    {activeDeliveryStage === 5 ? "Consignment Handed to Patron" : displayOrder.etaWindow || "Arriving Today by 4:30 PM"}
                   </span>
+                  <span>{displayOrder.shippingAddress.pincode}</span>
                 </div>
+              </div>
+            )}
 
-                <h4 className="text-xs font-bold text-slate-950 leading-snug">
-                  {stg.label}
-                </h4>
-                <p className="text-[10px] text-slate-500 mt-1 leading-normal line-clamp-3">
-                  {stg.subtitle}
+            {/* Interactive Control Card */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-50 via-indigo-50/50 to-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-mono font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-indigo-600" />
+                  <span>Forward Logistics Simulator</span>
+                </span>
+                <p className="text-xs text-slate-700">
+                  Step through all 5 outbound fulfillment stages in real time.
                 </p>
               </div>
-            );
-          })}
-        </div>
 
-        {/* Stage 4 Dynamic Visual: Live Map & Delivery Associate Route */}
-        {activeDeliveryStage >= 4 && (
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-sky-50/80 to-indigo-50/80 border border-sky-200/80 space-y-3 animate-in fade-in duration-300">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
               <div className="flex items-center gap-2">
-                <Navigation className="w-4 h-4 text-indigo-600 animate-spin" />
-                <span className="font-bold text-slate-900">
-                  Simulated Live Van Progress Bar (Nariman Point Route)
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-600 font-mono text-[11px]">
-                <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Delivery Partner: <strong>{displayOrder.courierPartner}</strong></span>
+                <button
+                  type="button"
+                  onClick={handleAdvanceMilestone}
+                  disabled={isAdvancingMilestone || activeDeliveryStage >= 5}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-sky-600 hover:from-indigo-700 hover:to-sky-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 disabled:opacity-50 cursor-pointer shrink-0"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isAdvancingMilestone ? "animate-spin" : ""}`} />
+                  <span>
+                    {activeDeliveryStage >= 5
+                      ? "🎉 Outbound Delivered!"
+                      : "Simulate Next Outbound Stage ⚡"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsReturnModalOpen(true)}
+                  className="px-4 py-2.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Request Return / Exchange</span>
+                </button>
               </div>
             </div>
 
-            {/* Moving Van Progress Bar */}
-            <div className="relative pt-3 pb-1">
-              <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-sky-500 via-indigo-600 to-emerald-500 transition-all duration-700 rounded-full"
-                  style={{ width: activeDeliveryStage === 5 ? "100%" : "78%" }}
-                />
-              </div>
+            {milestoneMessage && (
+              <p className="text-xs text-indigo-800 font-medium text-center bg-indigo-50/90 py-2 px-3 rounded-xl border border-indigo-200 animate-in fade-in duration-200">
+                {milestoneMessage}
+              </p>
+            )}
+          </div>
+        )}
 
-              {/* Animated Floating Van Icon */}
-              <div
-                className="absolute top-0 -translate-y-1 transition-all duration-700"
-                style={{ left: activeDeliveryStage === 5 ? "96%" : "74%" }}
-              >
-                <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-md animate-pulse">
-                  <Truck className="w-4 h-4" />
+        {/* --- VIEW 2: RETURN & REVERSE LOGISTICS JOURNEY --- */}
+        {logisticsTab === "RETURN" && (
+          <div className="space-y-6">
+            {!isReturnActive ? (
+              <div className="p-8 rounded-2xl bg-gradient-to-r from-amber-50/80 via-white to-amber-50/50 border border-amber-200 text-center space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                  <RotateCcw className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-base font-extrabold text-slate-950">
+                    7-Day Hassle-Free Direct Studio Return & Exchange
+                  </h3>
+                  <p className="text-xs text-slate-600 max-w-md mx-auto">
+                    Unlike other marketplaces that charge small sellers ₹180 penalties, NEXU coordinates direct studio exchanges with zero fees and instant UPI refund upon studio hub receipt.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsReturnModalOpen(true)}
+                  className="px-6 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center gap-2 shadow-md cursor-pointer transition-all"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Initiate Return / Exchange (Zero Penalty)</span>
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Active Return Status Banner */}
+                <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                  <div>
+                    <span className="font-mono font-bold text-amber-900 uppercase text-[10px] block">
+                      Active Return Lifecycle
+                    </span>
+                    <p className="font-bold text-slate-950 text-sm">
+                      Status: {returnTimeline?.status} • Reason: &quot;{returnTimeline?.reason}&quot;
+                    </p>
+                  </div>
+                  <div className="text-left sm:text-right">
+                    <span className="text-[10px] font-mono text-slate-500 block">Refund Amount (Escrow)</span>
+                    <span className="font-mono font-black text-emerald-700 text-base">
+                      {formatCurrency(displayOrder.total)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 5-Stage Reverse Stepper */}
+                <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                  {FIVE_RETURN_STAGES.map((rstg) => {
+                    const statusOrder = ["NONE", "REQUESTED", "APPROVED", "PICKED_UP", "IN_TRANSIT", "REFUNDED"];
+                    const currentIdx = statusOrder.indexOf(returnTimeline?.status || "NONE");
+                    const stageIdx = statusOrder.indexOf(rstg.key);
+                    const isCompleted = currentIdx >= stageIdx;
+                    const isCurrent = currentIdx === stageIdx;
+                    const Icon = rstg.icon;
+
+                    return (
+                      <div
+                        key={rstg.key}
+                        className={`p-3.5 rounded-2xl border transition-all ${
+                          isCurrent
+                            ? "bg-amber-50/80 border-amber-400 ring-2 ring-amber-500/20 shadow-sm"
+                            : isCompleted
+                            ? "bg-slate-50/90 border-slate-200"
+                            : "bg-white/60 border-slate-100 opacity-60"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div
+                            className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold transition-colors ${
+                              isCompleted
+                                ? "bg-amber-600 text-white shadow-xs"
+                                : "bg-slate-200 text-slate-600"
+                            }`}
+                          >
+                            {isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : rstg.stage}
+                          </div>
+                          {isCurrent && (
+                            <span className="flex h-2 w-2 relative">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Icon className={`w-3.5 h-3.5 ${isCurrent ? "text-amber-700" : isCompleted ? "text-slate-800" : "text-slate-400"}`} />
+                          <span className="text-[10px] font-mono font-bold text-slate-500">
+                            RETURN {rstg.stage}
+                          </span>
+                        </div>
+
+                        <h4 className="text-xs font-bold text-slate-950 leading-snug">
+                          {rstg.label}
+                        </h4>
+                        <p className="text-[10px] text-slate-500 mt-1 leading-normal line-clamp-2">
+                          {rstg.subtitle}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Refund Released Details (Stage R5) */}
+                {returnTimeline?.status === "REFUNDED" && (
+                  <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-xs font-mono space-y-2">
+                    <div className="flex items-center gap-2 text-emerald-800 font-bold">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      <span>Instant Refund Released via NPCI 256-bit Direct UPI</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-slate-700 pt-1">
+                      <div>
+                        <span>Refund UTR:</span> <strong className="text-slate-950">{returnTimeline.refundUtr || "REF/UPI/849201840"}</strong>
+                      </div>
+                      <div>
+                        <span>Credited To:</span> <strong className="text-slate-950">{displayOrder.paymentDetails.upiId || "customer@okaxis"}</strong>
+                      </div>
+                      <div>
+                        <span>Settlement Speed:</span> <strong className="text-emerald-700 font-bold">0 Seconds (Real-Time)</strong>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Return Simulator Action */}
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] font-mono font-bold text-amber-800 uppercase tracking-wider">
+                      Reverse Logistics Simulator
+                    </span>
+                    <p className="text-xs text-slate-600">
+                      Simulate the pickup rider scan, transit to maker studio, and instant UPI refund.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAdvanceReturn}
+                    disabled={returnTimeline?.status === "REFUNDED"}
+                    className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 disabled:opacity-50 cursor-pointer shrink-0"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>
+                      {returnTimeline?.status === "REFUNDED"
+                        ? "🎉 Refund Successfully Released!"
+                        : "Advance Return Stage ⚡"}
+                    </span>
+                  </button>
                 </div>
               </div>
-            </div>
-
-            <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono pt-1">
-              <span>Mumbai Central Cargo Hub</span>
-              <span className="text-emerald-700 font-bold">
-                {activeDeliveryStage === 5 ? "Package Delivered at Doorstep" : "Arriving in approx 25 mins"}
-              </span>
-              <span>{displayOrder.shippingAddress.pincode}</span>
-            </div>
+            )}
           </div>
         )}
 
-        {/* Company Showcase Interactive Control Card */}
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-50 via-indigo-50/50 to-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-0.5">
-            <span className="text-[10px] font-mono font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-indigo-600" />
-              <span>Evaluator Interactive Control</span>
-            </span>
-            <p className="text-xs text-slate-700">
-              Click the button below to watch the order status animate through all 5 fulfillment stages in real time.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleAdvanceMilestone}
-            disabled={isAdvancingMilestone || activeDeliveryStage >= 5}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-sky-600 hover:from-indigo-700 hover:to-sky-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 disabled:opacity-50 cursor-pointer shrink-0"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isAdvancingMilestone ? "animate-spin" : ""}`} />
-            <span>
-              {activeDeliveryStage >= 5
-                ? "🎉 Consignment Successfully Delivered!"
-                : "Simulate Next Delivery Stage ⚡"}
-            </span>
-          </button>
-        </div>
-
-        {milestoneMessage && (
-          <p className="text-xs text-indigo-800 font-medium text-center bg-indigo-50/90 py-2 px-3 rounded-xl border border-indigo-200 animate-in fade-in duration-200">
-            {milestoneMessage}
-          </p>
-        )}
       </div>
+
+      {/* --- MODAL: INITIATE RETURN / EXCHANGE --- */}
+      {isReturnModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 text-slate-900 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <RotateCcw className="w-5 h-5 text-amber-600" />
+                <h3 className="font-extrabold text-base text-slate-950">
+                  Initiate Direct Studio Return
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsReturnModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleInitiateReturnSubmit} className="space-y-4 text-xs">
+              <div className="space-y-1.5">
+                <label className="font-bold text-slate-700">Select Return / Exchange Reason *</label>
+                <select
+                  value={returnReason}
+                  onChange={(e) => setReturnReason(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-medium"
+                >
+                  <option value="Size or fit adjustment required (Exchange for S/M/L)">Size or fit adjustment required (Exchange for S/M/L)</option>
+                  <option value="Color shade variation in natural studio light">Color shade variation in natural studio light</option>
+                  <option value="Fabric drape / Handloom feel inspection">Fabric drape / Handloom feel inspection</option>
+                  <option value="Minor craftsmanship detail exchange">Minor craftsmanship detail exchange</option>
+                </select>
+              </div>
+
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 space-y-1">
+                <p className="font-bold">🛡️ Guaranteed Return Terms:</p>
+                <p>• Zero return shipping fee (Courier absorbs or studio covers)</p>
+                <p>• Free doorstep pickup by Blue Dart associate</p>
+                <p>• 100% refund credited directly to your UPI ID upon studio receipt</p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsReturnModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-bold cursor-pointer shadow-md"
+                >
+                  Confirm & Schedule Pickup 🚚
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* --- OFFICIAL TAX-COMPLIANT BRANDED INVOICE CARD --- */}
       <div className="printable-invoice-card relative max-w-4xl mx-auto rounded-3xl border border-white/80 bg-white/95 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.06)] p-6 sm:p-10 space-y-8 overflow-hidden print:border-none print:shadow-none print:p-0">
