@@ -24,6 +24,9 @@
   - [4. Live 5-Stage Logistics & Delivery Simulator](#4-live-5-stage-logistics--delivery-simulator)
   - [5. B2B Supplier Hub & Blue Dart Cargo Manifests](#5-b2b-supplier-hub--blue-dart-cargo-manifests)
   - [6. Platform Owner Admin Command Center](#6-platform-owner-admin-command-center)
+  - [7. Floating Evaluator Demo Bar & B2B Wholesale Leads Engine (Phase 6)](#7-floating-evaluator-demo-bar--b2b-wholesale-leads-engine-phase-6)
+  - [8. Commercial White-Label Reseller Engine & Floating Smartphone Simulator (Phase 8)](#8-commercial-white-label-reseller-engine--floating-smartphone-simulator-phase-8)
+  - [9. Dedicated @media print Invoice Engine & Zero-Crash Safeguards (Phase 9)](#9-dedicated-media-print-invoice-engine--zero-crash-safeguards-phase-9)
 - [⚡ 2-Minute Evaluator Quickstart](#-2-minute-evaluator-quickstart)
 - [🛠️ Tech Stack & Dependencies](#️-tech-stack--dependencies)
 - [🚀 Local Setup & Installation](#-local-setup--installation)
@@ -144,6 +147,17 @@ flowchart TD
   - Embedded metallic hardware shell with Dynamic Island, live status clock, 5G wireless icon, and battery percentage.
   - Interactive multi-stage payment handshake: Google Pay push collect request $\to$ 4-digit UPI PIN numeric keypad (with 1-click `"⚡ Tap to Auto-Enter PIN"` shortcut) $\to$ Instant HDFC Bank SMS debited alert banner.
   - Seamless two-way handshake resolving background checkouts and issuing branded receipts.
+
+### 9. Dedicated @media print Invoice Engine & Zero-Crash Safeguards (Phase 9)
+- **🖨️ Clean A4 Paper & PDF Print Stylesheet**:
+  - Automatically isolates `.printable-invoice-card` during print and removes all web chrome (top navbar, footer, background liquid blobs, floating evaluator pills, and phone simulator overlays).
+  - High-contrast typography, crisp border definition, page-break avoidance, and an authentic NPCI Escrow watermark stamp.
+- **🛡️ Corrupt-Proof LocalStorage Engine**:
+  - Defensive `safeStorageGet` and `safeStorageSet` abstractions preventing crashes in private browsing mode, incognito windows, or quota exhaustion.
+  - Pre-seeded with 3 realistic historical orders across all major lifecycle stages (`DELIVERED` Stage 5, `OUT_FOR_DELIVERY` Stage 4, `CONFIRMED` Stage 1) and 6 verified B2B suppliers, eliminating first-load empty states.
+- **📱 Responsive Scroll & Touch Physics**:
+  - Precision responsive stacking tested across 1440px Desktop, 768px Tablet, and 375px Mobile viewports.
+  - Custom crystal-clear water scrollbar (`::-webkit-scrollbar` + Firefox `scrollbar-width: thin`).
 
 ---
 

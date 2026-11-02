@@ -178,8 +178,10 @@ flowchart TD
 | :--- | :--- | :--- | :--- | :---: |
 | **Static Type Safety** | `npx tsc --noEmit` | 0 Compilation Errors | 0 Errors | **PASS** |
 | **Unit & Integration** | Vitest (`--no-file-parallelism`) | 25 Test Suites | 25 Suites / 294 Tests Passed | **PASS** |
-| **Browser E2E Automation** | Edge / Puppeteer | 9 Phase 6 Milestones | 9 Milestones Passed | **PASS** |
-| **Visual Artifacts** | High-Res PNG Capture | 9 Phase 6 Proofs | Saved in `screenshots/` & artifact folder | **PASS** |
+| **Print Media Stylesheet** | `@media print` isolation | 0 UI chrome, clean A4 invoice | Verified via Puppeteer | **PASS** |
+| **Defensive Storage** | `safeStorageGet/Set` | Zero crashes on incognito/quota | Validated across full matrix | **PASS** |
+| **Browser E2E Automation** | Edge / Puppeteer | 8 Phase 9 Hardening Milestones | 8 Milestones Passed | **PASS** |
+| **Visual Artifacts** | High-Res PNG Capture | 8 Phase 9 Proofs | Saved in `screenshots/` & artifact folder | **PASS** |
 
 ---
 
@@ -195,7 +197,8 @@ flowchart TD
 1. **Browse & Filter:** Search for *"Titanium"*, filter by *"Electronics"*, and click *"Quick View"*.
 2. **Request B2B Quote:** Click *"Request Bulk / B2B Quote"*, click *"1-Click Fill Enterprise Lead"*, and submit.
 3. **Cart & Promo:** Add an item to cart, apply coupon code `DEMO20` in the slide-over drawer, and proceed to checkout.
-4. **UPI Gateway:** Enter a custom UPI ID or scan QR, click *"Verify & Pay"*, and watch the simulated mobile push notification.
-5. **Invoice & Tracking:** Inspect the generated GST receipt and click *"Simulate Next Delivery Stage ⚡"* to watch real-time logistics progression.
-6. **Switch to Supplier:** Toggle navbar role to *"Supplier Portal"*, check the new order in the queue, click *"Generate Manifest"*, and approve the B2B Wholesale Lead.
-7. **Switch to Admin:** Toggle navbar role to *"Admin Command Center"* to verify platform GMV, 10% fees earned, and the immutable UTR audit log.
+4. **UPI Gateway & Smartphone Simulator:** Enter a custom UPI ID or scan QR, click *"Verify & Pay"*, interact with the floating iPhone simulator keypad, and trigger the HDFC bank SMS debit alert.
+5. **Invoice & Print Engine:** Click *"Download Official Receipt (Print / PDF)"* to test `@media print` A4 formatting with zero background blobs or buttons.
+6. **Delivery Progression:** Click *"Simulate Next Delivery Stage ⚡"* to watch real-time logistics progression through all 5 stages.
+7. **Switch to Supplier:** Toggle navbar role to *"Supplier Portal"*, check the new order in the queue, click *"Generate Manifest"*, and approve the B2B Wholesale Lead.
+8. **Switch to Admin:** Toggle navbar role to *"Admin Command Center"* to verify platform GMV, 10% fees earned, the immutable UTR audit log, and try the 1-click White-Label brand presets.

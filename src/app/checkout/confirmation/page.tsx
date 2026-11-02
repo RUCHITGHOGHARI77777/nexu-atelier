@@ -325,7 +325,7 @@ function ConfirmationContent() {
   }
 
   return (
-    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 space-y-10 text-slate-900">
+    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 space-y-10 text-slate-900 print:min-h-0 print:py-0 print:px-0 print:space-y-0">
       {/* --- TOP CONFIRMATION BANNER --- */}
       <div className="max-w-4xl mx-auto text-center space-y-4 print:hidden">
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/25 animate-in zoom-in-90 duration-300">
@@ -529,7 +529,7 @@ function ConfirmationContent() {
       </div>
 
       {/* --- OFFICIAL TAX-COMPLIANT BRANDED INVOICE CARD --- */}
-      <div className="relative max-w-4xl mx-auto rounded-3xl border border-white/80 bg-white/95 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.06)] p-6 sm:p-10 space-y-8 overflow-hidden print:border-none print:shadow-none print:p-0">
+      <div className="printable-invoice-card relative max-w-4xl mx-auto rounded-3xl border border-white/80 bg-white/95 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.06)] p-6 sm:p-10 space-y-8 overflow-hidden print:border-none print:shadow-none print:p-0">
         {/* Authentic "PAID & ESCROW VERIFIED" Watermark Stamp */}
         <div className="absolute top-1/2 right-12 -translate-y-1/2 -rotate-12 pointer-events-none select-none opacity-25 sm:opacity-30 print:opacity-40">
           <div className="border-4 border-dashed border-emerald-600 rounded-3xl p-6 text-center shadow-xs">

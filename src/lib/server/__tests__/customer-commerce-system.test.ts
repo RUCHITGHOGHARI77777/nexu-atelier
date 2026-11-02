@@ -213,12 +213,12 @@ describe("NEXU ATELIER — Complete Customer Commerce System", () => {
           {
             productId: productA.id,
             quantity: 1,
-            selectedSku: productA.variants?.find((v) => v.stock > 0)?.sku,
+            selectedSku: productA.variants?.find((v: any) => v.stock > 0)?.sku,
           },
           {
             productId: productB.id,
             quantity: 1,
-            selectedSku: productB.variants?.find((v) => v.stock > 0)?.sku,
+            selectedSku: productB.variants?.find((v: any) => v.stock > 0)?.sku,
           },
         ],
       });
@@ -266,7 +266,7 @@ describe("NEXU ATELIER — Complete Customer Commerce System", () => {
           {
             productId: productA.id,
             quantity: 1,
-            selectedSku: productA.variants?.find((v) => v.stock > 0)?.sku,
+            selectedSku: productA.variants?.find((v: any) => v.stock > 0)?.sku,
           },
         ],
       });

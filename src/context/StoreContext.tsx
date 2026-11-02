@@ -928,6 +928,162 @@ export const INITIAL_B2B_QUOTES: B2BQuoteRequest[] = [
   },
 ];
 
+export const INITIAL_PRELOADED_ORDERS: StoreOrder[] = [
+  {
+    id: "ORD-2026-894201",
+    items: [
+      {
+        id: "pre_item_1",
+        productId: "prod_elec_01",
+        quantity: 1,
+        product: PRELOADED_PRODUCTS[0],
+      },
+    ],
+    total: 26990,
+    subtotal: 26990,
+    shippingFee: 0,
+    taxAmount: 4117,
+    discount: 0,
+    customerName: "Aarav Mehta",
+    customerPhone: "+91 98765 43210",
+    customerEmail: "aarav.mehta@enterprise-demo.com",
+    shippingAddress: {
+      fullName: "Aarav Mehta",
+      phone: "+91 98765 43210",
+      street: "Flat 402, Highline Horizon, Nariman Point",
+      city: "Mumbai",
+      state: "Maharashtra",
+      pincode: "400001",
+    },
+    paymentMethod: "UPI",
+    paymentDetails: {
+      method: "UPI",
+      upiId: "aarav@okaxis",
+      bankRef: "UPI/2026/894201",
+      utrNumber: "UPI/2026/894201",
+      paidAt: "01 Nov 2026, 11:42:10 IST",
+      status: "PAID & ESCROW VERIFIED",
+    },
+    deliveryStage: 5,
+    deliveryStageName: "Delivered",
+    awbNumber: "BD-98214051IN",
+    courierPartner: "Blue Dart Express • Delivered by Kishore Reddy",
+    estimatedDelivery: "Delivered on 02 Nov 2026",
+    status: "DELIVERED",
+    createdAt: "2026-11-01T06:12:10.000Z",
+  },
+  {
+    id: "ORD-2026-441290",
+    items: [
+      {
+        id: "pre_item_2",
+        productId: "prod_fash_02",
+        quantity: 1,
+        product: PRELOADED_PRODUCTS[4],
+      },
+    ],
+    total: 18500,
+    subtotal: 18500,
+    shippingFee: 0,
+    taxAmount: 2822,
+    discount: 0,
+    customerName: "Priya Sharma",
+    customerPhone: "+91 98192 83746",
+    customerEmail: "priya.sharma@designcraft.in",
+    shippingAddress: {
+      fullName: "Priya Sharma",
+      phone: "+91 98192 83746",
+      street: "Studio 12, Indiranagar 100ft Road",
+      city: "Bangalore",
+      state: "Karnataka",
+      pincode: "560038",
+    },
+    paymentMethod: "UPI",
+    paymentDetails: {
+      method: "UPI",
+      upiId: "priya@ybl",
+      bankRef: "UPI/2026/441290",
+      utrNumber: "UPI/2026/441290",
+      paidAt: "02 Nov 2026, 09:15:30 IST",
+      status: "PAID & ESCROW VERIFIED",
+    },
+    deliveryStage: 4,
+    deliveryStageName: "Out for Delivery",
+    awbNumber: "BD-77192034IN",
+    courierPartner: "Ramesh Sharma (+91 98200 12345) • Blue Dart Express",
+    estimatedDelivery: "Today • by 4:30 PM",
+    status: "OUT_FOR_DELIVERY",
+    createdAt: "2026-11-02T03:45:30.000Z",
+  },
+  {
+    id: "ORD-2026-194820",
+    items: [
+      {
+        id: "pre_item_3",
+        productId: "prod_home_01",
+        quantity: 1,
+        product: PRELOADED_PRODUCTS[6],
+      },
+      {
+        id: "pre_item_4",
+        productId: "prod_home_02",
+        quantity: 1,
+        product: PRELOADED_PRODUCTS[7],
+      },
+    ],
+    total: 31480,
+    subtotal: 31480,
+    shippingFee: 0,
+    taxAmount: 4802,
+    discount: 0,
+    customerName: "Vikramaditya Rao",
+    customerPhone: "+91 98450 99887",
+    customerEmail: "vikram@raomedia.com",
+    shippingAddress: {
+      fullName: "Vikramaditya Rao",
+      phone: "+91 98450 99887",
+      street: "Skyline Villa 4, Banjara Hills Road 3",
+      city: "Hyderabad",
+      state: "Telangana",
+      pincode: "500034",
+    },
+    paymentMethod: "UPI",
+    paymentDetails: {
+      method: "UPI",
+      upiId: "vikram@axisbank",
+      bankRef: "UPI/2026/194820",
+      utrNumber: "UPI/2026/194820",
+      paidAt: "02 Nov 2026, 17:30:45 IST",
+      status: "PAID & ESCROW VERIFIED",
+    },
+    deliveryStage: 1,
+    deliveryStageName: "Order Confirmed & Invoice Generated",
+    awbNumber: "BD-19482065IN",
+    courierPartner: "Blue Dart Express Priority Air",
+    estimatedDelivery: "Thursday, Nov 6 • by 6:00 PM",
+    status: "CONFIRMED",
+    createdAt: "2026-11-02T12:00:45.000Z",
+  },
+];
+
+// Helper functions for safe corrupt-proof localStorage handling
+function safeStorageGet(key: string): string | null {
+  try {
+    if (typeof window === "undefined" || !window.localStorage) return null;
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(key: string, value: string): void {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.setItem(key, value);
+    }
+  } catch {}
+}
+
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
@@ -935,7 +1091,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [suppliers, setSuppliers] = useState<SupplierInfo[]>(INITIAL_SUPPLIERS);
   const [cart, setCart] = useState<StoreCartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
-  const [orders, setOrders] = useState<StoreOrder[]>([]);
+  const [orders, setOrders] = useState<StoreOrder[]>(INITIAL_PRELOADED_ORDERS);
   const [b2bQuotes, setB2bQuotes] = useState<B2BQuoteRequest[]>(INITIAL_B2B_QUOTES);
   const [isB2BModalOpen, setIsB2BModalOpen] = useState(false);
   const [b2bModalProduct, setB2bModalProduct] = useState<StoreProduct | null>(null);
@@ -957,85 +1113,110 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Load from localStorage on client mount
+  // Load from localStorage on client mount with corrupt-proof fallbacks
   useEffect(() => {
     try {
-      const savedProducts = localStorage.getItem("nexu_saas_products");
-      if (savedProducts) setProducts(JSON.parse(savedProducts));
-
-      const savedSuppliers = localStorage.getItem("nexu_saas_suppliers");
-      if (savedSuppliers) setSuppliers(JSON.parse(savedSuppliers));
-
-      const savedCart = localStorage.getItem("nexu_saas_cart");
-      if (savedCart) setCart(JSON.parse(savedCart));
-
-      const savedWishlist = localStorage.getItem("nexu_saas_wishlist");
-      if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
-
-      const savedOrders = localStorage.getItem("nexu_saas_orders");
-      if (savedOrders) setOrders(JSON.parse(savedOrders));
-
-      const savedWhiteLabel = localStorage.getItem("nexu_whitelabel_config");
-      if (savedWhiteLabel) {
-        setWhiteLabelConfig((prev) => ({ ...prev, ...JSON.parse(savedWhiteLabel) }));
+      const savedProducts = safeStorageGet("nexu_saas_products");
+      if (savedProducts) {
+        try {
+          const parsed = JSON.parse(savedProducts);
+          if (Array.isArray(parsed) && parsed.length > 0) setProducts(parsed);
+        } catch {}
       }
 
-      const savedRole = localStorage.getItem("nexu_saas_role");
+      const savedSuppliers = safeStorageGet("nexu_saas_suppliers");
+      if (savedSuppliers) {
+        try {
+          const parsed = JSON.parse(savedSuppliers);
+          if (Array.isArray(parsed) && parsed.length > 0) setSuppliers(parsed);
+        } catch {}
+      }
+
+      const savedCart = safeStorageGet("nexu_saas_cart");
+      if (savedCart) {
+        try {
+          const parsed = JSON.parse(savedCart);
+          if (Array.isArray(parsed)) setCart(parsed);
+        } catch {}
+      }
+
+      const savedWishlist = safeStorageGet("nexu_saas_wishlist");
+      if (savedWishlist) {
+        try {
+          const parsed = JSON.parse(savedWishlist);
+          if (Array.isArray(parsed)) setWishlist(parsed);
+        } catch {}
+      }
+
+      const savedOrders = safeStorageGet("nexu_saas_orders");
+      if (savedOrders) {
+        try {
+          const parsed = JSON.parse(savedOrders);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setOrders(parsed);
+          } else {
+            setOrders(INITIAL_PRELOADED_ORDERS);
+            safeStorageSet("nexu_saas_orders", JSON.stringify(INITIAL_PRELOADED_ORDERS));
+          }
+        } catch {
+          setOrders(INITIAL_PRELOADED_ORDERS);
+        }
+      } else {
+        safeStorageSet("nexu_saas_orders", JSON.stringify(INITIAL_PRELOADED_ORDERS));
+      }
+
+      const savedWhiteLabel = safeStorageGet("nexu_whitelabel_config");
+      if (savedWhiteLabel) {
+        try {
+          const parsed = JSON.parse(savedWhiteLabel);
+          if (parsed && typeof parsed === "object") {
+            setWhiteLabelConfig((prev) => ({ ...prev, ...parsed }));
+          }
+        } catch {}
+      }
+
+      const savedRole = safeStorageGet("nexu_saas_role");
       if (savedRole && ["customer", "supplier", "admin"].includes(savedRole)) {
         setActiveRole(savedRole as RoleType);
       }
     } catch {
-      // LocalStorage access restricted or unavailable
+      // LocalStorage access restricted or unavailable in private browsing mode
     }
   }, []);
 
   // Save products to localStorage
   useEffect(() => {
-    try {
-      localStorage.setItem("nexu_saas_products", JSON.stringify(products));
-    } catch {}
+    safeStorageSet("nexu_saas_products", JSON.stringify(products));
   }, [products]);
 
   // Save suppliers to localStorage
   useEffect(() => {
-    try {
-      localStorage.setItem("nexu_saas_suppliers", JSON.stringify(suppliers));
-    } catch {}
+    safeStorageSet("nexu_saas_suppliers", JSON.stringify(suppliers));
   }, [suppliers]);
 
   // Save cart to localStorage
   useEffect(() => {
-    try {
-      localStorage.setItem("nexu_saas_cart", JSON.stringify(cart));
-    } catch {}
+    safeStorageSet("nexu_saas_cart", JSON.stringify(cart));
   }, [cart]);
 
   // Save wishlist to localStorage
   useEffect(() => {
-    try {
-      localStorage.setItem("nexu_saas_wishlist", JSON.stringify(wishlist));
-    } catch {}
+    safeStorageSet("nexu_saas_wishlist", JSON.stringify(wishlist));
   }, [wishlist]);
 
   // Save role to localStorage
   useEffect(() => {
-    try {
-      localStorage.setItem("nexu_saas_role", activeRole);
-    } catch {}
+    safeStorageSet("nexu_saas_role", activeRole);
   }, [activeRole]);
 
   // Save orders to localStorage
   useEffect(() => {
-    try {
-      localStorage.setItem("nexu_saas_orders", JSON.stringify(orders));
-    } catch {}
+    safeStorageSet("nexu_saas_orders", JSON.stringify(orders));
   }, [orders]);
 
   // Save white-label config to localStorage
   useEffect(() => {
-    try {
-      localStorage.setItem("nexu_whitelabel_config", JSON.stringify(whiteLabelConfig));
-    } catch {}
+    safeStorageSet("nexu_whitelabel_config", JSON.stringify(whiteLabelConfig));
   }, [whiteLabelConfig]);
 
   const updateWhiteLabelConfig = (config: Partial<WhiteLabelConfig>) => {
@@ -1572,16 +1753,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setSuppliers(INITIAL_SUPPLIERS);
     setCart([]);
     setWishlist([]);
-    setOrders([]);
+    setOrders(INITIAL_PRELOADED_ORDERS);
     try {
       localStorage.removeItem("nexu_saas_products");
       localStorage.removeItem("nexu_saas_suppliers");
       localStorage.removeItem("nexu_saas_cart");
       localStorage.removeItem("nexu_saas_wishlist");
-      localStorage.removeItem("nexu_saas_orders");
+      localStorage.setItem("nexu_saas_orders", JSON.stringify(INITIAL_PRELOADED_ORDERS));
       localStorage.removeItem("nexu_active_coupon");
     } catch {}
-    showToast("🔄 Platform state reset to pristine factory defaults", "info");
+    showToast("🔄 Platform state reset to pristine factory defaults with pre-seeded orders", "info");
   };
 
   // Filtered & Sorted products computation
