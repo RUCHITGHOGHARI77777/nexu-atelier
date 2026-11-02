@@ -23,3 +23,4 @@ export async function GET() {
     costSeparation: THIRD_PARTY_COST_SEPARATION,
   });
 }
+

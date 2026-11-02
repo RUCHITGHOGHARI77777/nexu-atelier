@@ -58,8 +58,65 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 3. Response Construction & Defensive Security Headers
-  const response = NextResponse.next();
+  // 3. Multi-Tenant Edge Router & Domain Resolution Layer
+  // Resolves tenant identity across 3 ingress channels:
+  // Channel A: Custom Domain (e.g., brandname.com)
+  // Channel B: Subdomain (e.g., brandname.nexu.global or brandname.nexu.store)
+  // Channel C: Path Store (e.g., nexu.global/store/brandname)
+  let tenantSlug = "";
+  let routingMode: "PATH_BASED" | "SUBDOMAIN" | "CUSTOM_DOMAIN" | "GLOBAL_HUB" = "GLOBAL_HUB";
+
+  const hostHeader = request.headers.get("host") || "";
+  const hostname = hostHeader.split(":")[0].toLowerCase();
+
+  const isPlatformDomain =
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "nexu.global" ||
+    hostname === "nexu.store" ||
+    hostname === "nexu.in" ||
+    hostname.endsWith(".vercel.app");
+
+  if (!isPlatformDomain) {
+    if (
+      hostname.endsWith(".nexu.global") ||
+      hostname.endsWith(".nexu.store") ||
+      hostname.endsWith(".nexu.in")
+    ) {
+      // Subdomain Mode: e.g. "jaipur-handlooms.nexu.global"
+      const sub = hostname.split(".")[0];
+      if (sub && sub !== "www" && sub !== "app" && sub !== "admin") {
+        tenantSlug = sub;
+        routingMode = "SUBDOMAIN";
+      }
+    } else {
+      // Custom Domain Mode: e.g. "brandname.com"
+      tenantSlug = hostname.replace(/\./g, "-");
+      routingMode = "CUSTOM_DOMAIN";
+    }
+  } else if (pathname.startsWith("/store/")) {
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments[1]) {
+      tenantSlug = segments[1];
+      routingMode = "PATH_BASED";
+    }
+  }
+
+  // Response Construction & Edge Rewrite
+  let response: NextResponse;
+  if ((routingMode === "SUBDOMAIN" || routingMode === "CUSTOM_DOMAIN") && pathname === "/") {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = `/store/${tenantSlug}`;
+    response = NextResponse.rewrite(rewriteUrl);
+  } else {
+    response = NextResponse.next();
+  }
+
+  // Inject Verified Edge Ingress Headers for Downstream Consumption
+  if (tenantSlug) {
+    response.headers.set("x-nexu-tenant-slug", tenantSlug);
+    response.headers.set("x-nexu-routing-mode", routingMode);
+  }
 
   // Content-Security-Policy (CSP)
   const cspHeader = `

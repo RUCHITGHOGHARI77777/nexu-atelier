@@ -306,3 +306,4 @@ export function verifyTenantOwnership(
   }
   return { authorized: true };
 }
+
