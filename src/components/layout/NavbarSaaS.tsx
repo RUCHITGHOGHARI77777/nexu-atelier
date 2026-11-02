@@ -18,9 +18,12 @@ import {
   UserCheck,
   CheckCircle,
   Star,
+  Check,
+  Globe,
 } from "lucide-react";
 import { useStore, RoleType } from "@/context/StoreContext";
 import { formatCurrency } from "@/lib/formatters";
+import { REGIONS } from "@/lib/currency";
 
 export function NavbarSaaS() {
   const router = useRouter();
@@ -37,9 +40,13 @@ export function NavbarSaaS() {
     setIsCartDrawerOpen,
     showToast,
     whiteLabelConfig,
+    activeRegion,
+    setActiveRegion,
+    formatPrice,
   } = useStore();
 
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+  const [isRegionMenuOpen, setIsRegionMenuOpen] = useState(false);
 
   const categories = [
     "All",
@@ -70,18 +77,22 @@ export function NavbarSaaS() {
       <div className="hidden lg:block border-b border-slate-100 bg-slate-50/60 py-1.5 px-4 sm:px-6 lg:px-8 text-[11px] font-medium text-slate-500">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1 text-slate-700 font-semibold">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Multi-Vendor Architectural SaaS Engine</span>
+            <span className="flex items-center gap-1.5 text-slate-800 font-semibold">
+              <Globe className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Multi-Region Commerce: <strong className="text-slate-950 font-bold">{activeRegion.flag} {activeRegion.name} ({activeRegion.currency})</strong></span>
             </span>
             <span className="text-slate-300">•</span>
-            <span>256-Bit Escrow Hold System</span>
+            <span>Tax Standard: <strong className="text-slate-800 font-semibold">{activeRegion.taxName}</strong></span>
             <span className="text-slate-300">•</span>
-            <span className="text-emerald-700 font-semibold">Pan-India Express Free Dispatch &gt; ₹2,500</span>
+            <span className="text-emerald-700 font-semibold">
+              Express Free Delivery &gt; {formatPrice(activeRegion.shippingThresholdINR)}
+            </span>
           </div>
 
           <div className="flex items-center gap-4 font-mono text-[10px]">
-            <span>GSTIN: {whiteLabelConfig.gstinNumber}</span>
+            <span>{activeRegion.taxIdLabel}: <strong className="text-slate-800">{activeRegion.taxIdDefault}</strong></span>
+            <span className="text-slate-300">•</span>
+            <span className="text-indigo-700 font-semibold">Gateway: {activeRegion.paymentGatewayName}</span>
             <span className="text-slate-300">•</span>
             <Link href="/account" className="hover:text-slate-900 transition-colors">
               Patron Account Hub
@@ -241,6 +252,84 @@ export function NavbarSaaS() {
             <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
             <span>Trust Wall (9.9/10)</span>
           </Link>
+
+          {/* Global Multi-Country & Currency Switcher (For International Evaluators) */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsRegionMenuOpen((prev) => !prev)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white/80 hover:bg-white text-slate-800 text-xs font-bold transition-all shadow-2xs hover:shadow-xs cursor-pointer shrink-0"
+              title="Switch Country, Currency & Tax Engine"
+            >
+              <span className="text-sm leading-none">{activeRegion.flag}</span>
+              <span className="font-mono">{activeRegion.currency}</span>
+              <span className="text-[10px] text-slate-400 font-mono">({activeRegion.symbol.trim()})</span>
+              <ChevronDown className="w-3 h-3 text-slate-400 ml-0.5" />
+            </button>
+
+            {isRegionMenuOpen && (
+              <div className="absolute top-full right-0 mt-2 w-72 rounded-2xl bg-white/95 backdrop-blur-2xl border border-white/90 ring-1 ring-slate-900/10 shadow-[0_15px_40px_rgba(15,23,42,0.12)] p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-3 py-1.5 border-b border-slate-100 mb-1 flex items-center justify-between">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                    Select Region & Tax Standard
+                  </span>
+                  <span className="text-[9px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-bold">
+                    Live Real-Time
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  {Object.values(REGIONS).map((reg) => {
+                    const isSelected = activeRegion.code === reg.code;
+                    return (
+                      <button
+                        key={reg.code}
+                        type="button"
+                        onClick={() => {
+                          setActiveRegion(reg.code);
+                          setIsRegionMenuOpen(false);
+                          showToast(
+                            `Switched to ${reg.name} (${reg.currency}). Tax: ${reg.taxShort} applied!`,
+                            "success"
+                          );
+                        }}
+                        className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-slate-900 text-white shadow-sm"
+                            : "hover:bg-slate-50 text-slate-800"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-base leading-none">{reg.flag}</span>
+                          <div>
+                            <div className="text-xs font-bold flex items-center gap-1.5">
+                              <span>{reg.name}</span>
+                              <span
+                                className={`text-[10px] font-mono px-1 rounded ${
+                                  isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                                }`}
+                              >
+                                {reg.currency} ({reg.symbol.trim()})
+                              </span>
+                            </div>
+                            <span
+                              className={`text-[10px] block font-mono ${
+                                isSelected ? "text-slate-300" : "text-slate-500"
+                              }`}
+                            >
+                              {reg.taxShort} • {reg.paymentGatewayName.split("/")[0].trim()}
+                            </span>
+                          </div>
+                        </div>
+
+                        {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* 4. Wishlist & Cart Actions */}
           <div className="flex items-center gap-2 shrink-0">

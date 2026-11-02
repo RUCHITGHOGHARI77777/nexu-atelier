@@ -1,8 +1,15 @@
+import { RegionConfig, formatPriceRegional, DEFAULT_REGION, REGIONS } from "./currency";
+
+export * from "./currency";
+
 /**
- * Formats Indian Rupee values with proper thousand delimiters.
+ * Formats currency values based on active region or defaults to Indian Rupee.
  */
-export function formatCurrency(amount: number): string {
+export function formatCurrency(amount: number, region?: RegionConfig | null): string {
   if (isNaN(amount)) return "₹0";
+  if (region) {
+    return formatPriceRegional(amount, region);
+  }
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",

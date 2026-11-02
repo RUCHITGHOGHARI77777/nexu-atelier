@@ -31,6 +31,8 @@ export function CartDrawerSaaS() {
     cartSubtotal,
     clearCart,
     showToast,
+    formatPrice,
+    activeRegion,
   } = useStore();
 
   const [couponCode, setCouponCode] = useState("");
@@ -41,15 +43,15 @@ export function CartDrawerSaaS() {
 
   if (!isCartDrawerOpen) return null;
 
-  const freeShippingThreshold = 2500;
-  const shippingFee = cartSubtotal >= freeShippingThreshold || cartSubtotal === 0 ? 0 : 150;
+  const freeShippingThreshold = activeRegion.shippingThresholdINR;
+  const shippingFee = cartSubtotal >= freeShippingThreshold || cartSubtotal === 0 ? 0 : activeRegion.standardShippingFeeINR;
   const freeShippingProgress = Math.min(
     100,
     Math.round((cartSubtotal / freeShippingThreshold) * 100)
   );
 
   const grandTotal = Math.max(0, cartSubtotal + shippingFee - couponDiscount);
-  const gstAmount = Math.round((cartSubtotal * 18) / 118);
+  const taxAmount = Math.round(cartSubtotal * activeRegion.taxRate);
 
   const handleApplyCoupon = (e: React.FormEvent) => {
     e.preventDefault();
@@ -226,7 +228,7 @@ export function CartDrawerSaaS() {
                         </div>
 
                         <span className="font-mono font-bold text-slate-950 text-sm">
-                          {formatCurrency(item.product.price * item.quantity)}
+                          {formatPrice(item.product.price * item.quantity)}
                         </span>
                       </div>
                     </div>
@@ -289,7 +291,7 @@ export function CartDrawerSaaS() {
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                     <span>{appliedCouponName} Applied</span>
                   </div>
-                  <span className="font-mono font-bold">-{formatCurrency(couponDiscount)}</span>
+                  <span className="font-mono font-bold">-{formatPrice(couponDiscount)}</span>
                 </div>
               )}
               {couponError && (
@@ -300,27 +302,27 @@ export function CartDrawerSaaS() {
               <div className="space-y-1.5 text-xs font-mono">
                 <div className="flex justify-between text-slate-600">
                   <span>Bag Subtotal:</span>
-                  <span>{formatCurrency(cartSubtotal)}</span>
+                  <span>{formatPrice(cartSubtotal)}</span>
                 </div>
                 <div className="flex justify-between text-slate-500 text-[11px]">
-                  <span>GST (18% included):</span>
-                  <span>{formatCurrency(gstAmount)}</span>
+                  <span>{activeRegion.taxShort} ({Math.round(activeRegion.taxRate * 100)}% included):</span>
+                  <span>{formatPrice(taxAmount)}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
-                  <span>Priority Air Shipping:</span>
+                  <span>Priority Express Delivery:</span>
                   <span className={shippingFee === 0 ? "text-emerald-600 font-bold" : ""}>
-                    {shippingFee === 0 ? "FREE" : formatCurrency(shippingFee)}
+                    {shippingFee === 0 ? "FREE" : formatPrice(shippingFee)}
                   </span>
                 </div>
                 {couponDiscount > 0 && (
                   <div className="flex justify-between text-emerald-700 font-bold">
                     <span>Voucher Discount:</span>
-                    <span>-{formatCurrency(couponDiscount)}</span>
+                    <span>-{formatPrice(couponDiscount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-slate-950 font-extrabold text-sm pt-2 border-t border-slate-200">
                   <span>Payable Total:</span>
-                  <span>{formatCurrency(grandTotal)}</span>
+                  <span>{formatPrice(grandTotal)}</span>
                 </div>
               </div>
 
@@ -331,7 +333,7 @@ export function CartDrawerSaaS() {
                 className="w-full py-3.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-98"
               >
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Proceed to Escrow Checkout ({formatCurrency(grandTotal)})</span>
+                <span>Proceed to Checkout ({formatPrice(grandTotal)})</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 

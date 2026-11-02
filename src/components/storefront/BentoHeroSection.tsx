@@ -19,8 +19,9 @@ import { useStore, PRELOADED_PRODUCTS } from "@/context/StoreContext";
 import { formatCurrency } from "@/lib/formatters";
 
 export function BentoHeroSection() {
-  const { addToCart, setQuickViewProduct, setSelectedCategory } = useStore();
+  const { addToCart, setQuickViewProduct, setSelectedCategory, formatPrice, activeRegion } = useStore();
   const spotlightProduct = PRELOADED_PRODUCTS[0]; // Sony WH-1000XM5
+  const [imgSrc, setImgSrc] = useState(spotlightProduct.images[0]);
 
   // Live 24-hour countdown timer
   const [timeLeft, setTimeLeft] = useState({ hours: 7, minutes: 42, seconds: 18 });
@@ -83,13 +84,13 @@ export function BentoHeroSection() {
               {/* Pricing & Ratings */}
               <div className="flex items-baseline gap-3 pt-1">
                 <span className="text-2xl sm:text-3xl font-extrabold text-slate-950 font-mono tracking-tight">
-                  {formatCurrency(spotlightProduct.price)}
+                  {formatPrice(spotlightProduct.price)}
                 </span>
                 <span className="text-sm text-slate-400 line-through font-mono">
-                  {formatCurrency(spotlightProduct.mrpPrice)}
+                  {formatPrice(spotlightProduct.mrpPrice)}
                 </span>
                 <span className="px-2 py-0.5 rounded-md text-xs font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Save ₹8,000 (23% OFF)
+                  Save {formatPrice(spotlightProduct.mrpPrice - spotlightProduct.price)} (23% OFF)
                 </span>
               </div>
 
@@ -112,9 +113,10 @@ export function BentoHeroSection() {
             <div className="pt-6 relative z-10 grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
               <div className="sm:col-span-6 relative h-48 sm:h-56 rounded-2xl overflow-hidden bg-slate-50 border border-slate-200/80 group">
                 <Image
-                  src={spotlightProduct.images[0]}
+                  src={imgSrc}
                   alt={spotlightProduct.title}
                   fill
+                  onError={() => setImgSrc("https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80")}
                   sizes="(max-width: 640px) 100vw, 400px"
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
@@ -154,7 +156,7 @@ export function BentoHeroSection() {
                     B2B Wholesale Procurement
                   </span>
                   <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                    18% GST Input Credit
+                    {activeRegion.taxShort} Input Credit
                   </span>
                 </div>
                 <h3 className="text-base font-extrabold text-slate-950">

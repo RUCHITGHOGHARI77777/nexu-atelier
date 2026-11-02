@@ -17,12 +17,14 @@ import {
   Store,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
+import { useStore } from "@/context/StoreContext";
 
 interface MarketplaceSavingsCalculatorProps {
   onOpenLaunchModal: () => void;
 }
 
 export function MarketplaceSavingsCalculator({ onOpenLaunchModal }: MarketplaceSavingsCalculatorProps) {
+  const { formatPrice, activeRegion } = useStore();
   // Sliders
   const [monthlySales, setMonthlySales] = useState<number>(100000); // default ₹1,00,000
   const [returnRate, setReturnRate] = useState<number>(15); // default 15%
@@ -116,7 +118,7 @@ export function MarketplaceSavingsCalculator({ onOpenLaunchModal }: MarketplaceS
                   <span>Your Estimated Monthly Sales (GMV)</span>
                 </label>
                 <span className="text-sm font-extrabold font-mono text-slate-950 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
-                  {formatCurrency(monthlySales)}
+                  {formatPrice(monthlySales)}
                 </span>
               </div>
               <input
@@ -129,9 +131,9 @@ export function MarketplaceSavingsCalculator({ onOpenLaunchModal }: MarketplaceS
                 className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
               />
               <div className="flex justify-between text-[11px] font-mono text-slate-400">
-                <span>₹20,000/mo</span>
-                <span>₹5,00,000/mo</span>
-                <span>₹10,00,000/mo</span>
+                <span>{formatPrice(20000)}/mo</span>
+                <span>{formatPrice(500000)}/mo</span>
+                <span>{formatPrice(1000000)}/mo</span>
               </div>
             </div>
 
@@ -175,10 +177,10 @@ export function MarketplaceSavingsCalculator({ onOpenLaunchModal }: MarketplaceS
               </div>
               <div className="space-y-0.5">
                 <span className="text-2xl font-black font-mono text-rose-600 block">
-                  -{formatCurrency(amazonFlipkartLoss)}
+                  -{formatPrice(amazonFlipkartLoss)}
                 </span>
                 <span className="text-[11px] text-slate-500 block leading-tight">
-                  Lost to 18% commissions, non-refundable pick & pack, and reverse courier penalties every single month.
+                  15%–25% Commission + High Closing Fee + RTO Return Penalty + 14-Day Payout Hold. Seller loses 28%+ of revenue.
                 </span>
               </div>
             </div>
@@ -188,15 +190,15 @@ export function MarketplaceSavingsCalculator({ onOpenLaunchModal }: MarketplaceS
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-600">Meesho Marketplace</span>
                 <span className="text-[10px] font-mono text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                  Hidden RTO & Ads
+                  Heavy Reverse Penalty
                 </span>
               </div>
               <div className="space-y-0.5">
                 <span className="text-2xl font-black font-mono text-amber-700 block">
-                  -{formatCurrency(meeshoLoss)}
+                  -{formatPrice(meeshoLoss)}
                 </span>
                 <span className="text-[11px] text-slate-500 block leading-tight">
-                  0% direct commission, but seller bears ₹140-₹220 per RTO return plus heavy ad spend to get catalog orders.
+                  Heavy Reverse Shipping Penalty (₹120–₹160 per return) + Compulsory Ads Cost + Zero Brand Identity. Margin wiped out on returns.
                 </span>
               </div>
             </div>
@@ -211,10 +213,10 @@ export function MarketplaceSavingsCalculator({ onOpenLaunchModal }: MarketplaceS
               </div>
               <div className="space-y-0.5">
                 <span className="text-2xl font-black font-mono text-indigo-700 block">
-                  -{formatCurrency(shopifyLoss)}
+                  -{formatPrice(shopifyLoss)}
                 </span>
                 <span className="text-[11px] text-slate-500 block leading-tight">
-                  ₹1,999/mo base store fee + 2% payment gateway cut + ₹2,500/mo for essential WhatsApp & review plugins.
+                  $29–$299/month (₹2,000+/mo) Subscription + Paid Apps + 2% Transaction Fees. Too expensive for small/medium sellers.
                 </span>
               </div>
             </div>
@@ -226,7 +228,7 @@ export function MarketplaceSavingsCalculator({ onOpenLaunchModal }: MarketplaceS
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-100">
-                  Our Free Brand Store
+                  🏆 Our Direct Brand Store
                 </span>
                 <span className="text-[10px] font-mono font-bold bg-white/20 text-white px-2 py-0.5 rounded-full">
                   0% FEE FOREVER
@@ -234,10 +236,10 @@ export function MarketplaceSavingsCalculator({ onOpenLaunchModal }: MarketplaceS
               </div>
               <div className="space-y-0.5">
                 <span className="text-2xl font-black font-mono text-white block">
-                  +{formatCurrency(ourExtraProfit)}
+                  +{formatPrice(ourExtraProfit)}
                 </span>
                 <span className="text-[11px] text-emerald-100 block font-medium leading-tight">
-                  EXTRA PROFIT IN YOUR BANK! Direct UPI P2P payments with 0% platform commission & full customer ownership.
+                  0% Commission + ₹0 Monthly Fee + ₹0 Return Penalty + Instant Direct Bank/UPI Settlement + Free Custom Brand Link.
                 </span>
               </div>
             </div>
@@ -249,14 +251,14 @@ export function MarketplaceSavingsCalculator({ onOpenLaunchModal }: MarketplaceS
               <div className="flex items-center justify-center md:justify-start gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-400">
-                  60-Second Setup • Zero Hidden Fees • Direct Bank Settlement
+                  100% Zero Commission • Direct P2P Settlement
                 </span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight">
-                Keep {formatCurrency(ourExtraProfit)} in your pocket every month.
+              <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-400">
+                Extra Net Profit You Keep Every Month: {formatPrice(ourExtraProfit)}
               </h3>
               <p className="text-xs text-slate-300 max-w-xl">
-                Launch your branded online store at <code className="text-emerald-300 font-mono">/store/your-brand</code> today. Connect your own UPI ID, share on WhatsApp & Instagram, and build a lasting business you own 100%.
+                Launch your branded online store at <code className="text-emerald-300 font-mono">/store/your-brand</code> in 60 seconds. Connect your direct bank/UPI VPA, keep 100% of customer payments, and escape marketplace penalties forever.
               </p>
             </div>
 

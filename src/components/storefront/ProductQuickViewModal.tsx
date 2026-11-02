@@ -33,6 +33,8 @@ export function ProductQuickViewModal() {
     isInWishlist,
     showToast,
     openB2BModal,
+    formatPrice,
+    activeRegion,
   } = useStore();
 
   const [activeImageIdx, setActiveImageIdx] = useState(0);
@@ -240,16 +242,16 @@ export function ProductQuickViewModal() {
             {/* Pricing Section */}
             <div className="flex items-baseline gap-3">
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-950 font-mono tracking-tight">
-                {formatCurrency(product.price)}
+                {formatPrice(product.price)}
               </span>
               {product.mrpPrice > product.price && (
                 <span className="text-sm text-slate-400 line-through font-mono">
-                  {formatCurrency(product.mrpPrice)}
+                  {formatPrice(product.mrpPrice)}
                 </span>
               )}
               {discountPercent > 0 && (
                 <span className="text-xs font-bold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
-                  Save {formatCurrency(product.mrpPrice - product.price)} ({discountPercent}% OFF)
+                  Save {formatPrice(product.mrpPrice - product.price)} ({discountPercent}% OFF)
                 </span>
               )}
             </div>

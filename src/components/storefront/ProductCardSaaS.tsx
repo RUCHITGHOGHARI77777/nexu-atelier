@@ -19,9 +19,10 @@ import { formatCurrency } from "@/lib/formatters";
 
 export function ProductCardSaaS({ product }: { product: StoreProduct }) {
   const router = useRouter();
-  const { addToCart, toggleWishlist, isInWishlist, setQuickViewProduct, openB2BModal } = useStore();
+  const { addToCart, toggleWishlist, isInWishlist, setQuickViewProduct, openB2BModal, formatPrice, activeRegion } = useStore();
 
   const [isHovered, setIsHovered] = useState(false);
+  const [imgSrc, setImgSrc] = useState(product.images[0] || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80");
   const wishlisted = isInWishlist(product.id);
 
   const discountPercent = Math.round(
@@ -42,9 +43,10 @@ export function ProductCardSaaS({ product }: { product: StoreProduct }) {
       {/* Top Media Container */}
       <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-slate-100 border border-slate-200/50 mb-3.5">
         <Image
-          src={product.images[0]}
+          src={imgSrc}
           alt={product.title}
           fill
+          onError={() => setImgSrc("https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80")}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
           className="object-cover group-hover:scale-106 transition-transform duration-500 ease-out"
         />
@@ -126,11 +128,11 @@ export function ProductCardSaaS({ product }: { product: StoreProduct }) {
           <div className="flex items-baseline justify-between">
             <div className="flex items-baseline gap-2">
               <span className="text-base sm:text-lg font-extrabold text-slate-950 font-mono tracking-tight">
-                {formatCurrency(product.price)}
+                {formatPrice(product.price)}
               </span>
               {product.mrpPrice > product.price && (
                 <span className="text-xs text-slate-400 line-through font-mono">
-                  {formatCurrency(product.mrpPrice)}
+                  {formatPrice(product.mrpPrice)}
                 </span>
               )}
             </div>

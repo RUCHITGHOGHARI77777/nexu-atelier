@@ -56,7 +56,7 @@ export function InteractivePaymentModal({
   customerPhone = "+91 98765 43210",
   onPaymentSuccess,
 }: InteractivePaymentModalProps) {
-  const { showToast, whiteLabelConfig, openPhoneSimulator } = useStore();
+  const { showToast, whiteLabelConfig, openPhoneSimulator, formatPrice, activeRegion } = useStore();
   const [stage, setStage] = useState<"IDLE" | "AUTHORIZING" | "SUCCESS">("IDLE");
   const [secondsLeft, setSecondsLeft] = useState(299); // 4m 59s overall expiry
   const [authCountdown, setAuthCountdown] = useState(4); // 4s auto-approval timer
@@ -265,7 +265,7 @@ export function InteractivePaymentModal({
                 <span className="font-mono">Now</span>
               </div>
               <p className="text-xs font-bold text-zinc-950 truncate">
-                Payment Request: {formatCurrency(payableAmountINR)}
+                Payment Request: {formatPrice(payableAmountINR)}
               </p>
               <p className="text-[11px] text-zinc-600 line-clamp-1 mt-0.5">
                 {whiteLabelConfig.brandName} has requested payment. Tap below or use Smartphone Simulator to authorize.
@@ -295,12 +295,12 @@ export function InteractivePaymentModal({
             </div>
             <div>
               <span className="text-[10px] font-mono font-bold tracking-widest text-zinc-500 uppercase block">
-                {whiteLabelConfig.brandName.toUpperCase()} PAY • ESCROW GATEWAY
+                {whiteLabelConfig.brandName.toUpperCase()} PAY • {activeRegion.currency} GATEWAY
               </span>
               <h3 className="text-sm font-extrabold text-zinc-950 flex items-center gap-1.5">
                 <span>
                   {method === "UPI"
-                    ? "UPI Smart QR & Mobile Collect"
+                    ? `${activeRegion.paymentGatewayName} Portal`
                     : method === "CARD"
                     ? "3D Secure Bank Gateway"
                     : method === "NET_BANKING"
@@ -328,9 +328,9 @@ export function InteractivePaymentModal({
         <div className="bg-gradient-to-r from-zinc-50 via-slate-50 to-zinc-50 px-6 py-3 border-b border-zinc-100 flex items-center justify-between">
           <span className="text-xs text-zinc-600 font-medium">Authoritative Payable Amount:</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-xs text-zinc-500 font-mono">INR</span>
+            <span className="text-xs text-zinc-500 font-mono">{activeRegion.currency}</span>
             <span className="text-xl font-extrabold text-zinc-950 font-mono tracking-tight">
-              {formatCurrency(payableAmountINR)}
+              {formatPrice(payableAmountINR)}
             </span>
           </div>
         </div>
@@ -433,7 +433,7 @@ export function InteractivePaymentModal({
                         className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
                       >
                         <ShieldCheck className="w-4 h-4" />
-                        <span>Verify & Pay {formatCurrency(payableAmountINR)}</span>
+                        <span>Verify & Pay {formatPrice(payableAmountINR)}</span>
                         <ArrowRight className="w-4 h-4" />
                       </button>
                     </div>
@@ -547,7 +547,7 @@ export function InteractivePaymentModal({
                         className="w-full py-3 px-4 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all"
                       >
                         <QrCode className="w-4 h-4 text-emerald-400" />
-                        <span>Simulate Scanned & Authorize {formatCurrency(payableAmountINR)}</span>
+                        <span>Simulate Scanned & Authorize {formatPrice(payableAmountINR)}</span>
                       </button>
                     </div>
                   )}
@@ -640,7 +640,7 @@ export function InteractivePaymentModal({
                     <p className="text-zinc-600 text-[11px]">
                       {method === "COD"
                         ? "Delivery agent will collect cash or UPI QR scan upon courier handover."
-                        : `Authorized wallet debit of ${formatCurrency(payableAmountINR)} from ${walletName}.`}
+                        : `Authorized wallet debit of ${formatPrice(payableAmountINR)} from ${walletName}.`}
                     </p>
                   </div>
 

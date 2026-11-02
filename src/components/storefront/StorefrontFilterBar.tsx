@@ -28,6 +28,8 @@ export function StorefrontFilterBar() {
     setMinRating,
     searchQuery,
     setSearchQuery,
+    formatPrice,
+    activeRegion,
   } = useStore();
 
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
@@ -139,7 +141,7 @@ export function StorefrontFilterBar() {
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-slate-700">Price Ceiling:</span>
                 <span className="font-mono font-bold text-slate-950">
-                  Up to {formatCurrency(priceRange[1])}
+                  Up to {formatPrice(priceRange[1])}
                 </span>
               </div>
               <input
@@ -152,9 +154,9 @@ export function StorefrontFilterBar() {
                 className="w-full accent-slate-950 cursor-pointer"
               />
               <div className="flex justify-between text-[10px] font-mono text-slate-400">
-                <span>₹1,000</span>
-                <span>₹50,000</span>
-                <span>₹1,50,000</span>
+                <span>{formatPrice(1000)}</span>
+                <span>{formatPrice(50000)}</span>
+                <span>{formatPrice(150000)}</span>
               </div>
             </div>
 

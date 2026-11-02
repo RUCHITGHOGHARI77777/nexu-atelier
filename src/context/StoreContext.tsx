@@ -1,6 +1,14 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import {
+  RegionCode,
+  RegionConfig,
+  REGIONS,
+  DEFAULT_REGION,
+  formatPriceRegional,
+  convertFromINR,
+} from "@/lib/currency";
 
 export type RoleType = "customer" | "supplier" | "admin";
 
@@ -198,6 +206,11 @@ interface StoreContextType {
   reviews: PlatformReview[];
   platformOverallScore: number;
   submitPlatformReview: (review: Omit<PlatformReview, "id" | "date" | "verified">) => void;
+  // Multi-Country & Currency Engine
+  activeRegion: RegionConfig;
+  setActiveRegion: (code: RegionCode) => void;
+  formatPrice: (amountINR: number) => string;
+  convertPrice: (amountINR: number) => number;
   // Actions
   updateWhiteLabelConfig: (config: Partial<WhiteLabelConfig>) => void;
   resetWhiteLabelConfig: () => void;
@@ -1220,8 +1233,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [minRating, setMinRating] = useState<number>(0);
   const [quickViewProduct, setQuickViewProduct] = useState<StoreProduct | null>(null);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+  const [activeRegion, setActiveRegionState] = useState<RegionConfig>(DEFAULT_REGION);
   const [toast, setToast] = useState<ToastState>({ show: false, message: "", type: "info" });
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+
+  const setActiveRegion = (code: RegionCode) => {
+    const target = REGIONS[code] || DEFAULT_REGION;
+    setActiveRegionState(target);
+    safeStorageSet("nexu_saas_region", code);
+  };
+
+  const formatPrice = (amountINR: number) => formatPriceRegional(amountINR, activeRegion);
+  const convertPrice = (amountINR: number) => convertFromINR(amountINR, activeRegion);
 
   const dismissToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -1302,6 +1325,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const savedRole = safeStorageGet("nexu_saas_role");
       if (savedRole && ["customer", "supplier", "admin"].includes(savedRole)) {
         setActiveRole(savedRole as RoleType);
+      }
+
+      const savedRegion = safeStorageGet("nexu_saas_region") as RegionCode | null;
+      if (savedRegion && REGIONS[savedRegion]) {
+        setActiveRegionState(REGIONS[savedRegion]);
       }
     } catch {
       // LocalStorage access restricted or unavailable in private browsing mode
@@ -2093,6 +2121,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         reviews,
         platformOverallScore,
         submitPlatformReview,
+        activeRegion,
+        setActiveRegion,
+        formatPrice,
+        convertPrice,
       }}
     >
       {children}

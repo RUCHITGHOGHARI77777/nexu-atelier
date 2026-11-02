@@ -17,7 +17,7 @@ import { useStore } from "@/context/StoreContext";
 import { formatCurrency } from "@/lib/formatters";
 
 export function B2BQuoteModal() {
-  const { isB2BModalOpen, b2bModalProduct, closeB2BModal, submitB2BQuote } = useStore();
+  const { isB2BModalOpen, b2bModalProduct, closeB2BModal, submitB2BQuote, formatPrice, activeRegion } = useStore();
 
   const [quantity, setQuantity] = useState(50);
   const [targetPrice, setTargetPrice] = useState<number>(0);
@@ -121,7 +121,7 @@ export function B2BQuoteModal() {
               {product.title}
             </h4>
             <div className="flex items-center gap-2 mt-0.5 text-xs">
-              <span className="font-mono font-semibold text-slate-600">Retail: {formatCurrency(product.price)}</span>
+              <span className="font-mono font-semibold text-slate-600">Retail: {formatPrice(product.price)}</span>
               <span className="text-slate-300">•</span>
               <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.2 rounded text-[10px]">
                 Tier: 50+ Units Eligible
@@ -268,11 +268,11 @@ export function B2BQuoteModal() {
             <div className="space-y-0.5">
               <span className="text-[11px] font-bold text-blue-900 block">Projected Consignment Value:</span>
               <span className="text-[10px] text-blue-700 font-mono">
-                {quantity} units @ {formatCurrency(targetPrice)}/unit
+                {quantity} units @ {formatPrice(targetPrice)}/unit
               </span>
             </div>
             <span className="text-base font-extrabold text-blue-950 font-mono">
-              {formatCurrency(totalWholesaleEstimate)}
+              {formatPrice(totalWholesaleEstimate)}
             </span>
           </div>
 

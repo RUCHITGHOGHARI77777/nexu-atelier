@@ -764,10 +764,10 @@ export default function CheckoutPage() {
               <div className="space-y-4">
                 {Object.values(DELIVERY_METHODS).map((method) => {
                   const isFree =
-                    method.id === "standard" && rawSubtotal >= 2500;
+                    method.id === "standard" && rawSubtotal >= store.activeRegion.shippingThresholdINR;
                   const feeDisplay = isFree
-                    ? "Complimentary (Orders > ₹2,500)"
-                    : formatCurrency(method.baseFee);
+                    ? `Complimentary (Orders > ${store.formatPrice(store.activeRegion.shippingThresholdINR)})`
+                    : store.formatPrice(method.baseFee);
 
                   return (
                     <label
@@ -877,7 +877,7 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                       <span className="font-mono font-bold text-zinc-950">
-                        {formatCurrency(item.unitPrice * item.quantity)}
+                        {store.formatPrice(item.unitPrice * item.quantity)}
                       </span>
                     </div>
                   ))}
@@ -910,7 +910,7 @@ export default function CheckoutPage() {
                       <div className="text-[11px] text-zinc-500 flex justify-between">
                         <span>Shipment Subtotal:</span>
                         <span className="font-mono font-semibold text-zinc-900">
-                          {formatCurrency(group.subtotal)}
+                          {store.formatPrice(group.subtotal)}
                         </span>
                       </div>
                     </div>
@@ -980,7 +980,7 @@ export default function CheckoutPage() {
               <div className="flex items-center justify-between pt-2">
                 <span>Items ({rawItemCount}):</span>
                 <span className="font-mono text-zinc-950 font-medium">
-                  {formatCurrency(rawSubtotal)}
+                  {store.formatPrice(rawSubtotal)}
                 </span>
               </div>
 
@@ -989,7 +989,7 @@ export default function CheckoutPage() {
                 <span className="font-mono text-zinc-950 font-medium">
                   {calculatedShippingFee === 0
                     ? "Complimentary"
-                    : formatCurrency(calculatedShippingFee)}
+                    : store.formatPrice(calculatedShippingFee)}
                 </span>
               </div>
 
@@ -997,15 +997,15 @@ export default function CheckoutPage() {
                 <div className="flex items-center justify-between pt-2 text-emerald-700">
                   <span>Voucher ({appliedCoupon.code}):</span>
                   <span className="font-mono font-bold">
-                    -{formatCurrency(couponDiscountINR)}
+                    -{store.formatPrice(couponDiscountINR)}
                   </span>
                 </div>
               )}
 
               <div className="flex items-center justify-between pt-2">
-                <span>Estimated GST Included (18%):</span>
+                <span>Estimated {store.activeRegion.taxShort} Included:</span>
                 <span className="font-mono text-zinc-950 font-medium">
-                  {formatCurrency(Math.round((rawSubtotal * 18) / 118))}
+                  {store.formatPrice(Math.round(rawSubtotal * store.activeRegion.taxRate))}
                 </span>
               </div>
 
@@ -1013,7 +1013,7 @@ export default function CheckoutPage() {
                 <div className="flex items-center justify-between pt-2 text-zinc-600">
                   <span>COD Courier Convenience Fee:</span>
                   <span className="font-mono text-zinc-950 font-medium">
-                    {formatCurrency(codFeeINR)}
+                    {store.formatPrice(codFeeINR)}
                   </span>
                 </div>
               )}
@@ -1021,7 +1021,7 @@ export default function CheckoutPage() {
               <div className="flex items-center justify-between pt-3 font-bold text-sm text-zinc-950">
                 <span>Total Payable:</span>
                 <span className="font-mono text-base font-black text-zinc-950">
-                  {formatCurrency(finalPayableTotal)}
+                  {store.formatPrice(finalPayableTotal)}
                 </span>
               </div>
             </div>

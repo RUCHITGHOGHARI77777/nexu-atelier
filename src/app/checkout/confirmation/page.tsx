@@ -557,7 +557,7 @@ function ConfirmationContent() {
               </h3>
             </div>
             <p className="text-[11px] text-slate-500 font-mono">
-              {store.whiteLabelConfig.brandSubtitle} • GSTIN: {store.whiteLabelConfig.gstinNumber}
+              {store.whiteLabelConfig.brandSubtitle} • {store.activeRegion.taxIdLabel}: {store.activeRegion.taxIdDefault}
             </p>
             <p className="text-[10px] text-slate-400 font-mono">
               Official Merchant VPA: {store.whiteLabelConfig.merchantUpiId} • Registered Central Operations Hub
@@ -640,8 +640,8 @@ function ConfirmationContent() {
                 <th className="py-2.5 text-center">HSN Code</th>
                 <th className="py-2.5 text-center">Qty</th>
                 <th className="py-2.5 text-right">Unit Price</th>
-                <th className="py-2.5 text-right">GST Rate</th>
-                <th className="py-2.5 text-right">Amount (INR)</th>
+                <th className="py-2.5 text-right">Tax Rate</th>
+                <th className="py-2.5 text-right">Amount ({store.activeRegion.currency})</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-xs">
@@ -659,10 +659,10 @@ function ConfirmationContent() {
                     </td>
                     <td className="py-3 text-center font-mono text-slate-600">8518 / 6203</td>
                     <td className="py-3 text-center font-mono font-medium">{item.quantity}</td>
-                    <td className="py-3 text-right font-mono">{formatCurrency(item.product.price)}</td>
-                    <td className="py-3 text-right font-mono text-slate-600">18%</td>
+                    <td className="py-3 text-right font-mono">{store.formatPrice(item.product.price)}</td>
+                    <td className="py-3 text-right font-mono text-slate-600">{Math.round(store.activeRegion.taxRate * 100)}%</td>
                     <td className="py-3 text-right font-mono font-bold text-slate-950">
-                      {formatCurrency(lineTotal)}
+                      {store.formatPrice(lineTotal)}
                     </td>
                   </tr>
                 );
@@ -675,37 +675,37 @@ function ConfirmationContent() {
         <div className="border-t border-slate-200 pt-4 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="text-[11px] text-slate-500 max-w-sm space-y-1">
             <p>
-              <strong>Artisan & Buyer Escrow Protection:</strong> Funds remain securely escrowed under RBI marketplace guidelines until delivery confirmation.
+              <strong>Buyer & Merchant Protection:</strong> Settled securely through {store.activeRegion.paymentGatewayName}.
             </p>
             <p>
-              Tax Invoiced in compliance with Section 31 of CGST Act, 2017. For support, contact <code>support@nexu.studio</code>.
+              Tax Invoiced in compliance with {store.activeRegion.taxName}. For support, contact <code>support@nexu.studio</code>.
             </p>
           </div>
 
           <div className="w-full sm:w-72 space-y-2 text-xs font-mono">
             <div className="flex justify-between text-slate-600">
               <span>Subtotal:</span>
-              <span>{formatCurrency(displayOrder.subtotal)}</span>
+              <span>{store.formatPrice(displayOrder.subtotal)}</span>
             </div>
             <div className="flex justify-between text-slate-600">
-              <span>Courier Air Shipping:</span>
+              <span>Courier Delivery:</span>
               <span className={displayOrder.shippingFee === 0 ? "text-emerald-700 font-bold" : ""}>
-                {displayOrder.shippingFee === 0 ? "FREE" : formatCurrency(displayOrder.shippingFee)}
+                {displayOrder.shippingFee === 0 ? "FREE" : store.formatPrice(displayOrder.shippingFee)}
               </span>
             </div>
             {displayOrder.discount > 0 && (
               <div className="flex justify-between text-emerald-700 font-bold">
                 <span>Voucher Discount ({displayOrder.couponCode || "PROMO"}):</span>
-                <span>-{formatCurrency(displayOrder.discount)}</span>
+                <span>-{store.formatPrice(displayOrder.discount)}</span>
               </div>
             )}
             <div className="flex justify-between text-slate-600">
-              <span>GST Included (18%):</span>
-              <span>{formatCurrency(displayOrder.taxAmount)}</span>
+              <span>{store.activeRegion.taxShort} ({Math.round(store.activeRegion.taxRate * 100)}% Included):</span>
+              <span>{store.formatPrice(displayOrder.taxAmount)}</span>
             </div>
             <div className="flex justify-between text-slate-950 font-extrabold text-sm pt-2 border-t-2 border-slate-900">
               <span>Total Paid:</span>
-              <span>{formatCurrency(displayOrder.total)}</span>
+              <span>{store.formatPrice(displayOrder.total)}</span>
             </div>
           </div>
         </div>
