@@ -24,6 +24,54 @@ export interface SupplierInfo {
   joinedDate?: string;
   totalProductsCount?: number;
   totalSalesINR?: number;
+  slug?: string;
+  storeSlug?: string;
+  brandName?: string;
+  subdomain?: string;
+  customDomain?: string;
+  logoUrl?: string;
+  status?: "ACTIVE" | "PENDING_VERIFICATION" | "SUSPENDED";
+  story?: string;
+  heroImage?: string;
+  upiId?: string;
+  taxIdentifier?: string;
+  pickupAddress?: string;
+  returnWarehouse?: string;
+  theme?: {
+    accentColor: string;
+    bannerUrl?: string;
+    layoutMode: "flagship_minimal" | "nike_bold" | "apple_glass";
+    tagline?: string;
+  };
+  rbacMembers?: Array<{
+    id: string;
+    name: string;
+    email: string;
+    role: "OWNER" | "INVENTORY_MANAGER" | "FINANCE_CA" | "FULFILLMENT_STAFF";
+    status: "ACTIVE" | "INVITED";
+  }>;
+  paymentConfig?: {
+    directUpiId: string;
+    bankAccountName: string;
+    bankAccountNumber: string;
+    bankIfsc: string;
+    platformCommissionPercent: number; // 0%
+  };
+  shippingConfig?: {
+    mode: "SELF_DELIVERY_RIDER" | "SHIPROCKET_COURIER";
+    pickupHubAddress: string;
+    returnWarehouseAddress: string;
+    courierPartner: string;
+    awbAutoGenerate: boolean;
+  };
+  taxConfig?: {
+    gstin: string;
+    pan: string;
+    hsnCodeDefault: string;
+    cgstPercent: number;
+    sgstPercent: number;
+    igstPercent: number;
+  };
 }
 
 export interface ReviewItem {
@@ -69,6 +117,12 @@ export interface StoreProduct {
     pincode: string;
   };
   returnPolicy?: string;
+  storeId?: string;
+  storeSlug?: string;
+  sku?: string;
+  hsnCode?: string;
+  sizeStock?: Record<string, number>;
+  returnAddress?: string;
 }
 
 export interface ReturnLogisticsTimeline {
@@ -137,6 +191,11 @@ export interface StoreOrder {
   riderPhone?: string;
   currentHubLocation?: string;
   etaWindow?: string;
+  storeId?: string;
+  storeSlug?: string;
+  sellerAcceptedAt?: string;
+  sellerPickupAddress?: string;
+  sellerReturnAddress?: string;
   outboundTimestamps?: {
     placedAt: string;
     packedAt?: string;
@@ -896,57 +955,67 @@ export const PRELOADED_PRODUCTS: StoreProduct[] = [
 
 export const INITIAL_SUPPLIERS: SupplierInfo[] = [
   {
-    id: "sup_apex",
-    name: "Apex Electronics Hub",
-    location: "Bangalore, KA",
-    rating: 4.96,
-    fulfillmentRate: "99.8%",
-    verified: true,
-    payoutOnHold: false,
-    joinedDate: "12 Jan 2025",
-    totalProductsCount: 14,
-    totalSalesINR: 489200,
-  },
-  {
-    id: "sup_optiview",
-    name: "OptiView Labs",
-    location: "Hyderabad, TS",
-    rating: 4.94,
-    fulfillmentRate: "99.2%",
-    verified: true,
-    payoutOnHold: false,
-    joinedDate: "03 Feb 2025",
-    totalProductsCount: 8,
-    totalSalesINR: 842000,
-  },
-  {
-    id: "sup_sartorial",
-    name: "Sartorial Atelier Mumbai",
-    location: "Mumbai, MH",
+    id: "sup_jaipur_01",
+    name: "Jaipur Heritage Handlooms",
+    brandName: "Jaipur Heritage Handlooms",
+    slug: "jaipur-heritage-handlooms",
+    storeSlug: "jaipur-heritage-handlooms",
+    subdomain: "jaipur-handlooms.nexu.store",
+    location: "Jaipur Central Crafts Zone, Rajasthan",
     rating: 4.98,
     fulfillmentRate: "99.9%",
     verified: true,
     payoutOnHold: false,
-    joinedDate: "10 Nov 2024",
-    totalProductsCount: 22,
-    totalSalesINR: 1250000,
-  },
-  {
-    id: "sup_verdant",
-    name: "Verdant Raw Mills",
-    location: "Jaipur, RJ",
-    rating: 4.85,
-    fulfillmentRate: "98.1%",
-    verified: false,
-    payoutOnHold: false,
-    joinedDate: "29 Mar 2025",
-    totalProductsCount: 11,
-    totalSalesINR: 320000,
+    joinedDate: "15 Oct 2024",
+    totalProductsCount: 18,
+    totalSalesINR: 1489200,
+    upiId: "jaipurhandlooms@icici",
+    taxIdentifier: "08AABCH1234J1ZV",
+    pickupAddress: "Workshop 14, Weavers Colony, Sanganer, Jaipur, RJ — 302029",
+    returnWarehouse: "Central Logistics Hub, Gate 2, Sanganer Industrial Area, Jaipur, RJ — 302029",
+    theme: {
+      accentColor: "#4F46E5",
+      bannerUrl: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1600&q=80",
+      layoutMode: "apple_glass",
+      tagline: "Authentic Museum-Grade Handloom & Natural Mulberry Silk Artisans",
+    },
+    rbacMembers: [
+      { id: "mem_01", name: "Devendra Rathore", email: "devendra@jaipurhandlooms.in", role: "OWNER", status: "ACTIVE" },
+      { id: "mem_02", name: "Bhanwar Singh", email: "inventory@jaipurhandlooms.in", role: "INVENTORY_MANAGER", status: "ACTIVE" },
+      { id: "mem_03", name: "Ramesh Sharma, FCA", email: "ca.ramesh@auditfirm.in", role: "FINANCE_CA", status: "ACTIVE" },
+      { id: "mem_04", name: "Kailash Gurjar", email: "dispatch@jaipurhandlooms.in", role: "FULFILLMENT_STAFF", status: "ACTIVE" },
+    ],
+    paymentConfig: {
+      directUpiId: "jaipurhandlooms@icici",
+      bankAccountName: "Jaipur Heritage Handlooms Enterprises",
+      bankAccountNumber: "001205008912",
+      bankIfsc: "ICIC0000012",
+      platformCommissionPercent: 0,
+    },
+    shippingConfig: {
+      mode: "SHIPROCKET_COURIER",
+      pickupHubAddress: "Workshop 14, Weavers Colony, Sanganer, Jaipur, RJ — 302029",
+      returnWarehouseAddress: "Central Logistics Hub, Gate 2, Sanganer, Jaipur, RJ — 302029",
+      courierPartner: "Blue Dart Air Priority",
+      awbAutoGenerate: true,
+    },
+    taxConfig: {
+      gstin: "08AABCH1234J1ZV",
+      pan: "AABCH1234J",
+      hsnCodeDefault: "5208",
+      cgstPercent: 2.5,
+      sgstPercent: 2.5,
+      igstPercent: 5.0,
+    },
   },
   {
     id: "sup_ceramics",
     name: "Atelier Ceramics Khurja",
-    location: "Khurja, UP",
+    brandName: "Atelier Ceramics Khurja",
+    slug: "atelier-ceramics-khurja",
+    storeSlug: "atelier-ceramics-khurja",
+    subdomain: "khurjaceramics.nexu.store",
+    location: "Khurja Potteries Cluster, Uttar Pradesh",
     rating: 4.93,
     fulfillmentRate: "98.7%",
     verified: true,
@@ -954,6 +1023,136 @@ export const INITIAL_SUPPLIERS: SupplierInfo[] = [
     joinedDate: "05 Dec 2024",
     totalProductsCount: 15,
     totalSalesINR: 295000,
+    upiId: "khurjaceramics@barodampay",
+    taxIdentifier: "09AABCK5678M1ZQ",
+    pickupAddress: "Kiln 8, Potteries Road, GT Road Industrial Zone, Khurja, UP — 203131",
+    returnWarehouse: "Atelier QC Return Facility, Shed B, Khurja, UP — 203131",
+    theme: {
+      accentColor: "#059669",
+      bannerUrl: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=1600&q=80",
+      layoutMode: "flagship_minimal",
+      tagline: "Fine Glazed Stoneware & High-Fire Terracotta Vessels",
+    },
+    rbacMembers: [
+      { id: "mem_k01", name: "Rajesh Pal", email: "rajesh@khurjaceramics.in", role: "OWNER", status: "ACTIVE" },
+      { id: "mem_k02", name: "Sunil Pal", email: "dispatch@khurjaceramics.in", role: "FULFILLMENT_STAFF", status: "ACTIVE" },
+    ],
+    paymentConfig: {
+      directUpiId: "khurjaceramics@barodampay",
+      bankAccountName: "Rajesh Pal Pottery Works",
+      bankAccountNumber: "09810100045231",
+      bankIfsc: "BARB0KHURJA",
+      platformCommissionPercent: 0,
+    },
+    shippingConfig: {
+      mode: "SELF_DELIVERY_RIDER",
+      pickupHubAddress: "Kiln 8, Potteries Road, Khurja, UP — 203131",
+      returnWarehouseAddress: "Atelier QC Return Facility, Shed B, Khurja, UP — 203131",
+      courierPartner: "Delhivery Surface Safe",
+      awbAutoGenerate: true,
+    },
+    taxConfig: {
+      gstin: "09AABCK5678M1ZQ",
+      pan: "AABCK5678M",
+      hsnCodeDefault: "6912",
+      cgstPercent: 6.0,
+      sgstPercent: 6.0,
+      igstPercent: 12.0,
+    },
+  },
+  {
+    id: "sup_apex",
+    name: "Apex Electronics Hub",
+    brandName: "Apex Electronics Hub",
+    slug: "apex-electronics-hub",
+    storeSlug: "apex-electronics-hub",
+    subdomain: "apexelectronics.nexu.store",
+    location: "Bangalore Tech Corridor, KA",
+    rating: 4.96,
+    fulfillmentRate: "99.8%",
+    verified: true,
+    payoutOnHold: false,
+    joinedDate: "12 Jan 2025",
+    totalProductsCount: 14,
+    totalSalesINR: 489200,
+    upiId: "apexops@hdfcbank",
+    taxIdentifier: "29AABCA9012E1ZU",
+    pickupAddress: "Building 4, Electronic City Phase 1, Bangalore, KA — 560100",
+    returnWarehouse: "Logistics Hub East, Whitefield, Bangalore, KA — 560066",
+    theme: {
+      accentColor: "#2563EB",
+      layoutMode: "nike_bold",
+      tagline: "High-Performance Audiophile & Studio Engineering Electronics",
+    },
+    paymentConfig: {
+      directUpiId: "apexops@hdfcbank",
+      bankAccountName: "Apex Electronics Hub Pvt Ltd",
+      bankAccountNumber: "50200012938411",
+      bankIfsc: "HDFC0000240",
+      platformCommissionPercent: 0,
+    },
+    shippingConfig: {
+      mode: "SHIPROCKET_COURIER",
+      pickupHubAddress: "Building 4, Electronic City Phase 1, Bangalore, KA — 560100",
+      returnWarehouseAddress: "Logistics Hub East, Whitefield, Bangalore, KA — 560066",
+      courierPartner: "Blue Dart Air Priority",
+      awbAutoGenerate: true,
+    },
+    taxConfig: {
+      gstin: "29AABCA9012E1ZU",
+      pan: "AABCA9012E",
+      hsnCodeDefault: "8518",
+      cgstPercent: 9.0,
+      sgstPercent: 9.0,
+      igstPercent: 18.0,
+    },
+  },
+  {
+    id: "sup_sartorial",
+    name: "Sartorial Atelier Mumbai",
+    brandName: "Sartorial Atelier Mumbai",
+    slug: "sartorial-atelier-mumbai",
+    storeSlug: "sartorial-atelier-mumbai",
+    subdomain: "sartorial.nexu.store",
+    location: "Bandra Kurla Complex, Mumbai, MH",
+    rating: 4.98,
+    fulfillmentRate: "99.9%",
+    verified: true,
+    payoutOnHold: false,
+    joinedDate: "10 Nov 2024",
+    totalProductsCount: 22,
+    totalSalesINR: 1250000,
+    upiId: "sartorial@yesbank",
+    taxIdentifier: "27AABCS3456P1ZX",
+    pickupAddress: "Tower 2, Maker Maxity, BKC, Mumbai, MH — 400051",
+    returnWarehouse: "Sartorial Vault, Kalina Central, Santacruz East, Mumbai — 400098",
+    theme: {
+      accentColor: "#0F172A",
+      layoutMode: "apple_glass",
+      tagline: "Tailored Minimalist Silhouettes & Architectural Outerwear",
+    },
+    paymentConfig: {
+      directUpiId: "sartorial@yesbank",
+      bankAccountName: "Sartorial Atelier Design Studio LLP",
+      bankAccountNumber: "0023948000124",
+      bankIfsc: "YESB0000023",
+      platformCommissionPercent: 0,
+    },
+    shippingConfig: {
+      mode: "SELF_DELIVERY_RIDER",
+      pickupHubAddress: "Tower 2, Maker Maxity, BKC, Mumbai, MH — 400051",
+      returnWarehouseAddress: "Sartorial Vault, Kalina Central, Mumbai — 400098",
+      courierPartner: "Dedicated VIP Van Delivery",
+      awbAutoGenerate: true,
+    },
+    taxConfig: {
+      gstin: "27AABCS3456P1ZX",
+      pan: "AABCS3456P",
+      hsnCodeDefault: "6201",
+      cgstPercent: 6.0,
+      sgstPercent: 6.0,
+      igstPercent: 12.0,
+    },
   },
   {
     id: "sup_nordic",
@@ -1906,6 +2105,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const acceptSellerOrder = (orderId: string) => {
+    const timeNow = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     setOrders((prev) =>
       prev.map((o) => {
         if (o.id !== orderId) return o;
@@ -1914,6 +2114,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           deliveryStage: 2,
           deliveryStageName: "Packed & Ready to Ship",
           status: "PACKED",
+          sellerAcceptedAt: timeNow,
+          sellerPickupAddress: o.sellerPickupAddress || "Workshop 14, Weavers Colony, Sanganer, Jaipur, RJ — 302029",
+          sellerReturnAddress: o.sellerReturnAddress || "Central Logistics Hub, Gate 2, Sanganer, Jaipur, RJ — 302029",
+          outboundTimestamps: {
+            placedAt: o.outboundTimestamps?.placedAt || "09:30 AM",
+            packedAt: timeNow,
+            packingLocation: "Seller Workshop Hub • Verified Artisan Barcode Applied",
+            ...o.outboundTimestamps,
+          },
         };
       })
     );
@@ -1939,6 +2148,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     orderId: string,
     deliveryDetails: { mode: "self" | "courier"; partner: string; trackingRef: string }
   ) => {
+    const timeNow = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     setOrders((prev) =>
       prev.map((o) => {
         if (o.id !== orderId) return o;
@@ -1949,6 +2159,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           status: "SHIPPED",
           courierPartner: deliveryDetails.partner,
           awbNumber: deliveryDetails.trackingRef,
+          outboundTimestamps: {
+            placedAt: o.outboundTimestamps?.placedAt || "09:30 AM",
+            packedAt: o.outboundTimestamps?.packedAt || "10:15 AM",
+            packingLocation: o.outboundTimestamps?.packingLocation || "Seller Workshop Hub",
+            shippedAt: timeNow,
+            ...o.outboundTimestamps,
+          },
         };
       })
     );

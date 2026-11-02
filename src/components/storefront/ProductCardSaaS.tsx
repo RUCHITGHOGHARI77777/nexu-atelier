@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SafeImage } from "@/components/ui/SafeImage";
 import {
@@ -102,10 +103,15 @@ export function ProductCardSaaS({ product }: { product: StoreProduct }) {
         <div className="space-y-1.5">
           {/* Supplier & Category Strip */}
           <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
-            <span className="truncate max-w-[150px] flex items-center gap-1">
-              <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
-              <span>{product.supplier.name}</span>
-            </span>
+            <Link
+              href={`/store/${product.storeSlug || product.supplier.slug || product.supplier.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+              onClick={(e) => e.stopPropagation()}
+              className="truncate max-w-[150px] flex items-center gap-1 hover:text-indigo-600 transition-colors group/brand"
+              title={`Visit ${product.supplier.name} Flagship Brand Boutique`}
+            >
+              <Building2 className="w-3 h-3 text-slate-400 group-hover/brand:text-indigo-600 shrink-0" />
+              <span className="group-hover/brand:underline underline-offset-2">{product.supplier.name}</span>
+            </Link>
             <div className="flex items-center text-amber-500 font-bold shrink-0">
               <Star className="w-3 h-3 fill-amber-400 text-amber-400 mr-0.5" />
               <span>{product.rating}</span>

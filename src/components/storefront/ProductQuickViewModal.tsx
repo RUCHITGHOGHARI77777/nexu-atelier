@@ -413,18 +413,43 @@ export function ProductQuickViewModal() {
               <div className="grid grid-cols-6 gap-2">
                 {availableSizes.map((s) => {
                   const isSelected = currentSize === s;
+                  const sizeStockMap: Record<string, number> = product.sizeStock || {
+                    XS: Math.max(1, Math.min(product.stock, 3)),
+                    S: Math.max(1, Math.min(product.stock, 8)),
+                    M: Math.max(1, Math.min(product.stock, 14)),
+                    L: Math.max(0, Math.min(product.stock, 6)),
+                    XL: Math.max(0, Math.min(product.stock, 2)),
+                    XXL: 0,
+                  };
+                  const stockNum = sizeStockMap[s] !== undefined ? sizeStockMap[s] : 5;
+                  const isOutOfStock = stockNum === 0;
+
                   return (
                     <button
                       key={s}
                       type="button"
+                      disabled={isOutOfStock}
                       onClick={() => setSelectedSize(s)}
-                      className={`py-2 px-1 text-center rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+                      className={`py-2 px-1 text-center rounded-xl text-xs font-mono transition-all flex flex-col items-center justify-center gap-0.5 ${
                         isSelected
                           ? "bg-slate-950 text-white shadow-md ring-2 ring-slate-950/20"
-                          : "bg-white hover:bg-slate-100 text-slate-800 border border-slate-200"
+                          : isOutOfStock
+                          ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60"
+                          : "bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 cursor-pointer"
                       }`}
                     >
-                      {s}
+                      <span className="font-bold">{s}</span>
+                      <span className={`text-[9px] ${
+                        isSelected
+                          ? "text-emerald-300 font-semibold"
+                          : isOutOfStock
+                          ? "text-slate-400"
+                          : stockNum <= 3
+                          ? "text-amber-700 font-bold"
+                          : "text-emerald-700 font-medium"
+                      }`}>
+                        {isOutOfStock ? "Out" : `${stockNum} left`}
+                      </span>
                     </button>
                   );
                 })}
@@ -623,15 +648,91 @@ export function ProductQuickViewModal() {
               )}
 
               {activeTab === "origin" && (
-                <div className="space-y-2 text-xs text-slate-600 leading-relaxed">
-                  <p>
-                    <strong>Artisan Studio:</strong> {product.supplier.name} located in {product.supplier.location}.
-                  </p>
-                  <p>
-                    {product.description}
-                  </p>
-                  <p className="text-[11px] text-slate-500 font-mono pt-1">
-                    Certified 100% genuine studio production. Direct dispatch prevents middleman markups and shelf degradation.
+                <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
+                  {/* Brand & Maker Link */}
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-mono uppercase font-bold text-slate-500 block">
+                        Verified Brand Boutique
+                      </span>
+                      <Link
+                        href={`/store/${product.storeSlug || sellerSlug}`}
+                        className="text-sm font-extrabold text-indigo-700 hover:text-indigo-900 flex items-center gap-1.5 transition-colors group"
+                      >
+                        <span>{product.supplier.name}</span>
+                        <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      </Link>
+                      <span className="text-[11px] text-slate-500 font-mono">
+                        {product.supplier.location} • ★ {product.supplier.rating} ({product.supplier.fulfillmentRate} Fulfillment SLA)
+                      </span>
+                    </div>
+
+                    <Link
+                      href={`/store/${product.storeSlug || sellerSlug}`}
+                      className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 text-[11px] font-bold border border-indigo-200 transition-colors shrink-0"
+                    >
+                      Visit Storefront 🛍️
+                    </Link>
+                  </div>
+
+                  {/* Warehouse Locations */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/60 space-y-1">
+                      <span className="text-[10px] font-mono font-bold uppercase text-slate-500 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-emerald-600" />
+                        Pickup & Dispatch Hub
+                      </span>
+                      <p className="text-[11px] text-slate-800 font-medium">
+                        {product.supplier.pickupAddress || `${product.supplier.location} (PIN: 302029)`}
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/60 space-y-1">
+                      <span className="text-[10px] font-mono font-bold uppercase text-slate-500 flex items-center gap-1">
+                        <RotateCcw className="w-3 h-3 text-indigo-600" />
+                        Verified Return Warehouse
+                      </span>
+                      <p className="text-[11px] text-slate-800 font-medium">
+                        {product.supplier.returnWarehouse || `Central QC Vault, ${product.supplier.location}`}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Transparent Price & Tax Breakdown */}
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5 font-mono text-[11px]">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">
+                      Itemized Transparent Price Breakdown (0% NEXU Commission)
+                    </span>
+                    <div className="flex justify-between text-slate-700">
+                      <span>Artisan Selling Price:</span>
+                      <span className="font-bold text-slate-900">{formatPrice(product.price)}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-700">
+                      <span>Logistics Delivery Fee:</span>
+                      <span className="font-bold text-emerald-700">
+                        {product.deliveryChargeMode === "CUSTOM" && product.deliveryCharge
+                          ? `+ ₹${product.deliveryCharge}`
+                          : "₹0.00 (Free Delivery)"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-slate-700">
+                      <span>Platform Middleman Cut:</span>
+                      <span className="font-bold text-emerald-700">₹0.00 (Zero Commission)</span>
+                    </div>
+                    <div className="flex justify-between text-slate-700">
+                      <span>Taxes (CGST/SGST/IGST):</span>
+                      <span className="text-slate-600">Included in product price</span>
+                    </div>
+                    <div className="flex justify-between pt-1.5 border-t border-slate-200 font-bold text-slate-950 text-xs">
+                      <span>Customer Payable Total:</span>
+                      <span className="text-indigo-700">
+                        {formatPrice(product.price + (product.deliveryChargeMode === "CUSTOM" && product.deliveryCharge ? product.deliveryCharge : 0))}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-slate-500 font-mono">
+                    🛡️ Protected by 7-Day Hassle-Free Exchange • 100% Direct UTR Refund Guarantee.
                   </p>
                 </div>
               )}
