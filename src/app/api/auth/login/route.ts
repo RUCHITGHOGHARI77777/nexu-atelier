@@ -114,6 +114,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ user: result.user });
   } catch (error) {
+    console.error("Login route error:", error);
     return NextResponse.json(
       { error: "An unexpected error occurred during login." },
       { status: 500 }

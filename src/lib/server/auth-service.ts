@@ -22,6 +22,14 @@ export interface IAuthService {
     password: string
   ): Promise<{ success: boolean; user?: CustomerUser; token?: string; error?: string }>;
 
+  authenticateDemo(
+    role: "customer" | "seller" | "admin"
+  ): Promise<{ success: boolean; user?: CustomerUser; token?: string; error?: string }>;
+
+  authenticateGoogle(
+    payload: { email: string; name?: string; photoURL?: string; uid?: string; idToken?: string }
+  ): Promise<{ success: boolean; user?: CustomerUser; token?: string; error?: string }>;
+
   validateSession(token: string): Promise<CustomerUser | null>;
 
   updateProfile(
@@ -126,7 +134,7 @@ export class PrismaAuthService implements IAuthService {
     try {
       const user = await prisma.user.findUnique({
         where: { email: cleanEmail },
-        include: { profile: true },
+        include: { profile: true, seller: true },
       });
 
       if (!user) {
@@ -136,6 +144,10 @@ export class PrismaAuthService implements IAuthService {
       const isValid = verifyPassword(password, user.passwordHash);
       if (!isValid) {
         return { success: false, error: "Invalid email or password." };
+      }
+
+      if (user.isSuspended) {
+        return { success: false, error: "This account has been suspended." };
       }
 
       const token = crypto.randomBytes(32).toString("hex");
@@ -158,11 +170,191 @@ export class PrismaAuthService implements IAuthService {
           phone: user.profile?.phone || undefined,
           createdAt: user.createdAt.toISOString(),
           role: user.role.toLowerCase() as "customer" | "seller" | "admin",
+          activeStoreId: user.seller?.id || undefined,
         },
         token,
       };
     } catch (err: unknown) {
       return { success: false, error: "Authentication service unavailable." };
+    }
+  }
+
+  public async authenticateDemo(
+    role: "customer" | "seller" | "admin"
+  ): Promise<{ success: boolean; user?: CustomerUser; token?: string; error?: string }> {
+    const DEMO_EMAILS: Record<string, { email: string; defaultName: string }> = {
+      customer: { email: "patron@nexu.studio", defaultName: "Vikramaditya Rao" },
+      seller: { email: "solstice@nexu.studio", defaultName: "Solstice Handloom Textiles" },
+      admin: { email: "admin@nexu.studio", defaultName: "Sarah Jenkins (Platform Owner)" },
+    };
+
+    const target = DEMO_EMAILS[role];
+    if (!target) {
+      return { success: false, error: "Invalid demo role specified." };
+    }
+
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email: target.email },
+        include: { profile: true, seller: true },
+      });
+
+      if (!user) {
+        return { success: false, error: `Seeded demo user ${target.email} not found in database.` };
+      }
+
+      // Security Check: Server-side role enforcement (prevents client escalation)
+      if (user.role.toLowerCase() !== role.toLowerCase()) {
+        return { success: false, error: `Role mismatch: User is not authorized for demo role '${role}'.` };
+      }
+
+      if (user.isSuspended) {
+        return { success: false, error: "Demo account is currently suspended." };
+      }
+
+      const token = crypto.randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+
+      await prisma.session.create({
+        data: {
+          token,
+          userId: user.id,
+          expiresAt,
+        },
+      });
+
+      await prisma.auditEvent.create({
+        data: {
+          entityType: "USER",
+          entityId: user.id,
+          action: "DEMO_LOGIN_SUCCEEDED",
+          performedBy: target.email,
+          note: `Evaluator authenticated via server-verified DEMO account: ${user.email} (${user.role}).`,
+        },
+      });
+
+      return {
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.profile?.name || target.defaultName,
+          phone: user.profile?.phone || undefined,
+          createdAt: user.createdAt.toISOString(),
+          role: user.role.toLowerCase() as "customer" | "seller" | "admin",
+          activeStoreId: user.seller?.id || undefined,
+        },
+        token,
+      };
+    } catch {
+      return { success: false, error: "Database error during demo authentication." };
+    }
+  }
+
+  public async authenticateGoogle(payload: {
+    email: string;
+    name?: string;
+    photoURL?: string;
+    uid?: string;
+    idToken?: string;
+  }): Promise<{ success: boolean; user?: CustomerUser; token?: string; error?: string }> {
+    const cleanEmail = sanitizeText(payload.email || "", 120).toLowerCase();
+    const cleanName = payload.name ? sanitizeText(payload.name, 100) : "Google Patron";
+
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      return { success: false, error: "Valid email address is required for Google Sign-In." };
+    }
+
+    try {
+      let user = await prisma.user.findUnique({
+        where: { email: cleanEmail },
+        include: { profile: true, seller: true },
+      });
+
+      if (!user) {
+        // Create new account: Always default to CUSTOMER role for security
+        const randomPassword = crypto.randomBytes(32).toString("hex");
+        const passwordHash = hashPassword(randomPassword);
+
+        user = await prisma.user.create({
+          data: {
+            email: cleanEmail,
+            passwordHash,
+            role: UserRole.CUSTOMER,
+            profile: {
+              create: {
+                name: cleanName,
+                isEmailVerified: true,
+                emailVerifiedAt: new Date(),
+              },
+            },
+          },
+          include: { profile: true, seller: true },
+        });
+
+        // Send welcome onboarding notification
+        notificationService
+          .queueNotification({
+            channel: "EMAIL",
+            recipient: cleanEmail,
+            template: "WELCOME_ONBOARDING",
+            payload: {
+              name: cleanName,
+              email: cleanEmail,
+              welcomeCoupon: "NEXUFIRST",
+            },
+          })
+          .catch(() => {});
+      } else {
+        // Update profile name if missing
+        if (user.profile && !user.profile.name && cleanName) {
+          await prisma.customerProfile.update({
+            where: { userId: user.id },
+            data: { name: cleanName },
+          });
+        }
+      }
+
+      if (user.isSuspended) {
+        return { success: false, error: "This account has been suspended." };
+      }
+
+      const token = crypto.randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+
+      await prisma.session.create({
+        data: {
+          token,
+          userId: user.id,
+          expiresAt,
+        },
+      });
+
+      await prisma.auditEvent.create({
+        data: {
+          entityType: "USER",
+          entityId: user.id,
+          action: "GOOGLE_LOGIN_SUCCEEDED",
+          performedBy: cleanEmail,
+          note: `Authenticated via Google OAuth for user ${cleanEmail} (${user.role}).`,
+        },
+      });
+
+      return {
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.profile?.name || cleanName,
+          phone: user.profile?.phone || undefined,
+          createdAt: user.createdAt.toISOString(),
+          role: user.role.toLowerCase() as "customer" | "seller" | "admin",
+          activeStoreId: user.seller?.id || undefined,
+        },
+        token,
+      };
+    } catch {
+      return { success: false, error: "Database error during Google authentication." };
     }
   }
 
@@ -174,7 +366,7 @@ export class PrismaAuthService implements IAuthService {
         where: { token },
         include: {
           user: {
-            include: { profile: true },
+            include: { profile: true, seller: true },
           },
         },
       });
@@ -193,6 +385,7 @@ export class PrismaAuthService implements IAuthService {
         phone: session.user.profile?.phone || undefined,
         createdAt: session.user.createdAt.toISOString(),
         role: session.user.role.toLowerCase() as "customer" | "seller" | "admin",
+        activeStoreId: session.user.seller?.id || undefined,
       };
     } catch {
       return null;
@@ -331,7 +524,7 @@ export class PrismaAuthService implements IAuthService {
     try {
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        include: { profile: true },
+        include: { profile: true, seller: true },
       });
 
       if (!user) return null;
@@ -343,6 +536,7 @@ export class PrismaAuthService implements IAuthService {
         phone: user.profile?.phone || undefined,
         createdAt: user.createdAt.toISOString(),
         role: user.role.toLowerCase() as "customer" | "seller" | "admin",
+        activeStoreId: user.seller?.id || undefined,
       };
     } catch {
       return null;

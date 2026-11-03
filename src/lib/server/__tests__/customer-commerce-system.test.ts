@@ -203,8 +203,16 @@ describe("NEXU ATELIER — Complete Customer Commerce System", () => {
 
   describe("3. Multi-Supplier Orders & Server-Authoritative Checkout", () => {
     it("creates a single customer order containing items from multiple distinct suppliers", async () => {
-      const initialStockA = productA.stock;
-      const initialStockB = productB.stock;
+      const freshProductA = await prisma.product.findUnique({
+        where: { id: productA.id },
+        include: { variants: true },
+      });
+      const freshProductB = await prisma.product.findUnique({
+        where: { id: productB.id },
+        include: { variants: true },
+      });
+      const initialStockA = freshProductA?.stock || productA.stock;
+      const initialStockB = freshProductB?.stock || productB.stock;
 
       const orderResult = await orderService.createOrder(customerUser.id, {
         deliveryMethodId: "standard",
@@ -213,12 +221,12 @@ describe("NEXU ATELIER — Complete Customer Commerce System", () => {
           {
             productId: productA.id,
             quantity: 1,
-            selectedSku: productA.variants?.find((v: any) => v.stock > 0)?.sku,
+            selectedSku: freshProductA?.variants?.find((v: any) => v.stock > 0)?.sku,
           },
           {
             productId: productB.id,
             quantity: 1,
-            selectedSku: productB.variants?.find((v: any) => v.stock > 0)?.sku,
+            selectedSku: freshProductB?.variants?.find((v: any) => v.stock > 0)?.sku,
           },
         ],
       });
@@ -258,7 +266,13 @@ describe("NEXU ATELIER — Complete Customer Commerce System", () => {
 
   describe("4. Payment Integration & Cryptographic Capture", () => {
     it("initiates payment based strictly on authoritative database order total", async () => {
-      // 1. Create dedicated order for payment testing
+      // 1. Create dedicated order for payment testing with fresh stock lookup
+      const freshProductA = await prisma.product.findUnique({
+        where: { id: productA.id },
+        include: { variants: true },
+      });
+      const availableSku = freshProductA?.variants?.find((v: any) => v.stock > 0)?.sku;
+
       const orderRes = await orderService.createOrder(customerUser.id, {
         deliveryMethodId: "standard",
         idempotencyKey: `idemp_pay_${Date.now()}`,
@@ -266,7 +280,7 @@ describe("NEXU ATELIER — Complete Customer Commerce System", () => {
           {
             productId: productA.id,
             quantity: 1,
-            selectedSku: productA.variants?.find((v: any) => v.stock > 0)?.sku,
+            selectedSku: availableSku,
           },
         ],
       });

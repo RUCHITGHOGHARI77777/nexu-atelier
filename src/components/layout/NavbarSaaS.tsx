@@ -25,9 +25,11 @@ import { useStore, RoleType } from "@/context/StoreContext";
 import { formatCurrency } from "@/lib/formatters";
 import { REGIONS } from "@/lib/currency";
 import { FirebaseAuthModal } from "@/components/auth/FirebaseAuthModal";
+import { useAuth } from "@/context/AuthContext";
 
 export function NavbarSaaS() {
   const router = useRouter();
+  const { user: authUser } = useAuth();
   const {
     searchQuery,
     setSearchQuery,
@@ -48,6 +50,13 @@ export function NavbarSaaS() {
     isAuthModalOpen,
     setIsAuthModalOpen,
   } = useStore();
+
+  const displayUser = authUser
+    ? {
+        displayName: authUser.name,
+        role: authUser.role,
+      }
+    : currentUser;
 
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [isRegionMenuOpen, setIsRegionMenuOpen] = useState(false);
@@ -113,7 +122,7 @@ export function NavbarSaaS() {
               onClick={() => setIsAuthModalOpen(true)}
               className="hover:text-slate-900 transition-colors font-semibold cursor-pointer"
             >
-              {currentUser ? `👤 ${currentUser.displayName.split(" ")[0]} (${currentUser.role})` : "Sign In"}
+              {displayUser ? `👤 ${displayUser.displayName.split(" ")[0]} (${displayUser.role})` : "Sign In"}
             </button>
           </div>
         </div>
@@ -358,14 +367,14 @@ export function NavbarSaaS() {
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200/80 bg-white/70 hover:bg-white text-slate-800 text-xs font-bold transition-all shadow-2xs cursor-pointer"
               title="Firebase Auth Profile & Role Switcher"
             >
-              <div className="w-5 h-5 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center font-bold">
-                {currentUser ? currentUser.displayName.charAt(0).toUpperCase() : "U"}
+              <div className="w-5 h-5 rounded-full bg-slate-900 text-white text-[10px] flex items-center justify-center font-bold">
+                {displayUser ? displayUser.displayName.charAt(0).toUpperCase() : "U"}
               </div>
               <span className="hidden lg:inline truncate max-w-[100px]">
-                {currentUser ? currentUser.displayName.split(" ")[0] : "Sign In"}
+                {displayUser ? displayUser.displayName.split(" ")[0] : "Sign In"}
               </span>
-              <span className="text-[9px] font-mono text-emerald-700 uppercase bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
-                {currentUser ? currentUser.role : "Guest"}
+              <span className="text-[9px] font-mono text-slate-800 uppercase bg-slate-100 px-1 py-0.2 rounded border border-slate-200">
+                {displayUser ? displayUser.role : "Guest"}
               </span>
             </button>
 

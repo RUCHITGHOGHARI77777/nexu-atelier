@@ -26,37 +26,37 @@ export interface AppUser {
 
 const LOCAL_STORAGE_AUTH_USER = "nexu_saas_auth_user";
 
-// Seeded default users for instant 1-click evaluator demo testing
+// Seeded default users matching PostgreSQL database records for evaluator demo testing
 export const DEMO_PRESET_USERS: Record<UserRole, AppUser> = {
   customer: {
-    uid: "usr_cust_vikram",
-    email: "vikram.rao@patron.com",
-    displayName: "Vikramaditya Rao",
+    uid: "usr_patron_01",
+    email: "patron@nexu.studio",
+    displayName: "Vikramaditya Rao (Customer)",
     role: "customer",
     phone: "+91 98201 55432",
     photoURL: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
-    provider: "google",
+    provider: "demo",
     createdAt: "2026-09-01T08:00:00.000Z",
   },
   seller: {
-    uid: "usr_seller_devendra",
-    email: "devendra@jaipurhandlooms.in",
-    displayName: "Devendra Rathore",
+    uid: "usr_seller_01",
+    email: "solstice@nexu.studio",
+    displayName: "Solstice Handloom Textiles",
     role: "seller",
     phone: "+91 98290 12345",
     photoURL: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
-    storeName: "Jaipur Heritage Handlooms",
-    provider: "phone",
+    storeName: "Solstice Handloom Studio",
+    provider: "demo",
     createdAt: "2026-08-15T10:00:00.000Z",
   },
   admin: {
-    uid: "usr_admin_sarah",
-    email: "director@nexu.studio",
+    uid: "usr_admin_01",
+    email: "admin@nexu.studio",
     displayName: "Sarah Jenkins (Platform Owner)",
     role: "admin",
     phone: "+1 415 555 0192",
     photoURL: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80",
-    provider: "email",
+    provider: "demo",
     createdAt: "2026-01-01T00:00:00.000Z",
   },
 };
@@ -85,46 +85,54 @@ export function saveAuthUserLocally(user: AppUser | null): void {
 }
 
 /**
- * 1-Click Google Sign-In with Zero-Crash Hybrid Fallback
+ * Genuine Google OAuth Sign-In via Firebase Auth / Google Cloud
+ * Opens official Google OAuth account picker popup.
+ * Returns genuine user credentials and JWT idToken.
+ * Throws explicit descriptive errors if configuration or authorization fails.
  */
-export async function signInWithGoogle(role: UserRole = "customer"): Promise<AppUser> {
-  if (auth && isLiveFirebase) {
-    try {
-      const provider = new GoogleAuthProvider();
-      const cred = await signInWithPopup(auth, provider);
-      const fbUser = cred.user;
+export async function signInWithGoogle(
+  role: UserRole = "customer"
+): Promise<{ userProfile: AppUser; idToken?: string }> {
+  const isMissingKey =
+    !process.env.NEXT_PUBLIC_FIREBASE_API_KEY ||
+    process.env.NEXT_PUBLIC_FIREBASE_API_KEY.includes("Fallback") ||
+    process.env.NEXT_PUBLIC_FIREBASE_API_KEY.includes("AIzaSyDemo");
 
-      const userProfile: AppUser = {
-        uid: fbUser.uid,
-        email: fbUser.email || "patron@google.com",
-        displayName: fbUser.displayName || "Google Patron",
-        role,
-        photoURL: fbUser.photoURL || undefined,
-        provider: "google",
-        createdAt: new Date().toISOString(),
-      };
-
-      // Persist profile to Firestore if available
-      if (db) {
-        try {
-          await setDoc(doc(db, "users", fbUser.uid), userProfile, { merge: true });
-        } catch {}
-      }
-
-      saveAuthUserLocally(userProfile);
-      return userProfile;
-    } catch {
-      // Fall through to hybrid mock
-    }
+  if (!auth || isMissingKey) {
+    const error: any = new Error(
+      "Live Google OAuth requires valid Firebase / Google Cloud credentials in .env.local (NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, NEXT_PUBLIC_FIREBASE_PROJECT_ID) with origin http://localhost:3000 authorized in Google Cloud Console."
+    );
+    error.code = "auth/configuration-missing";
+    throw error;
   }
 
-  // Hybrid Simulated Mode
-  const simulated: AppUser = {
-    ...DEMO_PRESET_USERS[role],
+  const provider = new GoogleAuthProvider();
+  provider.addScope("profile");
+  provider.addScope("email");
+
+  const cred = await signInWithPopup(auth, provider);
+  const fbUser = cred.user;
+  const idToken = await fbUser.getIdToken();
+
+  const userProfile: AppUser = {
+    uid: fbUser.uid,
+    email: fbUser.email || "patron@google.com",
+    displayName: fbUser.displayName || "Google Patron",
+    role,
+    photoURL: fbUser.photoURL || undefined,
     provider: "google",
+    createdAt: new Date().toISOString(),
   };
-  saveAuthUserLocally(simulated);
-  return simulated;
+
+  // Persist profile to Firestore if configured
+  if (db && isLiveFirebase) {
+    try {
+      await setDoc(doc(db, "users", fbUser.uid), userProfile, { merge: true });
+    } catch {}
+  }
+
+  saveAuthUserLocally(userProfile);
+  return { userProfile, idToken };
 }
 
 /**

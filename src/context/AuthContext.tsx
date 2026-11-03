@@ -15,6 +15,14 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string, honeypot?: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithDemo: (role: "customer" | "seller" | "admin") => Promise<{ success: boolean; user?: CustomerUser; error?: string }>;
+  loginWithGoogle: (payload: {
+    email: string;
+    name?: string;
+    photoURL?: string;
+    uid?: string;
+    idToken?: string;
+  }) => Promise<{ success: boolean; user?: CustomerUser; error?: string }>;
   register: (
     name: string,
     email: string,
@@ -72,6 +80,56 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch {
       setIsLoading(false);
       return { success: false, error: "Network error during authentication." };
+    }
+  };
+
+  const loginWithDemo = async (role: "customer" | "seller" | "admin") => {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/auth/demo-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setIsLoading(false);
+        return { success: false, error: data.error || "Demo authentication failed." };
+      }
+      setUser(data.user);
+      setIsLoading(false);
+      return { success: true, user: data.user };
+    } catch {
+      setIsLoading(false);
+      return { success: false, error: "Network error during demo authentication." };
+    }
+  };
+
+  const loginWithGoogle = async (payload: {
+    email: string;
+    name?: string;
+    photoURL?: string;
+    uid?: string;
+    idToken?: string;
+  }) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setIsLoading(false);
+        return { success: false, error: data.error || "Google sign-in failed." };
+      }
+      setUser(data.user);
+      setIsLoading(false);
+      return { success: true, user: data.user };
+    } catch {
+      setIsLoading(false);
+      return { success: false, error: "Network error during Google sign-in." };
     }
   };
 
@@ -138,6 +196,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isLoading,
         isAuthenticated: !!user,
         login,
+        loginWithDemo,
+        loginWithGoogle,
         register,
         logout,
         updateProfile,
