@@ -43,10 +43,10 @@ export function EvaluatorDemoControlBar() {
   // STEP 1: Launch Free Seller Brand Store
   const handleStep1_LaunchSellerStore = () => {
     setActiveRole("supplier");
-    if (pathname !== "/") {
-      router.push("/");
+    if (pathname !== "/seller") {
+      router.push("/seller");
     }
-    showToast("Step 1: Switched to Supplier Hub • Click '+ Launch Another Brand Store' or open store wizard! 🏪", "success");
+    showToast("Navigated to Seller Hub • Store catalog & orders ready.", "success");
   };
 
   // STEP 2: Simulate Customer Order + Mobile UPI/Stripe Pay
@@ -123,8 +123,8 @@ export function EvaluatorDemoControlBar() {
   // STEP 3: Seller Accept -> Print Slip -> Direct Delivery
   const handleStep3_SellerAcceptDispatchDeliver = () => {
     setActiveRole("supplier");
-    if (pathname !== "/") {
-      router.push("/");
+    if (pathname !== "/seller/orders") {
+      router.push("/seller/orders");
     }
 
     setTimeout(() => {

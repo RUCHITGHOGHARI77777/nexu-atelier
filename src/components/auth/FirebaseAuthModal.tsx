@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   X,
   ShieldCheck,
@@ -13,14 +14,12 @@ import {
   UserCheck,
   KeyRound,
   Sparkles,
-  RefreshCw,
   Lock,
   AlertCircle,
   HelpCircle,
-  ExternalLink,
-  Laptop,
   Store,
-  ShieldAlert,
+  Shield,
+  User,
 } from "lucide-react";
 import { useStore } from "@/context/StoreContext";
 import { useAuth } from "@/context/AuthContext";
@@ -35,12 +34,19 @@ import {
 interface FirebaseAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  defaultRole?: UserRole;
 }
 
-export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
+export function FirebaseAuthModal({
+  isOpen,
+  onClose,
+  defaultRole = "customer",
+}: FirebaseAuthModalProps) {
+  const router = useRouter();
   const { currentUser, setCurrentUser, showToast, setActiveRole } = useStore();
   const { user: authUser, login, loginWithDemo, loginWithGoogle, logout: authLogout } = useAuth();
 
+  const [selectedPortal, setSelectedPortal] = useState<UserRole>(defaultRole);
   const [authMethod, setAuthMethod] = useState<"google" | "email" | "phone">("google");
 
   // Phone OTP State
@@ -71,6 +77,33 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
       }
     : currentUser;
 
+  // Helper: Enforce server-side role validation after successful authentication
+  const handlePostAuthRedirect = (userRole: string, userName: string) => {
+    if (selectedPortal === "admin") {
+      if (userRole !== "admin") {
+        setAuthError(`Access Denied: Account '${userName}' does not have Super Admin governance privileges.`);
+        return;
+      }
+      setActiveRole("admin");
+      showToast(`Welcome Administrator ${userName}!`, "success");
+      onClose();
+      router.push("/admin");
+    } else if (selectedPortal === "seller") {
+      if (userRole !== "seller" && userRole !== "admin") {
+        setAuthError(`Access Restricted: Account '${userName}' is a Customer. Merchant access requires a verified Seller account.`);
+        return;
+      }
+      setActiveRole("supplier");
+      showToast(`Welcome Merchant ${userName}!`, "success");
+      onClose();
+      router.push("/seller");
+    } else {
+      setActiveRole("customer");
+      showToast(`Welcome ${userName}!`, "success");
+      onClose();
+    }
+  };
+
   // 1. Genuine Google OAuth Sign-In
   const handleGoogleLogin = async () => {
     setIsVerifying(true);
@@ -96,9 +129,7 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
           uid: res.user.id,
           role: res.user.role as UserRole,
         });
-        setActiveRole("customer");
-        showToast(`Welcome, ${res.user.name}! Signed in via Google OAuth.`, "success");
-        onClose();
+        handlePostAuthRedirect(res.user.role, res.user.name);
       } else {
         setAuthError(res.error || "Failed to establish server session with Google credentials.");
       }
@@ -143,12 +174,7 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
         };
 
         setCurrentUser(appUser);
-        setActiveRole(role === "admin" ? "admin" : role === "seller" ? "supplier" : "customer");
-        showToast(
-          `Signed in as Demo ${role.toUpperCase()} (${res.user.email}) with active PostgreSQL session!`,
-          "success"
-        );
-        onClose();
+        handlePostAuthRedirect(res.user.role, res.user.name);
       } else {
         setAuthError(res.error || `Failed to authenticate demo ${role}.`);
       }
@@ -170,26 +196,18 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
 
     try {
       const res = await login(emailInput.trim(), passwordInput);
-      if (res.success) {
-        const role = emailInput.includes("admin")
-          ? "admin"
-          : emailInput.includes("seller") || emailInput.includes("solstice")
-          ? "seller"
-          : "customer";
-
+      if (res.success && res.user) {
         const appUser: AppUser = {
-          uid: `usr_${Date.now()}`,
-          email: emailInput.trim(),
-          displayName: emailInput.split("@")[0].replace(/\b\w/g, (c) => c.toUpperCase()),
-          role: role as UserRole,
+          uid: res.user.id,
+          email: res.user.email,
+          displayName: res.user.name,
+          role: res.user.role as UserRole,
           provider: "email",
-          createdAt: new Date().toISOString(),
+          createdAt: res.user.createdAt,
         };
 
         setCurrentUser(appUser);
-        setActiveRole(role === "admin" ? "admin" : role === "seller" ? "supplier" : "customer");
-        showToast("Signed in successfully with server session cookie!", "success");
-        onClose();
+        handlePostAuthRedirect(res.user.role, res.user.name);
       } else {
         setAuthError(res.error || "Invalid email or password.");
       }
@@ -220,9 +238,7 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
         // Also establish customer demo session for seamless API access
         await loginWithDemo("customer");
         setCurrentUser(res.user);
-        setActiveRole("customer");
-        showToast(`Mobile verified! Signed in as ${res.user.displayName}`, "success");
-        onClose();
+        handlePostAuthRedirect("customer", res.user.displayName);
       } else {
         setAuthError(res.message || "Invalid OTP code.");
       }
@@ -246,7 +262,7 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-3xl border border-white/90 ring-1 ring-slate-900/10 bg-white/95 backdrop-blur-2xl shadow-[0_25px_60px_rgba(15,23,42,0.15)] p-6 sm:p-8 space-y-6 text-slate-900 max-h-[92vh] overflow-y-auto">
+      <div className="relative w-full max-w-lg rounded-3xl border border-slate-200/90 bg-white shadow-2xl p-6 sm:p-8 space-y-6 text-slate-900 max-h-[92vh] overflow-y-auto">
         {/* Close Button */}
         <button
           type="button"
@@ -257,69 +273,130 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
         </button>
 
         {/* Modal Header */}
-        <div className="space-y-1.5 pr-8">
+        <div className="space-y-1 pr-8">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-slate-900 text-white text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-2xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>PostgreSQL Session Engine</span>
+            <span className="px-2.5 py-0.5 rounded-full bg-slate-900 text-white text-[10px] font-mono font-bold uppercase tracking-wider">
+              NEXU Identity
             </span>
             <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-mono font-bold">
-              HTTP-Only Cookies
+              PostgreSQL Session
             </span>
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight flex items-center gap-2">
-            <ShieldCheck className="w-6 h-6 text-slate-900" />
-            <span>NEXU Identity & Access Portal</span>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">
+            Sign In to NEXU
           </h2>
-          <p className="text-xs text-slate-600">
-            Sign in with genuine Google OAuth, enterprise email, or switch between pre-seeded evaluator demo accounts.
+          <p className="text-xs text-slate-500">
+            Select your destination portal below to sign in with your verified credentials.
           </p>
         </div>
 
-        {/* Active Session Status Banner */}
-        {activeUser ? (
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-slate-900 text-white overflow-hidden relative border border-slate-300 flex items-center justify-center font-bold text-sm">
-                  {activeUser.displayName ? activeUser.displayName.charAt(0).toUpperCase() : "U"}
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-slate-950 flex items-center gap-1.5">
-                    <span>{activeUser.displayName}</span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold uppercase bg-slate-900 text-white">
-                      {activeUser.role}
-                    </span>
-                  </h4>
-                  <p className="text-[11px] text-slate-500 font-mono">
-                    {activeUser.email}
-                  </p>
+        {/* STEP 1: Professional Role / Portal Selection (3 Clearly Separated Cards) */}
+        <div className="space-y-2">
+          <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+            1. Select Portal Destination:
+          </label>
+
+          <div className="grid grid-cols-3 gap-2">
+            {/* Option A: Customer */}
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedPortal("customer");
+                setEmailInput("patron@nexu.studio");
+              }}
+              className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                selectedPortal === "customer"
+                  ? "border-slate-950 bg-slate-950 text-white shadow-sm ring-1 ring-slate-950"
+                  : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-900"
+              }`}
+            >
+              <div className="text-base mb-1">🛍️</div>
+              <div>
+                <div className="font-extrabold text-xs">Customer</div>
+                <div className={`text-[10px] leading-tight mt-0.5 ${
+                  selectedPortal === "customer" ? "text-slate-300" : "text-slate-500"
+                }`}>
+                  Shop & Orders
                 </div>
               </div>
+            </button>
 
-              <button
-                type="button"
-                disabled={isVerifying}
-                onClick={handleSignOut}
-                className="px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Sign Out</span>
-              </button>
+            {/* Option B: Seller */}
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedPortal("seller");
+                setEmailInput("solstice@nexu.studio");
+              }}
+              className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                selectedPortal === "seller"
+                  ? "border-emerald-600 bg-emerald-950 text-white shadow-sm ring-1 ring-emerald-600"
+                  : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-900"
+              }`}
+            >
+              <div className="text-base mb-1">📦</div>
+              <div>
+                <div className="font-extrabold text-xs">Seller Hub</div>
+                <div className={`text-[10px] leading-tight mt-0.5 ${
+                  selectedPortal === "seller" ? "text-emerald-300" : "text-slate-500"
+                }`}>
+                  Catalog & GST
+                </div>
+              </div>
+            </button>
+
+            {/* Option C: Super Admin */}
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedPortal("admin");
+                setEmailInput("admin@nexu.studio");
+              }}
+              className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                selectedPortal === "admin"
+                  ? "border-indigo-600 bg-indigo-950 text-white shadow-sm ring-1 ring-indigo-600"
+                  : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-900"
+              }`}
+            >
+              <div className="text-base mb-1">🛡️</div>
+              <div>
+                <div className="font-extrabold text-xs">Super Admin</div>
+                <div className={`text-[10px] leading-tight mt-0.5 ${
+                  selectedPortal === "admin" ? "text-indigo-300" : "text-slate-500"
+                }`}>
+                  Governance
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Active Session Status Banner */}
+        {activeUser && (
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs">
+                {activeUser.displayName ? activeUser.displayName.charAt(0).toUpperCase() : "U"}
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>{activeUser.displayName}</span>
+                  <span className="text-[9px] uppercase font-mono px-1 py-0.2 rounded bg-slate-200 text-slate-800">
+                    {activeUser.role}
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-500 font-mono">{activeUser.email}</div>
+              </div>
             </div>
 
-            {activeUser.storeName && (
-              <div className="text-[11px] text-slate-700 bg-white px-2.5 py-1.5 rounded-xl border border-slate-200 font-mono flex items-center justify-between">
-                <span>Active Storefront: <strong className="text-slate-950 font-bold">{activeUser.storeName}</strong></span>
-                <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">0% Commission</span>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="p-3 rounded-2xl bg-slate-100/80 border border-slate-200 text-xs text-slate-700 flex items-center gap-2">
-            <Lock className="w-4 h-4 text-slate-500 shrink-0" />
-            <span>Currently unauthenticated (Guest mode). Select an Evaluator Demo below or sign in.</span>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="text-xs text-rose-600 hover:text-rose-800 font-bold px-2 py-1 rounded hover:bg-rose-50 transition-colors"
+            >
+              Sign Out
+            </button>
           </div>
         )}
 
@@ -328,150 +405,27 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
           <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2.5">
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <span className="font-bold block">Authentication Notice:</span>
+              <span className="font-bold block">Access Notice:</span>
               <p className="text-[11px] leading-relaxed">{authError}</p>
             </div>
           </div>
         )}
 
-        {/* Production Configuration Guide Banner (Shown when OAuth keys are missing) */}
+        {/* Production Configuration Guide Banner */}
         {oauthConfigNotice && (
-          <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-300 text-xs text-amber-950 space-y-2">
+          <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-xs text-amber-950 space-y-1.5">
             <div className="flex items-center gap-2 font-bold text-amber-900">
               <HelpCircle className="w-4 h-4 text-amber-700 shrink-0" />
-              <span>Live Google OAuth Setup Requirement</span>
+              <span>Google OAuth Environment Notice</span>
             </div>
             <p className="text-[11px] leading-relaxed text-amber-900/90 font-mono">
               {oauthConfigNotice}
             </p>
-            <div className="pt-1 flex items-center gap-2">
-              <span className="text-[10px] bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded font-mono font-bold">
-                Target Origin: http://localhost:3000
-              </span>
-            </div>
           </div>
         )}
 
-        {/* SECTION 1: Evaluator Demo Access (Server-Authoritative Isolated Roles) */}
-        <div className="space-y-2.5 pt-1">
-          <div className="flex items-center justify-between">
-            <label className="text-[11px] font-bold text-slate-900 uppercase font-mono tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Evaluator Demo Access (Server-Verified):</span>
-            </label>
-            <span className="text-[10px] font-mono text-slate-500">Instant 1-Click DB Session</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            {/* Demo Customer */}
-            <button
-              type="button"
-              disabled={activeDemoLoading !== null || isVerifying}
-              onClick={() => handleDemoLogin("customer")}
-              className={`p-3 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group ${
-                activeUser?.role === "customer"
-                  ? "border-slate-900 bg-slate-900 text-white shadow-sm"
-                  : "border-slate-200 bg-white hover:border-slate-400 hover:bg-slate-50 text-slate-900"
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-base">🛍️</span>
-                <span className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${
-                  activeUser?.role === "customer"
-                    ? "bg-white/20 text-white"
-                    : "bg-slate-100 text-slate-600"
-                }`}>
-                  Customer
-                </span>
-              </div>
-              <div className="font-extrabold text-xs truncate">
-                {activeDemoLoading === "customer" ? "Authenticating..." : "Patron User"}
-              </div>
-              <div className={`text-[10px] font-mono truncate mt-0.5 ${
-                activeUser?.role === "customer" ? "text-slate-300" : "text-slate-500"
-              }`}>
-                patron@nexu.studio
-              </div>
-            </button>
-
-            {/* Demo Seller */}
-            <button
-              type="button"
-              disabled={activeDemoLoading !== null || isVerifying}
-              onClick={() => handleDemoLogin("seller")}
-              className={`p-3 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group ${
-                activeUser?.role === "seller"
-                  ? "border-slate-900 bg-slate-900 text-white shadow-sm"
-                  : "border-slate-200 bg-white hover:border-slate-400 hover:bg-slate-50 text-slate-900"
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-base">📦</span>
-                <span className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${
-                  activeUser?.role === "seller"
-                    ? "bg-white/20 text-white"
-                    : "bg-slate-100 text-slate-600"
-                }`}>
-                  Seller
-                </span>
-              </div>
-              <div className="font-extrabold text-xs truncate">
-                {activeDemoLoading === "seller" ? "Authenticating..." : "Solstice Handlooms"}
-              </div>
-              <div className={`text-[10px] font-mono truncate mt-0.5 ${
-                activeUser?.role === "seller" ? "text-slate-300" : "text-slate-500"
-              }`}>
-                solstice@nexu.studio
-              </div>
-            </button>
-
-            {/* Demo Admin */}
-            <button
-              type="button"
-              disabled={activeDemoLoading !== null || isVerifying}
-              onClick={() => handleDemoLogin("admin")}
-              className={`p-3 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group ${
-                activeUser?.role === "admin"
-                  ? "border-slate-900 bg-slate-900 text-white shadow-sm"
-                  : "border-slate-200 bg-white hover:border-slate-400 hover:bg-slate-50 text-slate-900"
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-base">🛡️</span>
-                <span className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${
-                  activeUser?.role === "admin"
-                    ? "bg-white/20 text-white"
-                    : "bg-slate-100 text-slate-600"
-                }`}>
-                  Super Admin
-                </span>
-              </div>
-              <div className="font-extrabold text-xs truncate">
-                {activeDemoLoading === "admin" ? "Authenticating..." : "Platform Owner"}
-              </div>
-              <div className={`text-[10px] font-mono truncate mt-0.5 ${
-                activeUser?.role === "admin" ? "text-slate-300" : "text-slate-500"
-              }`}>
-                admin@nexu.studio
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="relative my-2">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200" />
-          </div>
-          <div className="relative flex justify-center text-[10px] uppercase">
-            <span className="bg-white/95 px-3 text-slate-400 font-mono font-bold">
-              Or Live Production Sign-In
-            </span>
-          </div>
-        </div>
-
-        {/* SECTION 2: Live Authentication Methods */}
-        <div className="space-y-4">
+        {/* STEP 2: Authentication Methods for Selected Role */}
+        <div className="space-y-3.5">
           {/* Method Tabs */}
           <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs font-semibold">
             <button
@@ -509,16 +463,15 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
             </button>
           </div>
 
-          {/* Tab 1: Genuine Google Sign-In */}
+          {/* Tab 1: Google OAuth */}
           {authMethod === "google" && (
-            <div className="space-y-3 pt-1">
+            <div className="space-y-2 pt-1">
               <button
                 type="button"
                 disabled={isVerifying}
                 onClick={handleGoogleLogin}
-                className="w-full py-3 px-4 rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 shadow-sm flex items-center justify-center gap-3 text-xs font-bold text-slate-800 transition-all active:scale-98 cursor-pointer group"
+                className="w-full py-3 px-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 shadow-xs flex items-center justify-center gap-3 text-xs font-bold text-slate-800 transition-all cursor-pointer"
               >
-                {/* Official Google 'G' Logo SVG */}
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
@@ -538,14 +491,9 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
                   />
                 </svg>
                 <span>
-                  {isVerifying ? "Connecting to Google OAuth..." : "Continue with Google"}
+                  {isVerifying ? "Connecting to Google OAuth..." : `Continue with Google (${selectedPortal.toUpperCase()})`}
                 </span>
               </button>
-
-              <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono px-1">
-                <span>• Opens genuine Google account selector</span>
-                <span>• Links to PostgreSQL database</span>
-              </div>
             </div>
           )}
 
@@ -561,7 +509,7 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
                   required
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
-                  placeholder="patron@nexu.studio"
+                  placeholder="name@studio.com"
                   className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono"
                 />
               </div>
@@ -584,7 +532,7 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
                 disabled={isVerifying}
                 className="w-full py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
               >
-                {isVerifying ? "Authenticating..." : "Sign In with Credentials"}
+                {isVerifying ? "Authenticating..." : `Sign In to ${selectedPortal === "seller" ? "Seller Hub" : selectedPortal === "admin" ? "Admin Center" : "Account"}`}
               </button>
             </form>
           )}
@@ -609,7 +557,7 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
                     onClick={handleSendOtp}
                     className="px-3.5 py-2 rounded-xl bg-slate-950 text-white text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
                   >
-                    {otpSent ? "Resend OTP" : "Send OTP"}
+                    {otpSent ? "Resend" : "Send OTP"}
                   </button>
                 </div>
               </div>
@@ -617,13 +565,13 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
               {otpSent && (
                 <div className="space-y-2.5 p-3 rounded-2xl bg-slate-50 border border-slate-200">
                   <div className="flex items-center justify-between text-xs text-slate-900">
-                    <span className="font-semibold">Enter 6-Digit OTP:</span>
+                    <span className="font-semibold">Enter OTP (Test: 482910):</span>
                     <button
                       type="button"
                       onClick={() => setOtpCode("482910")}
                       className="text-[10px] font-mono font-bold text-slate-700 underline cursor-pointer"
                     >
-                      ⚡ Auto-Fill (482910)
+                      Auto-Fill
                     </button>
                   </div>
                   <input
@@ -632,20 +580,55 @@ export function FirebaseAuthModal({ isOpen, onClose }: FirebaseAuthModalProps) {
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value)}
                     placeholder="482910"
-                    className="w-full text-center text-lg tracking-widest font-mono font-black py-2 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
+                    className="w-full text-center text-lg tracking-widest font-mono font-black py-2 rounded-xl border border-slate-300 bg-white text-slate-900"
                   />
                   <button
                     type="button"
                     disabled={isVerifying}
                     onClick={handleVerifyOtp}
-                    className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
+                    className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-sm cursor-pointer transition-all"
                   >
-                    {isVerifying ? "Verifying Token..." : "Verify & Sign In"}
+                    {isVerifying ? "Verifying..." : "Verify & Sign In"}
                   </button>
                 </div>
               )}
             </div>
           )}
+        </div>
+
+        {/* STEP 3: Discreet, Clearly Separated Evaluator Sandbox Access */}
+        <div className="pt-2 border-t border-slate-100">
+          <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-amber-500" />
+                <span>Technical Evaluator Demo Access</span>
+              </span>
+              <span className="text-[9px] font-mono text-slate-400">PostgreSQL</span>
+            </div>
+
+            <p className="text-[10px] text-slate-500 leading-normal">
+              1-Click instant authentication for platform reviewers with pre-seeded database records.
+            </p>
+
+            <button
+              type="button"
+              disabled={activeDemoLoading !== null || isVerifying}
+              onClick={() => handleDemoLogin(selectedPortal)}
+              className="w-full py-2 px-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <UserCheck className="w-3.5 h-3.5 text-slate-700" />
+              <span>
+                {activeDemoLoading === selectedPortal
+                  ? "Authenticating Session..."
+                  : selectedPortal === "seller"
+                  ? "1-Click Demo Seller (solstice@nexu.studio)"
+                  : selectedPortal === "admin"
+                  ? "1-Click Demo Admin (admin@nexu.studio)"
+                  : "1-Click Demo Customer (patron@nexu.studio)"}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

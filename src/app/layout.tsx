@@ -9,8 +9,8 @@ import { CurrencyProvider } from "@/context/CurrencyContext";
 import { StoreProvider } from "@/context/StoreContext";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
-import { NavbarSaaS } from "@/components/layout/NavbarSaaS";
-import { Footer } from "@/components/layout/Footer";
+import { AppNavigation } from "@/components/layout/AppNavigation";
+import { AppFooter } from "@/components/layout/AppFooter";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { CartDrawerSaaS } from "@/components/cart/CartDrawerSaaS";
 import { ProductQuickViewModal } from "@/components/storefront/ProductQuickViewModal";
@@ -107,8 +107,8 @@ export default function RootLayout({
                 <CompareProvider>
                   <RecentlyViewedProvider>
                     <StoreProvider>
-                      {/* Architectural enterprise header with Role Switcher & Live Search */}
-                      <NavbarSaaS />
+                      {/* Role-Separated Navigation: Customer Storefront, Seller Hub, or Admin Command */}
+                      <AppNavigation />
 
                       {/* Main content body */}
                       <main className="flex-1">{children}</main>
@@ -133,8 +133,8 @@ export default function RootLayout({
                       {/* PWA offline service worker */}
                       <ServiceWorkerRegister />
 
-                      {/* Comprehensive footer */}
-                      <Footer />
+                      {/* Role-Separated Footer */}
+                      <AppFooter />
                     </StoreProvider>
                   </RecentlyViewedProvider>
                 </CompareProvider>

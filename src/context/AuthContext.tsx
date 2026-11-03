@@ -14,7 +14,7 @@ interface AuthContextType {
   user: CustomerUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string, honeypot?: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string, honeypot?: string) => Promise<{ success: boolean; user?: CustomerUser; error?: string }>;
   loginWithDemo: (role: "customer" | "seller" | "admin") => Promise<{ success: boolean; user?: CustomerUser; error?: string }>;
   loginWithGoogle: (payload: {
     email: string;
@@ -76,7 +76,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       setUser(data.user);
       setIsLoading(false);
-      return { success: true };
+      return { success: true, user: data.user };
     } catch {
       setIsLoading(false);
       return { success: false, error: "Network error during authentication." };
@@ -154,7 +154,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       setUser(data.user);
       setIsLoading(false);
-      return { success: true };
+      return { success: true, user: data.user };
     } catch {
       setIsLoading(false);
       return { success: false, error: "Network error during registration." };

@@ -179,15 +179,17 @@ export function ProductCardSaaS({ product }: { product: StoreProduct }) {
             </button>
           </div>
 
-          {/* Request B2B Quote Action */}
-          <button
-            type="button"
-            onClick={() => openB2BModal(product)}
-            className="w-full mt-1.5 py-1.5 px-2.5 rounded-lg border border-slate-200/80 bg-white/70 hover:bg-blue-50/60 text-slate-600 hover:text-blue-700 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <span>Request Bulk / B2B Quote</span>
-            <ArrowRight className="w-3 h-3 text-slate-400" />
-          </button>
+          {/* Request B2B Quote Action (Only for B2B Wholesale category pieces) */}
+          {product.category === "B2B Wholesale Packs" && (
+            <button
+              type="button"
+              onClick={() => openB2BModal(product)}
+              className="w-full mt-1.5 py-1.5 px-2.5 rounded-lg border border-slate-200/80 bg-white/70 hover:bg-slate-100 text-slate-700 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <span>Request Wholesale Volume Pricing</span>
+              <ArrowRight className="w-3 h-3 text-slate-400" />
+            </button>
+          )}
         </div>
       </div>
     </div>

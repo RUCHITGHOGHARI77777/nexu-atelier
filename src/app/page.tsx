@@ -1,69 +1,32 @@
 "use client";
 
 import React, { useState } from "react";
-import { useStore } from "@/context/StoreContext";
 import { BentoHeroSection } from "@/components/storefront/BentoHeroSection";
 import { StorefrontFilterBar } from "@/components/storefront/StorefrontFilterBar";
 import { ProductGridSaaS } from "@/components/storefront/ProductGridSaaS";
 import { TrustHighlights } from "@/components/storefront/TrustHighlights";
 import { NewsletterSection } from "@/components/storefront/NewsletterSection";
-import { SupplierPortalSaaS } from "@/components/supplier/SupplierPortalSaaS";
-import { AdminCommandCenterSaaS } from "@/components/admin/AdminCommandCenterSaaS";
-import { MarketplaceSavingsCalculator } from "@/components/storefront/MarketplaceSavingsCalculator";
-import { LaunchBrandStoreModal } from "@/components/seller/LaunchBrandStoreModal";
 
 export default function StorefrontHomePage() {
-  const { activeRole } = useStore();
-  const [isLaunchModalOpen, setIsLaunchModalOpen] = useState(false);
-
-  // 1. Role-based view switching for seamless instant demo inspection
-  if (activeRole === "supplier") {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
-        <SupplierPortalSaaS />
-      </div>
-    );
-  }
-
-  if (activeRole === "admin") {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
-        <AdminCommandCenterSaaS />
-      </div>
-    );
-  }
-
-  // 2. Default: Customer Storefront
   return (
-    <div className="space-y-8 pb-16">
-      {/* 1. Promotional Bento Hero Section with Deal of the Day & Live Countdown */}
+    <div className="space-y-10 pb-16">
+      {/* 1. Curated Luxury Bento Hero Section with Deal of the Day */}
       <BentoHeroSection />
 
-      {/* 2. Interactive Marketplace Savings & Profit Calculator (Amazon vs Flipkart vs Meesho vs Us) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <MarketplaceSavingsCalculator onOpenLaunchModal={() => setIsLaunchModalOpen(true)} />
-      </section>
-
-      {/* 3. Main Storefront Catalog Section with Filters & Interactive Product Grid */}
+      {/* 2. Main Storefront Catalog Section with Filters & Interactive Product Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        {/* Interactive Filter & Sort Control Bar */}
+        {/* Category & Attribute Filter Bar */}
         <StorefrontFilterBar />
 
-        {/* High-Converting Product Cards Grid */}
+        {/* High-Resolution Luxury Product Cards Grid */}
         <ProductGridSaaS />
       </section>
 
-      {/* 4. Enterprise Escrow Trust Strip */}
+      {/* 3. 4-Pillar Customer Trust & Escrow Guarantee Strip */}
       <TrustHighlights />
 
-      {/* 5. Studio Dispatch Newsletter */}
+      {/* 4. Atelier Newsletter & Private Collection Drop Notifications */}
       <NewsletterSection />
-
-      {/* 6. 60-Second Brand Store Launch Wizard Modal */}
-      <LaunchBrandStoreModal
-        isOpen={isLaunchModalOpen}
-        onClose={() => setIsLaunchModalOpen(false)}
-      />
     </div>
   );
 }
