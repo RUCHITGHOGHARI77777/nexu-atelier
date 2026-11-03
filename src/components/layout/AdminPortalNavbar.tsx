@@ -29,10 +29,11 @@ export function AdminPortalNavbar() {
 
   const navLinks = [
     { label: "Overview & Metrics", href: "/admin" },
-    { label: "Sellers & KYC", href: "/admin#sellers" },
-    { label: "User Governance", href: "/admin#users" },
-    { label: "Audit & Security Logs", href: "/admin#audit" },
-    { label: "Infrastructure Telemetry", href: "/admin#telemetry" },
+    { label: "Sellers & KYC", href: "/admin/sellers" },
+    { label: "Product Moderation", href: "/admin/products" },
+    { label: "User Governance", href: "/admin/users" },
+    { label: "Audit & Security Logs", href: "/admin/audit-logs" },
+    { label: "Platform Finance", href: "/admin/finance" },
   ];
 
   const handleSignOut = async () => {
@@ -110,15 +111,22 @@ export function AdminPortalNavbar() {
 
         {/* Secondary Sub-Navigation */}
         <nav className="flex items-center gap-2 pt-3 mt-1 border-t border-slate-800/80 overflow-x-auto scrollbar-none">
-          {navLinks.map((tab) => (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-900 transition-colors shrink-0"
-            >
-              {tab.label}
-            </Link>
-          ))}
+          {navLinks.map((tab) => {
+            const isActive = tab.href === "/admin" ? pathname === "/admin" : pathname.startsWith(tab.href);
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shrink-0 ${
+                  isActive
+                    ? "text-white bg-indigo-950/80 border border-indigo-700/50 shadow-xs"
+                    : "text-slate-400 hover:text-white hover:bg-slate-900"
+                }`}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
 
@@ -129,3 +137,4 @@ export function AdminPortalNavbar() {
     </header>
   );
 }
+

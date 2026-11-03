@@ -55,8 +55,10 @@ export function CustomerStorefrontNavbar() {
 
   const handleCategorySelect = (catValue: string) => {
     setSelectedCategory(catValue);
-    if (window.location.pathname !== "/") {
-      router.push("/catalog?category=" + encodeURIComponent(catValue));
+    if (catValue === "All") {
+      router.push("/shop");
+    } else if (window.location.pathname !== "/") {
+      router.push("/shop?category=" + encodeURIComponent(catValue));
     }
   };
 
