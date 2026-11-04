@@ -43,3 +43,4 @@
 - **Cart Bag:** Clean white card architecture with quantity +/- steppers, trash action, and prominent promotional coupon card.
 - **Stepper Navigation:** 3-step checkout indicator (Address $\to$ Courier $\to$ Review & Payment) with explicit progress states.
 - **Payment Modal:** Centered simulated gateway with NPCI UPI QR code, test card presets, and instantaneous test skip.
+

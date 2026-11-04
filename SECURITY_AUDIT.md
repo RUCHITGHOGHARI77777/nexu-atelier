@@ -18,3 +18,4 @@
 | **Rate Limiting** | Brute force & coupon dictionary attacks | Sliding window memory store with IP + user identifier keying | `rate-limiter.test.ts` (PASS) |
 | **Atomic Inventory** | Checkout race conditions & overselling | PostgreSQL `tx.product.update({ data: { stock: { decrement: qty } } })` inside ACID transaction | `database-integrity.test.ts` (PASS) |
 | **Idempotency** | Double billing & duplicate orders | Unique `idempotencyKey` index on `Order` table; returns existing order if matched | `customer-journey.test.ts` (PASS) |
+

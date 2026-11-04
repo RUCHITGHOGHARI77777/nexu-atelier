@@ -64,3 +64,4 @@
 | `/policies/terms` | `src/app/policies/terms/page.tsx` | Marketplace terms, multi-vendor commission governance, patron rights | **VERIFIED (200)** |
 | `/policies/privacy` | `src/app/policies/privacy/page.tsx` | DPDP Act compliant privacy policy, zero token storage, cookie governance | **VERIFIED (200)** |
 | `/not-found` | `src/app/not-found.tsx` | Custom luxury 404 error screen with search and catalog redirection | **VERIFIED (200)** |
+

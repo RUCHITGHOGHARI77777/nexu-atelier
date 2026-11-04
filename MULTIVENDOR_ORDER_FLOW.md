@@ -28,3 +28,4 @@ flowchart TD
 2. **Seller Isolation:** Each seller receives a dedicated `Shipment` record with an independent tracking number (`BLUEDART-XXXXIN`) and seller-specific fulfillment status (`LABEL_CREATED`, `PICKED_UP`, `IN_TRANSIT`, `DELIVERED`).
 3. **Partial Cancellation & Returns:** A cancellation or return for Seller 1's piece does not cancel or invalidate Seller 2's shipment.
 4. **Escrow Protection:** Payment remains held in escrow until the carrier confirms parcel delivery, after which vendor payout ledgers are unlocked.
+

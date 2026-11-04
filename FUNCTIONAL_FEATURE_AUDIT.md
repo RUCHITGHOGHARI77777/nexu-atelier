@@ -27,3 +27,4 @@
 | **Orders** | Customer Archive | Navigate to `/account/orders` | Fetches patron's orders, displays order ID, total, status | Read Only | **PASS** |
 | **Orders** | Order Detail | Navigate to `/account/orders/[id]` | Displays 5-stage fulfillment timeline, invoice, cancel | Read Only | **PASS** |
 | **Orders** | Order Cancellation | Click Cancel on confirmed order | Cancels order in DB, atomically restores variant inventory | **UPDATE Order** | **PASS** |
+
