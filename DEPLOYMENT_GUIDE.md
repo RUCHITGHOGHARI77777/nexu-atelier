@@ -137,3 +137,4 @@ Once deployed to production:
 4. Add an item to bag, execute a test order, and verify invoice generation.
 5. Log into the Seller portal (`/seller`) and verify the product creation wizard and costing calculator.
 6. Log into Admin command center (`/admin`) and check platform financial telemetry.
+

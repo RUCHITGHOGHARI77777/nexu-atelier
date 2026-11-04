@@ -15,3 +15,4 @@ function walkDir(dir, callback) {
 
 // Check with next lint
 console.log('Done helper check');
+

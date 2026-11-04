@@ -23,3 +23,4 @@ let wizContent = fs.readFileSync(wizPath, 'utf8');
 wizContent = wizContent.replace("We'll recommend optimal selling price", "We&apos;ll recommend optimal selling price");
 fs.writeFileSync(wizPath, wizContent);
 console.log('Fixed SupplierProductCreationWizard.tsx');
+

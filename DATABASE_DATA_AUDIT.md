@@ -88,3 +88,4 @@ Per client directives:
    - Use the seeded demo accounts (`patron@nexu.studio` / password in test registry).
    - Any new orders placed in Demo Mode carry `paymentMethod: 'DEMO_UPI'` and `paymentTransactionId: 'DEMO-UTR-...'`.
    - Production filters can cleanly distinguish demo orders using `paymentTransactionId LIKE 'DEMO-%'`.
+

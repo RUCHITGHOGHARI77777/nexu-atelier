@@ -103,3 +103,4 @@
   - Accurate HSN code classification (6204: 5%/12%, 7113: 3%, 6403: 12%/18%, etc.).
   - Automatic intra-state (CGST + SGST) vs inter-state (IGST) splitting.
   - Zero external API dependency required; fully offline, deterministic, and legally compliant.
+

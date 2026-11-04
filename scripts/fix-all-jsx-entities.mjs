@@ -25,3 +25,4 @@ wiz = wiz.replace("piece's identity", "piece&apos;s identity");
 wiz = wiz.replace("seller's product", "seller&apos;s product");
 fs.writeFileSync(wizPath, wiz);
 console.log('Fixed SupplierProductCreationWizard.tsx');
+

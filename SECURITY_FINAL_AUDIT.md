@@ -73,3 +73,4 @@ Get-Item "D:\Ecommerce Project Real\backups\*.dump" | Select-Object Name, Length
 createdb -U postgres -O postgres nexu_restored
 pg_restore -U postgres -d nexu_restored -v "D:\Ecommerce Project Real\backups\nexu_dev_backup_<timestamp>.dump"
 ```
+
