@@ -160,6 +160,9 @@ export function mapDbProductToFrontend(p: any): Product {
     materials: p.material || "Natural composition",
     origin: p.countryOfOrigin || p.vendor.originHub || "India",
     estimatedDeliveryDays: p.vendor.leadTimeDays || 3,
+    taxRatePercent: p.taxRatePercent !== null && p.taxRatePercent !== undefined ? p.taxRatePercent : 12.0,
+    approvalStatus: p.approvalStatus,
+    isPublished: p.isPublished !== undefined ? Boolean(p.isPublished) : true,
   };
 }
 

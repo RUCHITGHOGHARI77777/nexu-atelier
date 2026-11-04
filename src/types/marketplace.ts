@@ -72,6 +72,9 @@ export interface Product {
   materials?: string;
   origin?: string;
   estimatedDeliveryDays: number;
+  taxRatePercent?: number;
+  approvalStatus?: string;
+  isPublished?: boolean;
 }
 
 export interface CartItem {
