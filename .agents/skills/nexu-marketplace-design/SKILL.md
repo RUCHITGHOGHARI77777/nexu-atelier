@@ -111,3 +111,4 @@ The public customer experience must remain 100% focused on customer discovery an
 - [ ] Server-side pricing is strictly authoritative (paise integers in PostgreSQL).
 - [ ] Checkout idempotency prevents duplicate order submission.
 - [ ] Demo payment simulator enforces format validation and zero-storage compliance.
+
