@@ -73,3 +73,4 @@
   - **UPI Intent:** Validates VPA format (`user@bank`), displays 10-second countdown with "Simulate Success" and "Simulate Timeout". Generates `DEMO-UTR-2026-XXXXXX`.
   - **Zero-Storage Card:** Pre-fills test numbers (`4242` for success, `4000` for decline). Never prompts for CVV/PIN.
   - **Cash on Delivery:** Runs fraud evaluation and marks order `PENDING_COLLECTION`.
+

@@ -109,3 +109,4 @@
 | **Vercel Commerce** | Production Next.js App Router e-commerce reference. | Benchmark for App Router caching, route handlers, and URL query state management. |
 | **Medusa Modern DTC** | Clean multi-vendor marketplace ergonomics. | Architectural reference for line-item grouping by vendor and shipment tracking. |
 | **Shopify Hydrogen** | Modern headless storefront patterns. | Reference for cart synchronization and optimistic UI updates. |
+

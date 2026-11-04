@@ -51,3 +51,4 @@ All garment, jewelry, acoustic, and object showcases enforce a portrait ratio of
 | **Vendor Origin** | "Commissioned from Solstice Loom Studio, Ahmedabad" | "Generic Supplier #412" |
 | **Returns** | "Complimentary 7-day atelier exchange & inspection" | "No returns on discounted items" |
 | **Payment** | "Insured Patron Escrow • Zero Risk" | "Click here to pay now!!" |
+

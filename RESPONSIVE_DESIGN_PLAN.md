@@ -41,3 +41,4 @@
 
 - **Minimum Hit Area:** Every clickable button, icon link, and filter chip enforces a minimum target area of `44px x 44px` on mobile viewports.
 - **Typography Scaling:** Fluid typography utilizing Tailwind's `text-xs sm:text-sm lg:text-base` to guarantee legibility on small phone screens without manual zooming.
+

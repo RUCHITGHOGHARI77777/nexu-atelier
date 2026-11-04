@@ -40,3 +40,4 @@
 | 29 | `/policies/refunds` | Returns & Refunds Policy | Escrow return windows, inspection criteria, SLA | **Active & Verified** |
 | 30 | `/policies/privacy` | Privacy & Data Ethics | DPDP/GDPR compliance, zero data brokerage | **Active & Verified** |
 | 31 | `/*` (Not Found) | Custom 404 Page | Clean luxury editorial missing piece notice (`not-found.tsx`) | **Active & Verified** |
+
