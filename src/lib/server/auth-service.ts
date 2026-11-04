@@ -5,6 +5,7 @@ import { prisma } from "./prisma";
 import { UserRole } from "@prisma/client";
 import { sanitizeText } from "./sanitizer";
 import { notificationService } from "./notification-service";
+import { otpService } from "./otp-service";
 
 export const AUTH_COOKIE_NAME = "nexu_customer_session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
@@ -28,6 +29,11 @@ export interface IAuthService {
 
   authenticateGoogle(
     payload: { email: string; name?: string; photoURL?: string; uid?: string; idToken?: string }
+  ): Promise<{ success: boolean; user?: CustomerUser; token?: string; error?: string }>;
+
+  authenticateWhatsAppOtp(
+    phone: string,
+    code: string
   ): Promise<{ success: boolean; user?: CustomerUser; token?: string; error?: string }>;
 
   validateSession(token: string): Promise<CustomerUser | null>;
@@ -355,6 +361,122 @@ export class PrismaAuthService implements IAuthService {
       };
     } catch {
       return { success: false, error: "Database error during Google authentication." };
+    }
+  }
+
+  public async authenticateWhatsAppOtp(
+    phone: string,
+    code: string
+  ): Promise<{ success: boolean; user?: CustomerUser; token?: string; error?: string }> {
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (!cleanPhone || cleanPhone.length < 10) {
+      return { success: false, error: "Valid mobile phone number is required." };
+    }
+
+    const verifyRes = await otpService.verifyOtp({
+      phone: cleanPhone,
+      code,
+      purpose: "LOGIN",
+    });
+
+    if (!verifyRes.verified) {
+      return { success: false, error: verifyRes.message };
+    }
+
+    const normalized = otpService.normalizePhone(cleanPhone);
+    const standard10 = cleanPhone.slice(-10);
+
+    try {
+      // Look for existing user with this phone in profile
+      let user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { profile: { phone: cleanPhone } },
+            { profile: { phone: normalized } },
+            { profile: { phone: `+${normalized}` } },
+            { profile: { phone: standard10 } },
+          ],
+        },
+        include: { profile: true, seller: true },
+      });
+
+      // If user does not exist, provision a verified customer account
+      if (!user) {
+        const generatedEmail = `patron.${standard10}@nexu-auth.internal`;
+        const tempHash = hashPassword(crypto.randomBytes(16).toString("hex"));
+
+        user = await prisma.user.create({
+          data: {
+            email: generatedEmail,
+            passwordHash: tempHash,
+            role: UserRole.CUSTOMER,
+            profile: {
+              create: {
+                name: `Patron ${standard10.slice(-4)}`,
+                phone: normalized,
+                isPhoneVerified: true,
+                phoneVerifiedAt: new Date(),
+              },
+            },
+          },
+          include: { profile: true, seller: true },
+        });
+
+        // Queue welcome onboarding notification
+        notificationService
+          .queueNotification({
+            channel: "EMAIL",
+            recipient: generatedEmail,
+            template: "WELCOME_ONBOARDING",
+            payload: {
+              name: user.profile?.name || "Patron",
+              email: generatedEmail,
+              welcomeCoupon: "NEXUFIRST",
+            },
+          })
+          .catch(() => {});
+      }
+
+      if (user.isSuspended) {
+        return { success: false, error: "This account has been suspended." };
+      }
+
+      const token = crypto.randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+
+      await prisma.session.create({
+        data: {
+          token,
+          userId: user.id,
+          expiresAt,
+        },
+      });
+
+      await prisma.auditEvent.create({
+        data: {
+          entityType: "USER",
+          entityId: user.id,
+          action: "WHATSAPP_OTP_LOGIN_SUCCEEDED",
+          performedBy: user.email,
+          note: `User authenticated via verified WhatsApp OTP for phone ${normalized}.`,
+        },
+      });
+
+      return {
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.profile?.name || "Patron",
+          phone: user.profile?.phone || undefined,
+          createdAt: user.createdAt.toISOString(),
+          role: user.role.toLowerCase() as "customer" | "seller" | "admin",
+          activeStoreId: user.seller?.id || undefined,
+        },
+        token,
+      };
+    } catch {
+      return { success: false, error: "Database error during WhatsApp OTP authentication." };
     }
   }
 

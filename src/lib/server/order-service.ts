@@ -549,7 +549,7 @@ export class PrismaOrderService implements IOrderService {
         return createdOrder;
       });
 
-      // Queue transactional order confirmation outbox notification
+      // Queue transactional notifications: Customer + Suppliers
       try {
         await notificationService.queueNotification({
           channel: "EMAIL",
@@ -560,10 +560,44 @@ export class PrismaOrderService implements IOrderService {
             orderId: resultOrder.id,
             customerName: resultOrder.customerName,
             totalINR: (resultOrder.totalPaise / 100).toLocaleString("en-IN"),
-            itemCount: resultOrder.items.length,
+            itemsCount: resultOrder.items.length,
             estimatedDeliveryDate: `${resultOrder.deliveryEstimatedDays} business days`,
           },
         });
+
+        // Queue supplier order notifications for each unique vendor involved
+        const supplierItemMap = new Map<string, { count: number; totalPaise: number }>();
+        for (const item of resultOrder.items) {
+          if (item.vendorId) {
+            const current = supplierItemMap.get(item.vendorId) || { count: 0, totalPaise: 0 };
+            current.count += item.quantity;
+            current.totalPaise += item.lineTotalPaise || 0;
+            supplierItemMap.set(item.vendorId, current);
+          }
+        }
+
+        for (const [vendorId, data] of supplierItemMap.entries()) {
+          const seller = await prisma.seller.findUnique({
+            where: { id: vendorId },
+            include: { user: true },
+          });
+          const recipientEmail = seller?.businessEmail || seller?.user?.email;
+          if (recipientEmail) {
+            await notificationService.queueNotification({
+              channel: "EMAIL",
+              recipient: recipientEmail,
+              template: "SUPPLIER_NEW_ORDER",
+              orderId: resultOrder.id,
+              payload: {
+                supplierName: seller.name || "Studio Master Artisan",
+                orderId: resultOrder.id,
+                itemsCount: data.count,
+                totalPayoutINR: (data.totalPaise / 100).toLocaleString("en-IN"),
+                dispatchDeadline: "Within 48 hours",
+              },
+            });
+          }
+        }
       } catch {}
 
       return { success: true, order: mapDbOrderToFrontend(resultOrder) };

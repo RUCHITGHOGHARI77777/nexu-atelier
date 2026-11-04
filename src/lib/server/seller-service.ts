@@ -13,6 +13,7 @@ import {
 import { Product } from "@/types/marketplace";
 import { mapDbProductToFrontend } from "./product-repository";
 import { productRevisionService } from "./product-revision-service";
+import { notificationService } from "./notification-service";
 import { supplierDraftService } from "./supplier-draft-service";
 import { slugRedirectService } from "./slug-redirect-service";
 import {
@@ -104,7 +105,7 @@ export class SellerService {
         });
       });
 
-      return {
+      const responsePayload = {
         success: true,
         seller: {
           id: createdSeller.id,
@@ -125,6 +126,25 @@ export class SellerService {
           createdAt: createdSeller.createdAt.toISOString(),
         },
       };
+
+      // Notify Admin of new supplier onboarding application
+      try {
+        const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || "admin@nexuatelier.com";
+        await notificationService.queueNotification({
+          channel: "EMAIL",
+          recipient: adminEmail,
+          template: "ADMIN_SUPPLIER_APPLICATION",
+          payload: {
+            studioName: createdSeller.name,
+            ownerName: data.name,
+            email: createdSeller.businessEmail || data.businessEmail || "applicant@studio.com",
+            city: createdSeller.originHub || "India",
+            state: "India",
+          },
+        });
+      } catch {}
+
+      return responsePayload;
     } catch {
       return { success: false, error: "Failed to submit seller application." };
     }

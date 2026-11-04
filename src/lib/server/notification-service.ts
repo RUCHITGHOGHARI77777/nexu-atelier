@@ -1,8 +1,13 @@
 import { prisma } from "./prisma";
 import { NotificationStatus } from "@prisma/client";
+import { createEmailAdapter, IEmailAdapter } from "./email/email-adapter";
+import * as templates from "./email/email-templates";
+import { whatsappService } from "./whatsapp-service";
+
+export type NotificationChannel = "EMAIL" | "WHATSAPP" | "IN_APP";
 
 export interface QueueNotificationParams {
-  channel?: "EMAIL" | "SMS" | "IN_APP";
+  channel?: NotificationChannel | "SMS"; // "SMS" gracefully mapped to "WHATSAPP" or "EMAIL"
   recipient: string;
   template: string;
   payload: Record<string, any>;
@@ -11,14 +16,44 @@ export interface QueueNotificationParams {
 }
 
 export interface INotificationAdapter {
-  send(params: { recipient: string; template: string; body: string; subject: string }): Promise<{ success: boolean; error?: string }>;
+  send(params: {
+    recipient: string;
+    template: string;
+    body: string;
+    subject: string;
+    html?: string;
+  }): Promise<{ success: boolean; error?: string }>;
 }
 
-export class ConsoleNotificationAdapter implements INotificationAdapter {
-  public async send(params: { recipient: string; template: string; body: string; subject: string }): Promise<{ success: boolean }> {
-    // Development / test sink: records log safely without exposing secrets
-    console.log(`[Notification Service] Template: ${params.template} -> To: ${params.recipient} | Subject: ${params.subject}`);
-    return { success: true };
+export class ProductionNotificationAdapter implements INotificationAdapter {
+  private emailAdapter: IEmailAdapter;
+
+  constructor() {
+    this.emailAdapter = createEmailAdapter();
+  }
+
+  public setEmailAdapter(adapter: IEmailAdapter) {
+    this.emailAdapter = adapter;
+  }
+
+  public async send(params: {
+    recipient: string;
+    template: string;
+    body: string;
+    subject: string;
+    html?: string;
+  }): Promise<{ success: boolean; error?: string }> {
+    const res = await this.emailAdapter.send({
+      to: params.recipient,
+      subject: params.subject,
+      html: params.html || `<div style="font-family: sans-serif; white-space: pre-wrap;">${params.body}</div>`,
+      text: params.body,
+    });
+
+    return {
+      success: res.success,
+      error: res.error,
+    };
   }
 }
 
@@ -26,7 +61,7 @@ export class NotificationService {
   private adapter: INotificationAdapter;
 
   constructor() {
-    this.adapter = new ConsoleNotificationAdapter();
+    this.adapter = new ProductionNotificationAdapter();
   }
 
   public setAdapter(adapter: INotificationAdapter) {
@@ -38,7 +73,12 @@ export class NotificationService {
    * If an idempotencyKey is provided, duplicate events are silently deduplicated.
    */
   public async queueNotification(params: QueueNotificationParams): Promise<{ queued: boolean; id?: string }> {
-    const channel = params.channel || "EMAIL";
+    // Map any legacy "SMS" request directly to WHATSAPP or EMAIL (SMS completely removed)
+    let channel: string = params.channel || "EMAIL";
+    if (channel === "SMS") {
+      channel = "WHATSAPP";
+    }
+
     const key = params.idempotencyKey || `${params.template}_${params.orderId || params.recipient}_${Date.now()}`;
 
     try {
@@ -91,14 +131,51 @@ export class NotificationService {
       payload = {};
     }
 
-    const { subject, body } = this.renderTemplate(event.template, payload);
+    // Render branded luxury template
+    const rendered = this.renderTemplate(event.template, payload);
 
     try {
+      // Channel: WHATSAPP
+      if (event.channel === "WHATSAPP") {
+        const otpCode = payload.code || payload.otpCode;
+        if (otpCode) {
+          const res = await whatsappService.sendOtp({
+            recipientPhone: event.recipient,
+            otpCode: String(otpCode),
+            purpose: payload.purpose || "PHONE_VERIFICATION",
+          });
+
+          if (res.success) {
+            await prisma.notificationEvent.update({
+              where: { id: eventId },
+              data: {
+                status: NotificationStatus.SENT,
+                sentAt: new Date(),
+                attempts: { increment: 1 },
+              },
+            });
+            return true;
+          } else {
+            await prisma.notificationEvent.update({
+              where: { id: eventId },
+              data: {
+                status: NotificationStatus.FAILED,
+                attempts: { increment: 1 },
+                lastError: res.error || "WhatsApp delivery failed",
+              },
+            });
+            return false;
+          }
+        }
+      }
+
+      // Default Channel: EMAIL
       const res = await this.adapter.send({
         recipient: event.recipient,
         template: event.template,
-        subject,
-        body,
+        subject: rendered.subject,
+        body: rendered.body,
+        html: rendered.html,
       });
 
       if (res.success) {
@@ -135,23 +212,256 @@ export class NotificationService {
     }
   }
 
-  private renderTemplate(template: string, payload: Record<string, any>): { subject: string; body: string } {
+  /**
+   * Renders the subject, body (plain-text), and luxury HTML for any supported template.
+   */
+  public renderTemplate(
+    template: string,
+    payload: Record<string, any>
+  ): { subject: string; body: string; html?: string } {
     switch (template) {
+      // -------------------------------------------------------------
+      // CUSTOMER TEMPLATES
+      // -------------------------------------------------------------
       case "WELCOME_ONBOARDING":
-        return {
-          subject: `Welcome to Nexu Atelier, ${payload.name}`,
-          body: `Dear ${payload.name},\nWelcome to Nexu Atelier. Discover heirloom artisan pieces directly from master Indian craft studios.\nUse code ${payload.welcomeCoupon || "NEXUFIRST"} for 15% off your first commission.`,
-        };
+      case "CUSTOMER_WELCOME": {
+        const rendered = templates.renderWelcomeEmail({
+          name: payload.name || "Valued Patron",
+          email: payload.email || "",
+          couponCode: payload.welcomeCoupon || payload.couponCode,
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "ACCOUNT_VERIFIED":
+      case "CUSTOMER_ACCOUNT_VERIFIED": {
+        const rendered = templates.renderAccountVerifiedEmail({
+          name: payload.name || "Valued Patron",
+          identifier: payload.identifier || payload.phone || payload.email || "",
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "ORDER_CONFIRMED":
+      case "CUSTOMER_ORDER_CONFIRMED": {
+        const rendered = templates.renderOrderConfirmedEmail({
+          orderId: payload.orderId || "ORD-PENDING",
+          customerName: payload.customerName || "Valued Patron",
+          totalINR: payload.totalINR || payload.total || "0",
+          itemsCount: payload.itemsCount,
+          estimatedDeliveryDate: payload.estimatedDeliveryDate,
+          shippingAddress: payload.shippingAddress,
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "PAYMENT_VERIFIED":
+      case "CUSTOMER_PAYMENT_CONFIRMED": {
+        const rendered = templates.renderPaymentConfirmedEmail({
+          orderId: payload.orderId || "ORD-PENDING",
+          customerName: payload.customerName || "Valued Patron",
+          totalINR: payload.totalINR || payload.total || "0",
+          paymentMethod: payload.paymentMethod || "Direct Instant UPI / Card",
+          transactionRef: payload.transactionRef || payload.utr || "TXN-VERIFIED",
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "SHIPMENT_DISPATCHED":
+      case "CUSTOMER_ORDER_SHIPPED": {
+        const rendered = templates.renderOrderShippedEmail({
+          orderId: payload.orderId || "ORD-PENDING",
+          customerName: payload.customerName || "Valued Patron",
+          carrierName: payload.carrierName || "Blue Dart Express",
+          trackingNumber: payload.trackingNumber || "AWB-PENDING",
+          trackingUrl: payload.trackingUrl,
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "OUT_FOR_DELIVERY":
+      case "CUSTOMER_DELIVERY_UPDATE": {
+        const rendered = templates.renderDeliveryUpdateEmail({
+          orderId: payload.orderId || "ORD-PENDING",
+          customerName: payload.customerName || "Valued Patron",
+          status: payload.status || "Out for delivery with courier partner",
+          location: payload.location,
+          timestamp: payload.timestamp,
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "DELIVERED":
+      case "CUSTOMER_ORDER_DELIVERED": {
+        const rendered = templates.renderOrderDeliveredEmail({
+          orderId: payload.orderId || "ORD-PENDING",
+          customerName: payload.customerName || "Valued Patron",
+          deliveredAt: payload.deliveredAt,
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
       case "ORDER_CANCELLED":
-        return {
-          subject: `Order Cancelled: ${payload.orderId} | Nexu Atelier`,
-          body: `Dear ${payload.customerName},\nYour order ${payload.orderId} has been successfully cancelled.\nReason: ${payload.reason || "Patron pre-dispatch request"}.\nAny authorized payments have been released.`,
-        };
-      case "DISPUTE_SUBMITTED":
-        return {
-          subject: `Return Request Received: Order ${payload.orderId}`,
-          body: `Dear patron,\nYour return/dispute request for order ${payload.orderId} has been received and routed to our arbitration desk.\nTicket Ref: ${payload.disputeId || "DISP-PENDING"}.`,
-        };
+      case "CUSTOMER_ORDER_CANCELLED": {
+        const rendered = templates.renderOrderCancelledEmail({
+          orderId: payload.orderId || "ORD-PENDING",
+          customerName: payload.customerName || "Valued Patron",
+          reason: payload.reason,
+          refundInitiated: Boolean(payload.refundInitiated),
+          refundAmountINR: payload.refundAmountINR || payload.totalINR,
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "REFUND_ISSUED":
+      case "CUSTOMER_REFUND_UPDATE": {
+        const rendered = templates.renderRefundUpdateEmail({
+          orderId: payload.orderId || "ORD-PENDING",
+          customerName: payload.customerName || "Valued Patron",
+          amountINR: payload.amountINR || payload.amount || "0",
+          refundId: payload.refundId || "REF-COMPLETED",
+          status: payload.status || "Processed to Original Payment Source",
+          gatewayRef: payload.gatewayRef,
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "PASSWORD_RESET":
+      case "CUSTOMER_PASSWORD_RESET": {
+        const rendered = templates.renderPasswordResetEmail({
+          name: payload.name || "Valued Patron",
+          resetUrl: payload.resetUrl || "#",
+          expiryMinutes: payload.expiryMinutes || 60,
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "SECURITY_ALERT":
+      case "CUSTOMER_SECURITY_ALERT": {
+        const rendered = templates.renderSecurityAlertEmail({
+          name: payload.name || "Valued Patron",
+          action: payload.action || "Credential Modification",
+          ipAddress: payload.ipAddress,
+          timestamp: payload.timestamp || new Date().toUTCString(),
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      // -------------------------------------------------------------
+      // SUPPLIER TEMPLATES
+      // -------------------------------------------------------------
+      case "SUPPLIER_NEW_ORDER": {
+        const rendered = templates.renderSupplierNewOrderEmail({
+          supplierName: payload.supplierName || "Studio Master Artisan",
+          orderId: payload.orderId || "ORD-PENDING",
+          itemsCount: payload.itemsCount || 1,
+          totalPayoutINR: payload.totalPayoutINR || payload.payout || "0",
+          dispatchDeadline: payload.dispatchDeadline,
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "SUPPLIER_ORDER_STATUS": {
+        const rendered = templates.renderSupplierOrderStatusEmail({
+          supplierName: payload.supplierName || "Studio Master Artisan",
+          orderId: payload.orderId || "ORD-PENDING",
+          oldStatus: payload.oldStatus || "PENDING",
+          newStatus: payload.newStatus || "UPDATED",
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "SUPPLIER_PRODUCT_APPROVED": {
+        const rendered = templates.renderSupplierProductApprovedEmail({
+          supplierName: payload.supplierName || "Studio Master Artisan",
+          productTitle: payload.productTitle || "Artisan Piece",
+          productId: payload.productId || "",
+          slug: payload.slug || "",
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "SUPPLIER_PRODUCT_REJECTED": {
+        const rendered = templates.renderSupplierProductRejectedEmail({
+          supplierName: payload.supplierName || "Studio Master Artisan",
+          productTitle: payload.productTitle || "Artisan Piece",
+          productId: payload.productId || "",
+          feedback: payload.feedback || "Please review attribute guidelines and image quality standards.",
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "SUPPLIER_RETURN_REQUEST":
+      case "DISPUTE_SUBMITTED": {
+        const rendered = templates.renderSupplierReturnRequestEmail({
+          supplierName: payload.supplierName || "Studio Master Artisan",
+          orderId: payload.orderId || "ORD-PENDING",
+          reason: payload.reason || "Patron replacement request",
+          disputeId: payload.disputeId || "DISP-PENDING",
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "SUPPLIER_SETTLEMENT": {
+        const rendered = templates.renderSupplierSettlementEmail({
+          supplierName: payload.supplierName || "Studio Master Artisan",
+          payoutId: payload.payoutId || "PAY-ESCROW",
+          amountINR: payload.amountINR || payload.amount || "0",
+          utrReference: payload.utrReference || payload.utr || "BANK-UTR-VERIFIED",
+          bankLast4: payload.bankLast4,
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      // -------------------------------------------------------------
+      // ADMIN TEMPLATES
+      // -------------------------------------------------------------
+      case "ADMIN_SUPPLIER_APPLICATION": {
+        const rendered = templates.renderAdminSupplierApplicationEmail({
+          studioName: payload.studioName || "New Studio",
+          ownerName: payload.ownerName || "Applicant",
+          email: payload.email || "",
+          city: payload.city || "India",
+          state: payload.state || "",
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "ADMIN_PLATFORM_ALERT": {
+        const rendered = templates.renderAdminPlatformAlertEmail({
+          title: payload.title || "System Notice",
+          message: payload.message || "",
+          severity: payload.severity || "INFO",
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "ADMIN_TRANSACTION_FAILURE":
+      case "PAYMENT_FAILED": {
+        const rendered = templates.renderAdminTransactionFailureEmail({
+          orderId: payload.orderId || "ORD-PENDING",
+          customerEmail: payload.customerEmail || payload.email || "patron@unknown.com",
+          amountINR: payload.amountINR || payload.totalINR || "0",
+          reason: payload.reason || "Payment declined at gateway",
+          gatewayError: payload.gatewayError,
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      case "ADMIN_DISPUTE_ALERT": {
+        const rendered = templates.renderAdminDisputeAlertEmail({
+          disputeId: payload.disputeId || "DISP-ALERT",
+          orderId: payload.orderId || "ORD-PENDING",
+          customerName: payload.customerName || "Patron",
+          supplierName: payload.supplierName || "Artisan Studio",
+          reason: payload.reason || "Arbitration request",
+        });
+        return { subject: rendered.subject, body: rendered.text, html: rendered.html };
+      }
+
+      // -------------------------------------------------------------
+      // MARKETING / ENGAGEMENT (PRESERVED)
+      // -------------------------------------------------------------
       case "WISHLIST_BACK_IN_STOCK":
         return {
           subject: `Back in Studio: ${payload.productTitle}`,
@@ -167,47 +477,45 @@ export class NotificationService {
           subject: `Complete your commission: Pieces awaiting in your studio bag`,
           body: `You left pieces in your shopping bag at Nexu Atelier. Items remain reserved for a limited time.\nComplimentary shipping applies on orders above ₹2,500.`,
         };
-      case "ORDER_CONFIRMED":
-        return {
-          subject: `Order Confirmed — ${payload.orderId} | Nexu Atelier`,
-          body: `Dear ${payload.customerName},\nYour order ${payload.orderId} of ₹${payload.totalINR} has been confirmed.\nEstimated Delivery: ${payload.estimatedDeliveryDate || "3 business days"}.`,
-        };
-      case "PAYMENT_VERIFIED":
-        return {
-          subject: `Payment Receipt for Order ${payload.orderId}`,
-          body: `Your payment of ₹${payload.totalINR} (Ref: ${payload.transactionRef}) has been successfully verified.`,
-        };
-      case "PAYMENT_FAILED":
-        return {
-          subject: `Action Required: Payment Failed for Order ${payload.orderId}`,
-          body: `We were unable to process your payment. Reason: ${payload.reason || "Gateway decline"}. Please retry checkout.`,
-        };
-      case "SHIPMENT_DISPATCHED":
-        return {
-          subject: `Parcel Dispatched: ${payload.carrierName} AWB ${payload.trackingNumber}`,
-          body: `Your artisan order ${payload.orderId} has been dispatched via ${payload.carrierName}.\nTracking Number: ${payload.trackingNumber}.`,
-        };
-      case "OUT_FOR_DELIVERY":
-        return {
-          subject: `Out for Delivery: Order ${payload.orderId}`,
-          body: `Your package with AWB ${payload.trackingNumber} is out for delivery today.`,
-        };
-      case "DELIVERED":
-        return {
-          subject: `Delivered: Your Nexu Atelier Parcel has arrived`,
-          body: `Package with AWB ${payload.trackingNumber} has been delivered. Thank you for supporting master artisans!`,
-        };
-      case "REFUND_ISSUED":
-        return {
-          subject: `Refund Processed for Order ${payload.orderId}`,
-          body: `A refund of ₹${payload.amountINR} has been issued. Reason: ${payload.reason || "Administrative resolution"}. Ref: ${payload.refundId}.`,
-        };
+
       default:
         return {
           subject: `Notification: ${template}`,
           body: JSON.stringify(payload, null, 2),
         };
     }
+  }
+
+  /**
+   * Processes the outbox queue with exponential backoff and maximum retry bounds.
+   */
+  public async processOutboxQueue(batchSize = 25): Promise<{ processed: number; succeeded: number; failed: number }> {
+    const events = await prisma.notificationEvent.findMany({
+      where: {
+        status: { in: [NotificationStatus.QUEUED, NotificationStatus.FAILED] },
+        attempts: { lt: 3 }, // Maximum 3 retries
+      },
+      orderBy: { createdAt: "asc" },
+      take: batchSize,
+    });
+
+    let succeeded = 0;
+    let failed = 0;
+
+    for (const event of events) {
+      const ok = await this.dispatchNotification(event.id);
+      if (ok) {
+        succeeded++;
+      } else {
+        failed++;
+      }
+    }
+
+    return {
+      processed: events.length,
+      succeeded,
+      failed,
+    };
   }
 
   /**
@@ -218,6 +526,26 @@ export class NotificationService {
       orderBy: { createdAt: "desc" },
       take: limit,
     });
+  }
+
+  /**
+   * Returns outbox operational metrics.
+   */
+  public async getOutboxMetrics() {
+    const [total, sent, queued, failed] = await Promise.all([
+      prisma.notificationEvent.count(),
+      prisma.notificationEvent.count({ where: { status: NotificationStatus.SENT } }),
+      prisma.notificationEvent.count({ where: { status: NotificationStatus.QUEUED } }),
+      prisma.notificationEvent.count({ where: { status: NotificationStatus.FAILED } }),
+    ]);
+
+    return {
+      total,
+      sent,
+      queued,
+      failed,
+      deliveryRatePercent: total > 0 ? Math.round((sent / total) * 100) : 100,
+    };
   }
 }
 

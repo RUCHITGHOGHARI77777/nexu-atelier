@@ -5,6 +5,7 @@
 
 import crypto from "crypto";
 import { prisma } from "@/lib/server/prisma";
+import { otpService } from "@/lib/server/otp-service";
 
 export interface UpdateConsentInput {
   consentMarketing?: boolean;
@@ -121,7 +122,8 @@ export class CustomerPrivacyService {
   }
 
   /**
-   * Requests a 6-digit phone verification OTP with attempt limits and resend cooldown.
+   * Requests a 6-digit phone verification OTP with attempt limits, resend cooldown,
+   * and delivery via Meta WhatsApp Business Cloud API.
    */
   public async requestPhoneOtp(userId: string, rawPhone: string) {
     const cleanPhone = rawPhone.replace(/\D/g, "");
@@ -129,52 +131,18 @@ export class CustomerPrivacyService {
       throw new Error("Invalid Indian mobile number. Must be a 10-digit number starting with 6-9.");
     }
 
-    const now = new Date();
-
-    // Check recent OTP for resend cooldown
-    const existing = await prisma.verificationOtp.findFirst({
-      where: {
-        identifier: cleanPhone,
-        type: "PHONE",
-        expiresAt: { gt: now },
-      },
-      orderBy: { createdAt: "desc" },
+    // Delegate directly to WhatsApp-first OTP engine
+    const result = await otpService.requestOtp({
+      phone: cleanPhone,
+      purpose: "PHONE_VERIFICATION",
     });
-
-    if (existing && existing.resendCooldownUntil > now) {
-      const waitSeconds = Math.ceil((existing.resendCooldownUntil.getTime() - now.getTime()) / 1000);
-      throw new Error(`Please wait ${waitSeconds} seconds before requesting a new OTP.`);
-    }
-
-    // Generate cryptographic 6-digit OTP
-    const otpCode = crypto.randomInt(100000, 999999).toString();
-    const otpHash = crypto.createHash("sha256").update(otpCode).digest("hex");
-
-    const expiresAt = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes
-    const resendCooldownUntil = new Date(now.getTime() + 60 * 1000); // 60 seconds
-
-    await prisma.verificationOtp.create({
-      data: {
-        identifier: cleanPhone,
-        type: "PHONE",
-        otpHash,
-        attemptsCount: 0,
-        maxAttempts: 3,
-        resendCooldownUntil,
-        expiresAt,
-      },
-    });
-
-    // In simulated environment, log for verification
-    console.log(`[SMS Gateway Simulator] OTP for ${cleanPhone}: ${otpCode}`);
 
     return {
       success: true,
-      message: `Verification code sent to +91 ${cleanPhone.slice(0, 3)}****${cleanPhone.slice(-3)}.`,
-      expiresInSeconds: 300,
-      cooldownSeconds: 60,
-      // For local testing convenience only
-      _debugCode: process.env.NODE_ENV !== "production" ? otpCode : undefined,
+      message: result.message,
+      expiresInSeconds: result.expiresInSeconds,
+      cooldownSeconds: result.cooldownSeconds,
+      _debugCode: result._debugCode,
     };
   }
 
@@ -185,40 +153,15 @@ export class CustomerPrivacyService {
     const cleanPhone = rawPhone.replace(/\D/g, "");
     const now = new Date();
 
-    const otpRecord = await prisma.verificationOtp.findFirst({
-      where: {
-        identifier: cleanPhone,
-        type: "PHONE",
-        expiresAt: { gt: now },
-        verifiedAt: null,
-      },
-      orderBy: { createdAt: "desc" },
+    const verifyResult = await otpService.verifyOtp({
+      phone: cleanPhone,
+      code: submittedOtp,
+      purpose: "PHONE_VERIFICATION",
     });
 
-    if (!otpRecord) {
-      throw new Error("No active verification code found or code has expired. Please request a new code.");
+    if (!verifyResult.verified) {
+      throw new Error(verifyResult.message);
     }
-
-    if (otpRecord.attemptsCount >= otpRecord.maxAttempts) {
-      throw new Error("Maximum verification attempts exceeded. Please request a new code.");
-    }
-
-    const submittedHash = crypto.createHash("sha256").update(submittedOtp.trim()).digest("hex");
-
-    if (submittedHash !== otpRecord.otpHash) {
-      await prisma.verificationOtp.update({
-        where: { id: otpRecord.id },
-        data: { attemptsCount: { increment: 1 } },
-      });
-      const remaining = otpRecord.maxAttempts - (otpRecord.attemptsCount + 1);
-      throw new Error(`Incorrect verification code. ${remaining} attempts remaining.`);
-    }
-
-    // Mark OTP as verified
-    await prisma.verificationOtp.update({
-      where: { id: otpRecord.id },
-      data: { verifiedAt: now },
-    });
 
     // Update Customer Profile
     await prisma.customerProfile.upsert({
@@ -241,15 +184,15 @@ export class CustomerPrivacyService {
       data: {
         entityType: "USER_PHONE",
         entityId: userId,
-        action: "PHONE_VERIFIED",
-        note: `Mobile number +91 ${cleanPhone.slice(0, 3)}****${cleanPhone.slice(-3)} verified via cryptographic OTP.`,
+        action: "PHONE_VERIFIED_WHATSAPP",
+        note: `Mobile number +91 ${cleanPhone.slice(0, 3)}****${cleanPhone.slice(-3)} verified via WhatsApp OTP.`,
         performedBy: userId,
       },
     });
 
     return {
       success: true,
-      message: "Mobile number verified successfully.",
+      message: "Mobile number verified successfully via WhatsApp.",
     };
   }
 

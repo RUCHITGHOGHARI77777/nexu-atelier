@@ -162,7 +162,7 @@ export default function CustomerPrivacyCenterPage() {
       setOtpCooldown(60);
       setPhoneFeedback({
         type: "success",
-        text: "Cryptographic 6-digit OTP generated and dispatched via SMS gateway. Valid for 5 minutes.",
+        text: "Cryptographic 6-digit OTP generated and dispatched via Meta WhatsApp Cloud API. Valid for 5 minutes.",
       });
     } catch (err: any) {
       setPhoneFeedback({ type: "error", text: err.message || "Failed to send OTP." });
@@ -416,7 +416,7 @@ export default function CustomerPrivacyCenterPage() {
 
             {otpSent && (
               <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200 space-y-2">
-                <label className="block text-xs font-medium text-zinc-800">Enter 6-Digit SMS Code</label>
+                <label className="block text-xs font-medium text-zinc-800">Enter 6-Digit WhatsApp Code</label>
                 <div className="flex gap-2">
                   <Input
                     type="text"
@@ -635,7 +635,7 @@ export default function CustomerPrivacyCenterPage() {
                 Promotional & Seasonal Collection Dispatch
               </label>
               <p className="text-xs text-zinc-600">
-                Receive curated quarterly editorial releases and newly onboarded atelier announcements via SMS and Email.
+                Receive curated quarterly editorial releases and newly onboarded atelier announcements via WhatsApp and Email.
               </p>
             </div>
             <input

@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { reviewSlaService } from "./review-sla-service";
 import { productRevisionService } from "./product-revision-service";
+import { notificationService } from "./notification-service";
 import {
   SellerStatus,
   ProductApprovalStatus,
@@ -436,7 +437,7 @@ export class AdminService {
   ): Promise<{ success: boolean; error?: string }> {
     const product = await prisma.product.findUnique({
       where: { id: productId },
-      include: { vendor: true },
+      include: { vendor: { include: { user: true } } },
     });
 
     if (!product) {
@@ -492,6 +493,41 @@ export class AdminService {
         adminFeedback: notes?.trim() || null,
         changedFields: options?.rejectedFields,
       });
+
+      // Dispatch supplier notification outbox
+      try {
+        const vendorEmail = product.vendor.businessEmail || product.vendor.user?.email;
+        if (vendorEmail) {
+          if (status === ProductApprovalStatus.APPROVED) {
+            await notificationService.queueNotification({
+              channel: "EMAIL",
+              recipient: vendorEmail,
+              template: "SUPPLIER_PRODUCT_APPROVED",
+              payload: {
+                supplierName: product.vendor.name || "Studio Master Artisan",
+                productTitle: product.title,
+                productId: product.id,
+                slug: product.slug,
+              },
+            });
+          } else if (
+            status === ProductApprovalStatus.REJECTED ||
+            status === ProductApprovalStatus.CHANGES_REQUESTED
+          ) {
+            await notificationService.queueNotification({
+              channel: "EMAIL",
+              recipient: vendorEmail,
+              template: "SUPPLIER_PRODUCT_REJECTED",
+              payload: {
+                supplierName: product.vendor.name || "Studio Master Artisan",
+                productTitle: product.title,
+                productId: product.id,
+                feedback: notes?.trim() || options?.suggestedCorrections || "Please review attribute guidelines and image quality standards.",
+              },
+            });
+          }
+        }
+      } catch {}
 
       return { success: true };
     } catch (err: any) {
@@ -2316,7 +2352,7 @@ export class AdminService {
 
     const payout = await prisma.vendorPayout.findUnique({
       where: { id: payoutId },
-      include: { seller: true },
+      include: { seller: { include: { user: true } } },
     });
 
     if (!payout) return { success: false, error: "Payout record not found." };
@@ -2346,6 +2382,25 @@ export class AdminService {
         performedBy: adminUserId,
       },
     });
+
+    // Queue transactional settlement notification to the supplier
+    try {
+      const recipientEmail = payout.seller.businessEmail || payout.seller.user?.email;
+      if (recipientEmail) {
+        await notificationService.queueNotification({
+          channel: "EMAIL",
+          recipient: recipientEmail,
+          template: "SUPPLIER_SETTLEMENT",
+          payload: {
+            supplierName: payout.seller.name || "Studio Master Artisan",
+            payoutId: updated.id,
+            amountINR: (updated.netPayoutPaise / 100).toLocaleString("en-IN"),
+            utrReference: updated.transactionRef || payload.transactionRef.trim(),
+            bankLast4: payout.seller.bankAccountNumber ? payout.seller.bankAccountNumber.slice(-4) : undefined,
+          },
+        });
+      }
+    } catch {}
 
     return {
       success: true,

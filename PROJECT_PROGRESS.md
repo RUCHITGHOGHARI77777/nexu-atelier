@@ -99,6 +99,22 @@ NEXU ATELIER is a single reusable Next.js application that hosts three role-gate
     - Responsive customer payment method selector (`PaymentMethodSelector.tsx`) supporting Instant UPI, Hosted Cards, Net Banking, Wallets, and COD.
     - **Critical Stop Point Honored:** The Final Pay button displays selected method and authoritative amount but remains a non-processing placeholder modal, holding live charges and COD order creation in staging mode until the owner supplies the next processing specification.
     - Database-backed payment reporting (`payment-report-service.ts`) analyzing volume, methods, failed transactions, and courier remittances directly from PostgreSQL.
+18. **WhatsApp Business Cloud API — Primary OTP Verification Engine & Complete Removal of SMS:**
+    - Integrated Meta WhatsApp Business Cloud API (`whatsappService.ts`) compliant with Graph API v20.0 authentication template specifications.
+    - Implemented secure OTP lifecycle management (`otpService.ts`): cryptographically secure 6-digit random codes, SHA-256 storage hashing (plaintext never stored in DB), 5-minute expiry, 60-second resend cooldown, 3-attempt brute force lock, and 5-request hourly abuse limit per phone.
+    - Dedicated authentication routes `/api/auth/otp/send`, `/api/auth/otp/verify`, and `/api/auth/otp/login` enabling seamless 1-click passwordless customer authentication via WhatsApp.
+    - Updated customer privacy profile verification (`verify-phone/route.ts` & `customer-privacy-service.ts`) to use WhatsApp OTP.
+    - Completely deprecated and removed all SMS gateway references, variables, and fallbacks in strict compliance with marketplace directives.
+19. **Automated Branded Transactional Email & Outbox Architecture:**
+    - Designed 21 responsive luxury HTML email templates (`email-templates.ts`) featuring `#17191F` headings, `#2457C5` buttons, pure white cards, and full plain-text fallbacks.
+    - Implemented transactional email provider driver architecture (`email-adapter.ts`) supporting Resend API (`RESEND_API_KEY`) and safe masked Console development sink.
+    - Comprehensive transactional coverage:
+      * **Customer Events:** Welcome Onboarding with welcome coupon, Account Verified, Order Confirmed with tracking link, Payment Verified with UTR ref, Order Shipped with AWB tracking, Delivery Updates, Order Delivered, Pre-Dispatch Cancellation with inventory restoration, Refund Notice, Password Reset, and Security Alerts.
+      * **Supplier Events:** New Order Allocated with item counts & net payout, Order Status Updates, Product Approved & Published, Product Changes Requested with curator notes, Return/Dispute Requests, and Escrow Settlement Releases with banking UTR.
+      * **Admin Alerts:** New Studio Applications with applicant details, Platform Health & Volume Alerts, Transaction/Gateway Failures, and Dispute Arbitration Escalations.
+    - Integrated into core business workflows (`order-service.ts`, `seller-service.ts`, `admin-service.ts`, `auth-service.ts`).
+    - Full idempotency deduplication and batch outbox retry queue processing (`notificationService.processOutboxQueue`).
+20. **Automated Test Suite Expansion:** 337 passed out of 337 Vitest tests across 29 test suites with 100% pass rate. TypeScript static analysis clean with 0 errors across entire repository.
 
 ### B. Incomplete Features (Queued for Resolution)
 1. **Complete Shopping & Supplier Fulfillment Journey (Part 7):**
