@@ -79,7 +79,7 @@ export function CustomerStorefrontNavbar() {
     if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
     leaveTimerRef.current = setTimeout(() => {
       setActiveMegaMenu(null);
-    }, 150);
+    }, 250);
   };
 
   React.useEffect(() => {
@@ -125,7 +125,7 @@ export function CustomerStorefrontNavbar() {
 
   return (
     <header
-      className="sticky top-0 z-50 w-full bg-white border-b border-zinc-200 shadow-xs transition-all"
+      className="sticky top-0 z-50 relative w-full bg-white border-b border-zinc-200 shadow-xs transition-all"
       onMouseLeave={handleMouseLeaveHeader}
     >
       {/* 1. Top Announcement & Utility Strip */}
@@ -629,6 +629,12 @@ export function CustomerStorefrontNavbar() {
         isOpen={Boolean(activeMegaMenu)}
         activeMenu={activeMegaMenu}
         onClose={() => setActiveMegaMenu(null)}
+        onMouseEnter={() => {
+          if (leaveTimerRef.current) {
+            clearTimeout(leaveTimerRef.current);
+            leaveTimerRef.current = null;
+          }
+        }}
       />
 
       {/* Global Auth Modal */}

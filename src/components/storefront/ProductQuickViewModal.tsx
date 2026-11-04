@@ -752,10 +752,10 @@ export function ProductQuickViewModal() {
                   {/* Transparent Price & Tax Breakdown */}
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5 font-mono text-[11px]">
                     <span className="text-[10px] uppercase font-bold text-slate-500 block">
-                      Itemized Transparent Price Breakdown (0% NEXU Commission)
+                      Itemized Transparent Price Breakdown
                     </span>
                     <div className="flex justify-between text-slate-700">
-                      <span>Artisan Selling Price:</span>
+                      <span>Artisan Studio Price:</span>
                       <span className="font-bold text-slate-900">{formatPrice(product.price)}</span>
                     </div>
                     <div className="flex justify-between text-slate-700">
@@ -763,12 +763,12 @@ export function ProductQuickViewModal() {
                       <span className="font-bold text-emerald-700">
                         {product.deliveryChargeMode === "CUSTOM" && product.deliveryCharge
                           ? `+ ₹${product.deliveryCharge}`
-                          : "₹0.00 (Free Delivery)"}
+                          : "Free Pan-India Delivery"}
                       </span>
                     </div>
                     <div className="flex justify-between text-slate-700">
-                      <span>Platform Middleman Cut:</span>
-                      <span className="font-bold text-emerald-700">₹0.00 (Zero Commission)</span>
+                      <span>Escrow Platform Handling:</span>
+                      <span className="font-semibold text-slate-700">Studio Direct Verified</span>
                     </div>
                     <div className="flex justify-between text-slate-700">
                       <span>Taxes (CGST/SGST/IGST):</span>

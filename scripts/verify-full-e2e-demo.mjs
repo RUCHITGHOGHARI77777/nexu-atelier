@@ -320,6 +320,13 @@ async function runFullE2EDemo() {
     // -------------------------------------------------------------------------
     console.log("\n▶ Step 13: Loading Customer Order Archive (/account/orders)...");
     await gotoPage(page, `${BASE_URL}/account/orders`);
+    try {
+      await page.waitForFunction(
+        () => document.body.innerText.includes("My Studio Orders") && !document.body.innerText.includes("Loading order history..."),
+        { timeout: 10000 }
+      );
+    } catch {}
+    await new Promise((r) => setTimeout(r, 800));
     await takeScreenshot(page, "demo_08_account_orders.png");
 
     const ordersPageRendered = await page.evaluate((orderId) => {
@@ -334,6 +341,13 @@ async function runFullE2EDemo() {
     if (latestOrder?.id) {
       console.log(`\n▶ Step 14: Inspecting Order Detail Page (/account/orders/${latestOrder.id})...`);
       await gotoPage(page, `${BASE_URL}/account/orders/${latestOrder.id}`);
+      try {
+        await page.waitForFunction(
+          () => document.body.innerText.includes("Order Confirmed") || document.body.innerText.includes("Delivery Address"),
+          { timeout: 10000 }
+        );
+      } catch {}
+      await new Promise((r) => setTimeout(r, 800));
       await takeScreenshot(page, "demo_09_order_detail_view.png");
 
       const detailPageValid = await page.evaluate(() => {

@@ -8,16 +8,23 @@ import { ArrowRight, Sparkles, ShieldCheck, MapPin } from "lucide-react";
 interface MegaMenuProps {
   isOpen: boolean;
   onClose: () => void;
+  onMouseEnter?: () => void;
   activeMenu: "collections" | "guilds" | null;
 }
 
-export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, activeMenu }) => {
+export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
+  isOpen,
+  onClose,
+  onMouseEnter,
+  activeMenu,
+}) => {
   if (!isOpen || !activeMenu) return null;
 
   return (
     <div
+      onMouseEnter={onMouseEnter}
       onMouseLeave={onClose}
-      className="absolute top-full left-0 w-full bg-white border-b border-zinc-200 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+      className="absolute top-full left-0 w-full bg-white border-b border-zinc-200 shadow-2xl z-50 animate-in fade-in slide-in-from-top-1 duration-150"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeMenu === "collections" && (
