@@ -258,7 +258,17 @@ export default function CheckoutPage() {
   const finalPayableTotal = calculatedGrandTotal + codFeeINR;
 
   const handlePlaceholderPayClick = () => {
-    // Owner specification fulfilled: Open interactive simulated payment gateway modal
+    // If Cash on Delivery is selected, proceed directly to order placement without payment gateway modal
+    if (paymentState?.method === "COD") {
+      handlePlaceOrder({
+        method: "COD",
+        bankRef: `COD-${Math.floor(100000 + Math.random() * 900000)}`,
+        notes: "Cash on Delivery confirmed by customer",
+        isDemo: false,
+      });
+      return;
+    }
+    // Owner specification fulfilled: Open interactive simulated payment gateway modal for electronic payments
     setShowPaymentModal(true);
   };
 
@@ -392,7 +402,7 @@ export default function CheckoutPage() {
       total: finalPayableTotal,
       subtotal: rawSubtotal,
       shippingFee: calculatedShippingFee,
-      taxAmount: Math.round((rawSubtotal * 18) / 118),
+      taxAmount: Math.round(((rawSubtotal - couponDiscountINR) * 12) / 112),
       discount: couponDiscountINR,
       couponCode: appliedCoupon?.code,
       customerName: activeAddress?.fullName || newFullName || "Aarav Mehta",
@@ -1040,9 +1050,9 @@ export default function CheckoutPage() {
               )}
 
               <div className="flex items-center justify-between pt-2">
-                <span>Estimated {store.activeRegion.taxShort} Included:</span>
+                <span>Estimated GST Included (12%):</span>
                 <span className="font-mono text-zinc-950 font-medium">
-                  {store.formatPrice(Math.round(rawSubtotal * store.activeRegion.taxRate))}
+                  {store.formatPrice(Math.round(((rawSubtotal - couponDiscountINR) * 12) / 112))}
                 </span>
               </div>
 

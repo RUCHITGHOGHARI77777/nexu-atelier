@@ -717,6 +717,32 @@ export default function OrderDetailPage({ params }: Props) {
               </div>
             </div>
 
+            <div className="pt-3 border-t border-zinc-100 space-y-1.5 text-[11px]">
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-500">Method:</span>
+                <span className="font-semibold text-zinc-900">
+                  {(order as any).paymentInfo?.isCod
+                    ? "Cash on Delivery (Doorstep)"
+                    : (order as any).paymentInfo?.method || "Prepaid Gateway"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-500">Settlement Status:</span>
+                <span className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded ${
+                  (order as any).paymentInfo?.isCod
+                    ? "bg-amber-100 text-amber-800"
+                    : "bg-emerald-100 text-emerald-800"
+                }`}>
+                  {(order as any).paymentInfo?.isCod ? "PENDING COLLECTION" : "CAPTURED / ESCROW HOLD"}
+                </span>
+              </div>
+              {(order as any).paymentInfo?.isSandbox && (
+                <div className="mt-2 p-2 rounded bg-amber-50 border border-amber-200 text-[10px] text-amber-900 leading-tight">
+                  <span className="font-bold">Sandbox Test Payment:</span> Demo Gateway Simulation. Not an actual live bank settlement.
+                </div>
+              )}
+            </div>
+
             <div className="pt-2 text-[10px] text-zinc-500 font-mono">
               Direct Escrow Hold • Verified against studio HSN standards
             </div>
@@ -1091,7 +1117,7 @@ export default function OrderDetailPage({ params }: Props) {
                     </div>
                   )}
                   <div className="flex justify-between text-zinc-600">
-                    <span>GST (Included @ 18%):</span>
+                    <span>GST (Included @ 12%):</span>
                     <span>{formatCurrency(order.totals.estimatedTax)}</span>
                   </div>
                   <div className="flex justify-between text-zinc-950 font-bold text-sm pt-2 border-t border-zinc-900">

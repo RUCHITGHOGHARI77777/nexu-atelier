@@ -179,7 +179,7 @@ export function PaymentMethodSelector({
   } else if (method === "WALLET") {
     isReadyToPay = Boolean(selectedWallet);
   } else if (method === "COD") {
-    isReadyToPay = Boolean(codEligibility?.isEligible && (!codEligibility.requiresOtp || codOtpVerified));
+    isReadyToPay = Boolean((codEligibility ? codEligibility.isEligible : true) && (!codEligibility?.requiresOtp || codOtpVerified));
   }
 
   // Notify parent component of state change

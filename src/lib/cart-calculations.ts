@@ -57,7 +57,9 @@ export function calculateCartTotals(items: CartItem[]): CartTotals {
 
   const shippingFee = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
   const amountNeededForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
-  const estimatedTax = Math.round(subtotal * ESTIMATED_TAX_RATE);
+  // GST Inclusive Calculation: All consumer prices are inclusive of 12% GST under HSN 61/62.
+  // Taxable Value = Subtotal / 1.12; GST Component = Subtotal * 12 / 112
+  const estimatedTax = Math.round((subtotal * 12) / 112);
   const total = subtotal + shippingFee; // Taxes are included in MRP/price as per Indian retail standard, itemized transparently
 
   return {

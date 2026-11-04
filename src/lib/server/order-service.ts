@@ -13,6 +13,7 @@ import {
   OrderStatus as PrismaOrderStatus,
   PaymentStatus,
   PaymentProvider,
+  CodCollectionStatus,
 } from "@prisma/client";
 import { addressRepository } from "./address-repository";
 import { authService } from "./auth-service";
@@ -122,7 +123,7 @@ function mapDbOrderToFrontend(dbOrder: any): Order {
 
   const timeline: OrderTimelineEvent[] = (dbOrder.auditEvents || []).map((e: any) => ({
     status: toFrontendStatus(
-      e.action.includes("CONFIRM")
+      e.action.includes("CONFIRM") || e.action.includes("PLACED")
         ? PrismaOrderStatus.CONFIRMED
         : e.action.includes("PRODUCTION")
         ? PrismaOrderStatus.IN_PRODUCTION
@@ -151,14 +152,33 @@ function mapDbOrderToFrontend(dbOrder: any): Order {
     try {
       meta = JSON.parse(p.rawGatewayResponse || "{}");
     } catch {}
+    const isCod = Boolean(dbOrder.isCod || meta.mode === "COD" || p.isCod);
+    const isSandbox = Boolean(
+      meta.isSandbox ||
+      meta.bankRef?.startsWith("DEMO-") ||
+      p.reconciliationStatus === "DEMO_EXCLUDED" ||
+      p.transactionRef?.includes("SANDBOX")
+    );
     paymentInfo = {
-      method: meta.mode || (p.provider === "RAZORPAY" ? "UPI" : "COD"),
+      method: isCod ? "COD" : (meta.mode || (p.provider === "RAZORPAY" ? "UPI" : "COD")),
       provider: p.provider,
       transactionRef: p.transactionRef,
-      bankRef: meta.bankRef || `UPI/2026/${p.transactionRef.replace(/[^0-9]/g, "").slice(-6) || "849201"}`,
-      vpa: meta.vpa || "patron@okhdfcbank",
+      bankRef: meta.bankRef || (isCod ? "N/A (Doorstep Handover)" : `UPI/2026/${p.transactionRef.replace(/[^0-9]/g, "").slice(-6) || "849201"}`),
+      vpa: isCod ? null : (meta.vpa || "patron@okhdfcbank"),
       status: p.status,
       amountPaise: p.amountPaise,
+      isCod,
+      isSandbox,
+      settlementType: isCod
+        ? "CASH_ON_DELIVERY_PENDING_DOORSTEP"
+        : isSandbox
+        ? "SIMULATED_TEST_GATEWAY"
+        : "PRODUCTION_SETTLEMENT",
+      disclaimer: isSandbox
+        ? "Simulated Test Authorization (Demo Gateway Sandbox) — Not an actual bank settlement"
+        : isCod
+        ? "Cash on Delivery: Payment collected physically upon doorstep parcel handover"
+        : undefined,
       authorizedAt: p.createdAt instanceof Date ? p.createdAt.toISOString() : String(p.createdAt),
     };
   }
@@ -449,7 +469,13 @@ export class PrismaOrderService implements IOrderService {
           }
         }
 
-        const estimatedTaxPaise = Math.round(subtotalPaise * 0.12);
+        // Statutory GST treatment under CGST Act Section 15(3):
+        // Indian retail MRP is inclusive of 12% GST for handloom & artisan apparel (> ₹1,000).
+        // Discount applies to the gross price before tax calculation.
+        // Taxable Base = (Subtotal - Discount) / (1 + 0.12)
+        // Tax Amount = (Subtotal - Discount) * 12 / 112
+        const netTaxablePaise = Math.max(0, subtotalPaise - discountPaise);
+        const estimatedTaxPaise = Math.round((netTaxablePaise * 12) / 112);
         const totalPaise = Math.max(0, subtotalPaise + shippingFeePaise - discountPaise);
 
         // Cryptographically strong unique Order ID enforced by database primary key constraint
@@ -459,11 +485,32 @@ export class PrismaOrderService implements IOrderService {
         );
 
         const isCOD = payload.paymentMethod === "COD";
-        const paymentProvider = isCOD ? PaymentProvider.ESCROW_INTERNAL : PaymentProvider.RAZORPAY;
-        const paymentStatus = isCOD ? PaymentStatus.ESCROW_HOLD : PaymentStatus.CAPTURED;
-        const bankRef = payload.paymentDetails?.bankRef || `UPI/2026/${Math.floor(100000 + Math.random() * 900000)}`;
+        const isDemo = Boolean(
+          (payload.paymentDetails as any)?.isDemo ||
+          String(payload.paymentDetails?.bankRef || "").startsWith("DEMO-") ||
+          payload.paymentMethod === "DEMO_UPI" ||
+          (payload as any).isDemo
+        );
+
+        const paymentProvider = isCOD
+          ? PaymentProvider.ESCROW_INTERNAL
+          : isDemo
+          ? PaymentProvider.ESCROW_INTERNAL
+          : PaymentProvider.RAZORPAY;
+
+        const paymentStatus = isCOD
+          ? PaymentStatus.ESCROW_HOLD
+          : PaymentStatus.CAPTURED;
+
+        const bankRef = payload.paymentDetails?.bankRef || (isDemo ? `DEMO-UTR-2026-${Math.floor(100000 + Math.random() * 900000)}` : `UPI/2026/${Math.floor(100000 + Math.random() * 900000)}`);
         const vpa = payload.paymentDetails?.vpa || "patron@okhdfcbank";
         const paymentMode = payload.paymentMethod || "UPI";
+
+        const transactionRef = isCOD
+          ? `TXN-COD-${orderId.replace("ORD-", "")}`
+          : isDemo
+          ? `TXN-SANDBOX-${paymentMode}-${orderId.replace("ORD-", "")}`
+          : `TXN-${paymentMode}-${orderId.replace("ORD-", "")}`;
 
         const createdOrder = await tx.order.create({
           data: {
@@ -485,20 +532,37 @@ export class PrismaOrderService implements IOrderService {
             paymentStatus,
             idempotencyKey,
             estimatedDeliveryDate: deliveryEta,
+            isCod: isCOD,
+            codCollectionStatus: isCOD ? CodCollectionStatus.PENDING : null,
             items: {
               create: validatedItemsData,
             },
             payments: {
               create: {
-                transactionRef: `TXN-${paymentMode}-${orderId.replace("ORD-", "")}`,
+                transactionRef,
                 provider: paymentProvider,
                 amountPaise: totalPaise,
                 currency: "INR",
                 status: paymentStatus,
+                isCod: isCOD,
+                codCollectionStatus: isCOD ? CodCollectionStatus.PENDING : null,
+                reconciliationStatus: isDemo ? "DEMO_EXCLUDED" : "UNRECONCILED",
                 rawGatewayResponse: JSON.stringify({
                   mode: paymentMode,
                   bankRef,
-                  vpa,
+                  vpa: isCOD ? null : vpa,
+                  isSandbox: isDemo,
+                  isProduction: false,
+                  settlementType: isCOD
+                    ? "COD_PENDING_PHYSICAL_COLLECTION"
+                    : isDemo
+                    ? "SIMULATED_TEST_AUTHORIZATION"
+                    : "PRODUCTION_SETTLEMENT",
+                  disclaimer: isDemo
+                    ? "SANDBOX TEST PAYMENT — Not an actual Razorpay live banking settlement"
+                    : isCOD
+                    ? "CASH ON DELIVERY — Amount due upon physical doorstep handover"
+                    : undefined,
                   authorizedAt: new Date().toISOString(),
                   verified: true,
                   details: payload.paymentDetails || {},
@@ -510,8 +574,12 @@ export class PrismaOrderService implements IOrderService {
                 {
                   entityType: "ORDER",
                   entityId: orderId,
-                  action: "ORDER_CONFIRMED",
-                  note: `Order confirmed via ${paymentMode}. Authorized reference: ${bankRef}.`,
+                  action: isCOD ? "ORDER_PLACED_COD" : "ORDER_CONFIRMED",
+                  note: isCOD
+                    ? `Order placed via Cash on Delivery. Payment pending collection at doorstep.`
+                    : isDemo
+                    ? `Order authorized via Sandbox Demonstration (${paymentMode}). Ref: ${bankRef}. (Test environment, not live bank settlement).`
+                    : `Order confirmed via ${paymentMode}. Authorized reference: ${bankRef}.`,
                   performedBy: "system:checkout",
                 },
               ],

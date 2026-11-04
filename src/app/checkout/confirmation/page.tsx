@@ -196,7 +196,7 @@ function ConfirmationContent() {
         total: dbOrder.totals?.total || 26990,
         subtotal: dbOrder.totals?.subtotal || 26990,
         shippingFee: dbOrder.totals?.shippingFee || 0,
-        taxAmount: dbOrder.totals?.estimatedTax || Math.round((26990 * 18) / 118),
+        taxAmount: dbOrder.totals?.estimatedTax || Math.round((26990 * 12) / 112),
         discount: dbOrder.discount || 0,
         customerName: dbOrder.customerName || "Aarav Mehta",
         customerPhone: dbOrder.shippingAddress?.phone || "+91 98765 43210",
@@ -1029,7 +1029,7 @@ function ConfirmationContent() {
               </div>
             )}
             <div className="flex justify-between text-slate-600">
-              <span>{store.activeRegion.taxShort} ({Math.round(store.activeRegion.taxRate * 100)}% Included):</span>
+              <span>GST (12% Included):</span>
               <span>{store.formatPrice(displayOrder.taxAmount)}</span>
             </div>
             <div className="flex justify-between text-slate-950 font-extrabold text-sm pt-2 border-t-2 border-slate-900">

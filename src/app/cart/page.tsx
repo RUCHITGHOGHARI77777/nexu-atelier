@@ -161,6 +161,7 @@ export default function CartPage() {
 
   const couponDiscountINR = appliedCoupon ? appliedCoupon.discountINR : 0;
   const finalCalculatedTotal = Math.max(0, totals.total - couponDiscountINR);
+  const currentGstIncluded = Math.round((Math.max(0, totals.subtotal - couponDiscountINR) * 12) / 112);
 
   const handleSimulatePayload = () => {
     setSimulatedReady(true);
@@ -478,7 +479,7 @@ export default function CartPage() {
               <div className="flex items-center justify-between text-zinc-600 pt-2">
                 <span>Estimated GST Included (12%):</span>
                 <span className="font-mono text-zinc-950 font-medium">
-                  {formatCurrency(totals.estimatedTax)}
+                  {formatCurrency(currentGstIncluded)}
                 </span>
               </div>
 

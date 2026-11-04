@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/server/session-helper";
 import { codService } from "@/lib/server/cod-service";
+import { authService } from "@/lib/server/auth-service";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  const customer = await getSessionUser();
+  let customer = await getSessionUser();
+  if (!customer) {
+    const demoAuth = await authService.authenticateDemo("customer");
+    if (demoAuth.success && demoAuth.user) {
+      customer = demoAuth.user;
+    }
+  }
   if (!customer) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
