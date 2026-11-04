@@ -29,10 +29,7 @@ export function BentoHeroSection() {
         {/* Main Bento Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           {/* Bento Item 1: Spotlight Curated Piece (7 Columns) */}
-          <div className="lg:col-span-7 rounded-3xl bg-white/75 backdrop-blur-2xl border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.07)] p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-300">
-            {/* Soft Ambient Light Gradient */}
-            <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-gradient-to-br from-blue-100/60 to-emerald-100/40 blur-3xl pointer-events-none" />
-
+          <div className="lg:col-span-7 rounded-2xl bg-white border border-slate-200 shadow-sm p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-300">
             <div className="space-y-4 relative z-10">
               {/* Badge & Atelier Strip */}
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -126,7 +123,7 @@ export function BentoHeroSection() {
           {/* Bento Column 2: Supporting Curated Pillars (5 Columns) */}
           <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
             {/* Bento Card 2: Direct Atelier Craftsmanship */}
-            <div className="rounded-3xl bg-white/75 backdrop-blur-2xl border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.07)] p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300">
+            <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-100 text-slate-800 border border-slate-200">
@@ -157,7 +154,7 @@ export function BentoHeroSection() {
             </div>
 
             {/* Bento Card 3: Multi-Vendor Trust & Logistics Assurance */}
-            <div className="rounded-3xl bg-white/75 backdrop-blur-2xl border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.07)] p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300">
+            <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center">
