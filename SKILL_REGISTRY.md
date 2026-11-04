@@ -52,3 +52,4 @@ Every code modification must verify compliance against its domain skill:
 2. **Database Queries:** Must follow `nexu-prisma-postgres` (compound indexes, atomic updates, error mapping).
 3. **Security Boundaries:** Must follow `nexu-marketplace-security` (tenant query scoping, role checks).
 4. **Visuals:** Must follow `nexu-design-system` (neutral canvas `#F6F7F9`, zero artificial gradients).
+

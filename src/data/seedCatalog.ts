@@ -80,6 +80,50 @@ export const SEED_VENDORS: Record<string, Vendor> = {
 
 export const SEED_PRODUCTS: Product[] = [
   {
+    id: "prod_fash_01",
+    slug: "loom-spindle-100-mulberry-raw-silk-kimono-jacket",
+    title: "Loom & Spindle 100% Mulberry Raw Silk Minimalist Kimono Jacket",
+    subtitle: "Hand-Spun Natural Ahimsa Silk with Architectural Drop Shoulder",
+    description:
+      "Crafted by master handloom weavers in Jaipur. Tailored from undyed, chemical-free mulberry silk with natural slub textures, deep interior pockets, and self-tying minimalist waistband.",
+    category: "Apparel",
+    vendor: SEED_VENDORS.solTextiles,
+    basePrice: 8499,
+    compareAtPrice: 12999,
+    currency: "INR",
+    stock: 5,
+    rating: 4.92,
+    reviewCount: 187,
+    isFeatured: true,
+    isTrending: true,
+    isNewArrival: true,
+    tags: ["Raw Silk", "Ahimsa", "Handloom", "Kimono"],
+    images: [
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1000&q=80",
+    ],
+    availableColors: [
+      { name: "Raw Ecru", hex: "#FAF8F5" },
+      { name: "Mineral Sage", hex: "#CBD5E1" },
+    ],
+    availableSizes: ["S", "M", "L", "XL"],
+    specifications: [
+      { label: "Fabric Composition", value: "100% Organic Peace Silk (Ahimsa)" },
+      { label: "Weave Type", value: "Single-Thread Pit-Loom Handloom Weave" },
+      { label: "Dye", value: "Zero Harsh Chemicals • Certified Botanical Extracts" },
+      { label: "Fit", value: "Relaxed Architectural Genderless Cut" },
+      { label: "Care Instructions", value: "Dry Clean Recommended or Cold Silk Wash" },
+    ],
+    highlights: [
+      "100% Peace silk loomed without harming silkworms",
+      "Hand-dyed with madder root and indigo extracts",
+      "Deep inner passport pocket with reinforced bar tacks",
+    ],
+    materials: "100% Mulberry Ahimsa Silk",
+    origin: "Jaipur, Rajasthan",
+    estimatedDeliveryDays: 2,
+  },
+  {
     id: "prod_kroma_01",
     slug: "chanderi-silk-embroidered-anarkali-robe",
     title: "Chanderi Silk Embroidered Anarkali Silhouette",

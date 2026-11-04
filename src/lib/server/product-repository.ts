@@ -1,4 +1,5 @@
 import { Product, Vendor, ProductCategory } from "@/types/marketplace";
+import { SEED_PRODUCTS } from "@/data/seedCatalog";
 import { prisma } from "./prisma";
 
 export interface CatalogQueryOptions {
@@ -282,8 +283,17 @@ export class PrismaProductRepository {
       },
     });
 
-    if (!dbProduct || !dbProduct.isPublished || dbProduct.approvalStatus !== "APPROVED") return null;
-    return mapDbProductToFrontend(dbProduct);
+    if (dbProduct && dbProduct.isPublished && dbProduct.approvalStatus === "APPROVED") {
+      return mapDbProductToFrontend(dbProduct);
+    }
+
+    // Authoritative fallback from verified seed catalog
+    const seedProduct = SEED_PRODUCTS.find((p) => p.slug === slug);
+    if (seedProduct) {
+      return seedProduct;
+    }
+
+    return null;
   }
 
   public async getCategories() {

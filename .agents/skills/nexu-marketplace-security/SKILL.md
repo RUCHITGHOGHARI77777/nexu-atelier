@@ -104,3 +104,4 @@ Admin routes must verify `user.role === 'ADMIN'` in the session token and log al
 - User phone numbers and personal identifiers must be masked in operational logs (e.g., `+91 983*****41`).
 - Provide Data Subject Request (DSR) workflows for account data export and erasure (`DataSubjectRequest`).
 - Retain audit logs for compliance without logging unencrypted sensitive secrets.
+

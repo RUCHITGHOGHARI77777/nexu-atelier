@@ -1,12 +1,12 @@
 # NEXU ATELIER — Master Project Architecture, Safety & Progress Tracker
 
-**Document Version:** 2.6.0 Production Candidate  
+**Document Version:** 2.7.0 Production Candidate  
 **Date Updated:** November 4, 2026  
 **Repository Identity:** NEXU ATELIER Reusable E-Commerce Marketplace  
 **Architecture:** Next.js 14.2.18 (App Router), React 18.3.1, TypeScript 5.9.3, Prisma 6.4.1 (5.x API compatible), PostgreSQL 17.10  
 **Design System:** Luxury Editorial & Heritage Gallery (`#F6F7F9` warm neutral canvas, `#FFFFFF` card surfaces, `Playfair Display` serif, `Inter` interface sans, `JetBrains Mono` code/numeric)  
 **Test Suite Health:** 30 Vitest Files Passed (347 Tests Passed, 0 Failed, 100% Green)  
-**Automated Browser Audits:** 20-Step E2E Customer Journey (20/20 Passed) + 12 Marketplace Suites (27 Checkpoints Passed, 0 Failed)  
+**Automated Browser Audits:** Storefront Audit Suite (19/19 Passed) + 20-Step Customer Journey (20/20 Passed) + 12 Marketplace Suites (27 Checkpoints Passed)  
 **Compiler Status:** `npx tsc --noEmit` clean (0 errors)  
 **Skills Active:** 15 Active Engineering, Design & QA Skills (`.agents/skills/`)  
 
@@ -126,3 +126,25 @@ The `.agents/skills/` directory houses version-pinned expert knowledge modules:
 1. Maintain continuous test execution during feature iterations.
 2. Select live payment gateway partner (Razorpay / Stripe / Cashfree) upon platform owner review.
 3. Configure live production Meta WhatsApp Cloud API credentials upon business verification.
+
+---
+
+## 6. Comprehensive Public Storefront Audit & Bug Remediation (Nov 4, 2026)
+
+A dedicated, evidence-based storefront audit resolved all visual, navigational, cart, and truth-in-advertising defects across the public customer journey:
+
+1. **Header Stacking Context & Text Bleed:** Upgraded navbar to `z-50 bg-white border-b border-zinc-200 shadow-xs` with a 150ms hover intent delay and global `Escape` key dismissal on mega menus.
+2. **Internal Evaluation Widget Removed:** Gated `EvaluatorDemoControlBar` behind authorization checks; 0 internal evaluation bars rendered for public patrons.
+3. **Cart Context Unification:** Root layout mounts authoritative `<CartDrawer />` bound to `CartContext`, with dynamic visual feedback ("Added" state) and atomic event bubbling prevention.
+4. **Direct Purchase Isolation:** "Buy Now" flow isolates the immediate purchase in `sessionStorage` (`nexu_buy_now_item` / `/checkout?direct=1`), preserving existing bag items intact.
+5. **Artisan Loom Alignment:** "FRESH FROM MASTER LOOMS" section filtered to showcase authentic silks, woolens, and handlooms.
+6. **Truthful Advertising Compliance:** Reconciled promotional claims across banners and mega menus to reflect the 10% platform fee and 90% net escrow payout policy honestly.
+
+### Cross-Referenced Audit Deliverables:
+- [`PUBLIC_WEBSITE_AUDIT.md`](file:///d:/Ecommerce%20Project%20Real/PUBLIC_WEBSITE_AUDIT.md) — Comprehensive storefront audit report
+- [`BUG_REGISTER.md`](file:///d:/Ecommerce%20Project%20Real/BUG_REGISTER.md) — Detailed defect log with reproduction steps, root causes, and verification
+- [`PRODUCT_DATA_AUDIT.md`](file:///d:/Ecommerce%20Project%20Real/PRODUCT_DATA_AUDIT.md) — Product data integrity, integer paise math, and stock verification
+- [`CART_AND_CHECKOUT_TESTS.md`](file:///d:/Ecommerce%20Project%20Real/CART_AND_CHECKOUT_TESTS.md) — Complete cart math and checkout lifecycle test suite
+- [`VISUAL_REGRESSION_REPORT.md`](file:///d:/Ecommerce%20Project%20Real/VISUAL_REGRESSION_REPORT.md) — Viewport inspection report across 6 target resolutions (1920px to 360px)
+- [`PERFORMANCE_REPORT.md`](file:///d:/Ecommerce%20Project%20Real/PERFORMANCE_REPORT.md) — Core Web Vitals, SSR/ISR caching, and query performance audit
+- [`BROWSER_TEST_EVIDENCE.md`](file:///d:/Ecommerce%20Project%20Real/BROWSER_TEST_EVIDENCE.md) — 19/19 headless browser verification results and screenshot registry

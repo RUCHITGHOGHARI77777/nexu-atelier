@@ -40,8 +40,23 @@ export function EvaluatorDemoControlBar() {
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isQaAuthorized, setIsQaAuthorized] = useState(false);
 
-  if (isDismissed) return null;
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const hasQaParam = urlParams.get("qa") === "1" || urlParams.get("demo") === "1";
+      const hasQaStorage = localStorage.getItem("nexu_qa_enabled") === "true";
+      if (hasQaParam) {
+        localStorage.setItem("nexu_qa_enabled", "true");
+        setIsQaAuthorized(true);
+      } else if (hasQaStorage && process.env.NODE_ENV !== "production") {
+        setIsQaAuthorized(true);
+      }
+    }
+  }, []);
+
+  if (isDismissed || !isQaAuthorized) return null;
 
   // STEP 1: Launch Free Seller Brand Store
   const handleStep1_LaunchSellerStore = () => {

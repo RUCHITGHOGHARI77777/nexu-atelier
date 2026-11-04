@@ -72,3 +72,4 @@ export async function sendTransactionalEmail(payload: {
 - If an external delivery attempt fails with a transient error, the notification is set to `QUEUED` with `attempts = attempts + 1`.
 - Exponential backoff retry mechanism (1m, 5m, 15m) capped at 3 retries.
 - Permanent failures (`FAILED`) are flagged for operational review in `OperationalContactLog`.
+

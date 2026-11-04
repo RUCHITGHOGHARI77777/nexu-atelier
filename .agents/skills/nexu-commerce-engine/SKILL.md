@@ -67,3 +67,4 @@ stateDiagram-v2
 
 - **Idempotency Guard:** Every checkout submission must provide a unique `idempotencyKey` to prevent double-charging or duplicate order creation during network retries.
 - **Pre-dispatch Cancellation:** Orders in `CONFIRMED` or `IN_PRODUCTION` can be cancelled by the customer, triggering automated inventory restoration and full refund queueing.
+

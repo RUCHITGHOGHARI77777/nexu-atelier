@@ -60,3 +60,4 @@ gantt
 - [ ] **Meta WhatsApp Business Production API:** Switch from simulator adapter to live Meta Graph API credentials.
 - [ ] **Live Carrier EDI Integration:** Connect production Blue Dart and Delhivery tracking webhooks.
 - [ ] **External Security Penetration Testing:** Final OWASP ASVS verification by independent security auditor.
+

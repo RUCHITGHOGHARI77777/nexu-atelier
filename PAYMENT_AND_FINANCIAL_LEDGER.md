@@ -78,3 +78,4 @@ export function verifyWebhookSignature(
 
 - The reconciliation engine compares captured gateway transactions (`PaymentRecord`) against internal order totals (`Order.totalPaise`).
 - Logs discrepancies to `FinancialReconciliation`. If $\text{totalDiscrepancyPaise} \neq 0$, the system generates an immediate escalation event to platform finance administrators.
+

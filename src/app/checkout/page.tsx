@@ -42,8 +42,32 @@ export default function CheckoutPage() {
   // Multi-step: 1 = Address, 2 = Delivery Method, 3 = Review & Place Order
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
-  // Normalize items from either CartContext or StoreContext
+  // Direct Buy-Now session check preserving existing customer cart
+  const [buyNowItem, setBuyNowItem] = useState<any | null>(null);
+  const [isDirectBuy, setIsDirectBuy] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isDirect = urlParams.get("direct") === "1" || urlParams.get("buyNow") === "1";
+      if (isDirect) {
+        try {
+          const rawStored = sessionStorage.getItem("nexu_buy_now_item");
+          if (rawStored) {
+            const parsed = JSON.parse(rawStored);
+            if (parsed && (parsed.productId || parsed.id)) {
+              setBuyNowItem(parsed);
+              setIsDirectBuy(true);
+            }
+          }
+        } catch {}
+      }
+    }
+  }, []);
+
+  // Normalize items from either Buy-Now session, CartContext, or StoreContext
   const items = React.useMemo(() => {
+    if (isDirectBuy && buyNowItem) return [buyNowItem];
     if (dbCartItems.length > 0) return dbCartItems;
     return store.cart.map((c) => ({
       id: c.id,
@@ -65,10 +89,18 @@ export default function CheckoutPage() {
       selectedColor: c.selectedColor ? { name: c.selectedColor.name, hex: c.selectedColor.hex, image: c.product.images[0] } : undefined,
       selectedSize: c.selectedSize,
     }));
-  }, [dbCartItems, store.cart]);
+  }, [isDirectBuy, buyNowItem, dbCartItems, store.cart]);
 
-  const rawSubtotal = dbCartItems.length > 0 ? dbCartTotals.subtotal : store.cartSubtotal;
-  const rawItemCount = dbCartItems.length > 0 ? dbCartTotals.itemCount : store.cartTotalCount;
+  const rawSubtotal = isDirectBuy && buyNowItem
+    ? buyNowItem.unitPrice * buyNowItem.quantity
+    : dbCartItems.length > 0
+    ? dbCartTotals.subtotal
+    : store.cartSubtotal;
+  const rawItemCount = isDirectBuy && buyNowItem
+    ? buyNowItem.quantity
+    : dbCartItems.length > 0
+    ? dbCartTotals.itemCount
+    : store.cartTotalCount;
 
   // Address Selection & Creation
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
@@ -446,8 +478,14 @@ export default function CheckoutPage() {
 
     // Always update global client-side store
     store.addOrder(newStoreOrder);
-    store.clearCart();
-    clearDbCart();
+    if (isDirectBuy) {
+      try {
+        sessionStorage.removeItem("nexu_buy_now_item");
+      } catch {}
+    } else {
+      store.clearCart();
+      clearDbCart();
+    }
     try {
       localStorage.removeItem("nexu_active_coupon");
     } catch {}
@@ -455,7 +493,7 @@ export default function CheckoutPage() {
     router.push(`/checkout/confirmation?orderId=${newStoreOrder.id}`);
   };
 
-  if (items.length === 0 && store.cart.length === 0) {
+  if (items.length === 0 && store.cart.length === 0 && !isDirectBuy) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-20 text-center space-y-4">
         <div className="w-16 h-16 rounded-2xl bg-zinc-100 flex items-center justify-center mx-auto text-zinc-400">

@@ -91,3 +91,4 @@ flowchart TD
 - [x] Fulfillment is independent: Seller A's dispatch delay does not block Seller B.
 - [x] Commission arithmetic uses integer paise with server-side validation.
 - [x] Full event sourcing and audit logs exist for all order state transitions.
+

@@ -57,6 +57,47 @@ export function CustomerStorefrontNavbar() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [activeMegaMenu, setActiveMegaMenu] = useState<"collections" | "guilds" | null>(null);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const leaveTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnterMenu = (menu: "collections" | "guilds") => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+      leaveTimerRef.current = null;
+    }
+    setActiveMegaMenu(menu);
+  };
+
+  const handleToggleMenu = (menu: "collections" | "guilds") => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+      leaveTimerRef.current = null;
+    }
+    setActiveMegaMenu((prev) => (prev === menu ? null : menu));
+  };
+
+  const handleMouseLeaveHeader = () => {
+    if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
+    leaveTimerRef.current = setTimeout(() => {
+      setActiveMegaMenu(null);
+    }, 150);
+  };
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setActiveMegaMenu(null);
+        setIsUserMenuOpen(false);
+        setIsRegionMenuOpen(false);
+        setIsMobileMenuOpen(false);
+        setIsSearchFocused(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
+    };
+  }, []);
 
   const popularSearches = [
     "Chanderi Silk",
@@ -84,8 +125,8 @@ export function CustomerStorefrontNavbar() {
 
   return (
     <header
-      className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-2xl border-b border-zinc-200/90 shadow-[0_2px_15px_rgba(0,0,0,0.03)] transition-all"
-      onMouseLeave={() => setActiveMegaMenu(null)}
+      className="sticky top-0 z-50 w-full bg-white border-b border-zinc-200 shadow-xs transition-all"
+      onMouseLeave={handleMouseLeaveHeader}
     >
       {/* 1. Top Announcement & Utility Strip */}
       <div className="border-b border-zinc-100 bg-zinc-50/90 py-1.5 px-4 sm:px-6 lg:px-8 text-[11px] font-medium text-zinc-600">
@@ -206,8 +247,8 @@ export function CustomerStorefrontNavbar() {
               {/* Collections Trigger (Opens Mega Menu) */}
               <button
                 type="button"
-                onMouseEnter={() => setActiveMegaMenu("collections")}
-                onClick={() => setActiveMegaMenu((prev) => (prev === "collections" ? null : "collections"))}
+                onMouseEnter={() => handleMouseEnterMenu("collections")}
+                onClick={() => handleToggleMenu("collections")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer ${
                   activeMegaMenu === "collections"
                     ? "text-zinc-950 bg-zinc-100 font-bold"
@@ -221,8 +262,8 @@ export function CustomerStorefrontNavbar() {
               {/* Guilds / Disciplines Trigger (Opens Mega Menu) */}
               <button
                 type="button"
-                onMouseEnter={() => setActiveMegaMenu("guilds")}
-                onClick={() => setActiveMegaMenu((prev) => (prev === "guilds" ? null : "guilds"))}
+                onMouseEnter={() => handleMouseEnterMenu("guilds")}
+                onClick={() => handleToggleMenu("guilds")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer ${
                   activeMegaMenu === "guilds"
                     ? "text-zinc-950 bg-zinc-100 font-bold"

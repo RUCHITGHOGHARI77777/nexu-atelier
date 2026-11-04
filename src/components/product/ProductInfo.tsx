@@ -136,16 +136,46 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
     }
     setValidationError("");
 
-    const success = addToCart(product, {
-      color: selectedColor,
-      size: selectedSize,
+    // Prepare direct Buy-Now session preserving existing customer cart
+    const primaryImg = typeof product.images[0] === "string" ? product.images[0] : (product.images[0] as any)?.url || "";
+    const directItem = {
+      id: `buynow_${product.id}_${matchedVariant?.sku || ""}_${selectedColor?.name || "def"}_${selectedSize || "std"}`,
+      productId: product.id,
+      product: {
+        id: product.id,
+        title: product.title,
+        price: product.basePrice,
+        slug: product.slug,
+        images: product.images.map((img) => ({
+          url: typeof img === "string" ? img : (img as any).url,
+          alt: product.title,
+          isPrimary: true,
+        })),
+        vendor: {
+          id: product.vendor.id,
+          name: product.vendor.name,
+        },
+      },
       quantity,
-      sku: matchedVariant?.sku,
-    });
+      unitPrice: matchedVariant?.priceDeltaPaise
+        ? product.basePrice + matchedVariant.priceDeltaPaise / 100
+        : product.basePrice,
+      selectedSku: matchedVariant?.sku || `${product.slug}-${selectedSize || "STD"}`,
+      selectedColor: selectedColor
+        ? {
+            name: selectedColor.name,
+            hex: selectedColor.hex,
+            image: selectedColor.image || primaryImg,
+          }
+        : undefined,
+      selectedSize,
+    };
 
-    if (success) {
-      router.push("/checkout");
-    }
+    try {
+      sessionStorage.setItem("nexu_buy_now_item", JSON.stringify(directItem));
+    } catch {}
+
+    router.push("/checkout?direct=1");
   };
 
   const handleIncrement = () => {

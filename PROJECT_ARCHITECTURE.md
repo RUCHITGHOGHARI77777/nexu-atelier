@@ -97,3 +97,4 @@ The client application is treated as untrusted presentation. When checkout is in
 - **Database Connection Sizing:** Configured with transaction timeouts (`maxWait: 5000ms`, `timeout: 10000ms`) to protect against connection exhaustion.
 - **Audit Logging:** Every administrative action, seller state transition, and order cancellation creates an immutable row in `AuditEvent`.
 - **Idempotency:** Webhook processing and checkout requests require unique idempotency keys to prevent duplicate operations.
+

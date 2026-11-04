@@ -59,3 +59,4 @@ sequenceDiagram
 - **`SUPPLIER_NEW_ORDER`:** Supplier order allocation manifest detailing packaging standards and Blue Dart pickup window.
 - **`ORDER_CANCELLED`:** Cancellation receipt confirming inventory release and automated refund timeline.
 - **`ADMIN_SLA_ESCALATION`:** Automated alert triggered when supplier product drafts exceed the 60-minute review SLA.
+

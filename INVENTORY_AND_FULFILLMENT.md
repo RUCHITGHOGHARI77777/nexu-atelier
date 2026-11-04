@@ -75,3 +75,4 @@ flowchart TD
 - **Customer Window:** 7 days post-delivery.
 - **Reverse Consignment:** Upon admin approval of `ReturnRequest`, reverse AWB is generated.
 - **Intake Inspection:** Warehouse or artisan inspects returned piece for original tags, undamaged luxury box, and unworn condition before triggering refund.
+

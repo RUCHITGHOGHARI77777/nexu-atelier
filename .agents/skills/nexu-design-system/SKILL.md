@@ -86,3 +86,4 @@ Every product card must render:
 - Interactive touch targets must be at least $44 \times 44$ pixels on mobile viewports.
 - All form inputs must have visible associated `<label>` elements or accessible `aria-label` attributes.
 - Responsive breakpoints tested across 375px (mobile), 768px (tablet), 1024px (small desktop), and 1440px+ (large display).
+

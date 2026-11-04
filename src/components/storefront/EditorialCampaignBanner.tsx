@@ -25,7 +25,7 @@ export function EditorialCampaignBanner() {
               </span>
             </h2>
             <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed max-w-xl">
-              In traditional luxury retail, over 65% of the patron&apos;s payment is absorbed by distributors, importers, and showrooms. At NEXU ATELIER, 100% of the asking price is transferred directly to verified artisan guilds.
+              In traditional luxury retail, over 65% of the patron&apos;s payment is absorbed by distributors, importers, and showrooms. At NEXU ATELIER, 90% of order value settles directly to verified artisan guilds via escrow upon delivery, with an honest, transparent 10% platform fee and zero hidden markups.
             </p>
 
             <div className="pt-2 flex flex-wrap gap-4">
@@ -48,12 +48,12 @@ export function EditorialCampaignBanner() {
           {/* Key Facts Matrix */}
           <div className="lg:col-span-4 grid grid-cols-2 gap-4">
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md space-y-1">
-              <span className="text-2xl sm:text-3xl font-extrabold text-white font-mono">100%</span>
-              <p className="text-[11px] text-zinc-400">Direct studio payout upon verified delivery</p>
+              <span className="text-2xl sm:text-3xl font-extrabold text-white font-mono">90%</span>
+              <p className="text-[11px] text-zinc-400">Net studio escrow payout upon verified delivery</p>
             </div>
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md space-y-1">
               <span className="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-mono">0 ₹</span>
-              <p className="text-[11px] text-zinc-400">Zero commission markups on patron orders</p>
+              <p className="text-[11px] text-zinc-400">Zero hidden markups or showroom fees</p>
             </div>
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md space-y-1">
               <span className="text-2xl sm:text-3xl font-extrabold text-amber-400 font-mono">48 Hr</span>

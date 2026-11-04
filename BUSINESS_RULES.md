@@ -83,3 +83,4 @@
    - 60-second cooldown between resend requests.
 3. **Transactional Emails:**
    - High-fidelity HTML emails dispatched for welcome, order confirmation, shipment tracking, cancellation, and admin SLA alerts.
+

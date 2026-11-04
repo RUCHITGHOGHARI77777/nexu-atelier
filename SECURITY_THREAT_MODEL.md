@@ -54,3 +54,4 @@ flowchart TD
 | **API8: Lack of Protection from Automated Threats** | Mitigated | Rate limiting, COD risk assessment engine, honeypot fields. | `fraud-and-cod-engine.test.ts` |
 | **API9: Improper Inventory Management** | Mitigated | Deprecated API routes retired; OpenAPI/contract documentation in `API_CONTRACTS.md`. | System Verification |
 | **API10: Unsafe Consumption of APIs** | Mitigated | Webhook payloads verified via cryptographically signed HMAC buffers before processing. | `payment-webhook-service.test.ts` |
+

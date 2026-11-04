@@ -148,3 +148,4 @@ Handle PostgreSQL and Prisma known error codes explicitly:
 - For serverless or high-concurrency environments, use a pooled connection string with `pgbouncer=true` and explicit connection limit parameters:
   `postgresql://user:pass@host:5432/dbname?connection_limit=20&pool_timeout=10`
 - Always disconnect or manage Prisma singleton instances via `globalThis.prisma = prisma` to prevent connection exhaustion during Next.js Hot Module Replacement (HMR).
+

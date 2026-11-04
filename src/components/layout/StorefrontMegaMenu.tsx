@@ -17,7 +17,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, a
   return (
     <div
       onMouseLeave={onClose}
-      className="absolute top-full left-0 w-full bg-white/98 backdrop-blur-2xl border-b border-zinc-200/90 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+      className="absolute top-full left-0 w-full bg-white border-b border-zinc-200 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-200"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeMenu === "collections" && (
@@ -178,7 +178,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, a
                     Meet the Loom Masters
                   </h4>
                   <p className="text-[11px] text-zinc-300 line-clamp-1">
-                    Direct commissions eliminating 100% of middlemen markups.
+                    Direct studio commissions eliminating intermediary showroom markups.
                   </p>
                 </div>
               </Link>

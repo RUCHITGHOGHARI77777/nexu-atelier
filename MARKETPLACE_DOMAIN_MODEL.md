@@ -80,3 +80,4 @@ erDiagram
 - **`SupportTicket` & `TicketMessage`:** Patron concierge tickets with unique tracking number (`TKT-YYYYMMDD-XXXX`), category enum, and priority SLA.
 - **`ReturnRequest`:** 7-day return and replacement management.
 - **`WishlistItem` & `RecentlyViewedItem`:** Real-time customer curation and browsing memory.
+

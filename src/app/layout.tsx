@@ -12,7 +12,6 @@ import { Header } from "@/components/layout/Header";
 import { AppNavigation } from "@/components/layout/AppNavigation";
 import { AppFooter } from "@/components/layout/AppFooter";
 import { CartDrawer } from "@/components/cart/CartDrawer";
-import { CartDrawerSaaS } from "@/components/cart/CartDrawerSaaS";
 import { ProductQuickViewModal } from "@/components/storefront/ProductQuickViewModal";
 import { B2BQuoteModal } from "@/components/storefront/B2BQuoteModal";
 import { EvaluatorDemoControlBar } from "@/components/demo/EvaluatorDemoControlBar";
@@ -113,8 +112,8 @@ export default function RootLayout({
                       {/* Main content body */}
                       <main className="flex-1">{children}</main>
 
-                      {/* Enterprise Slide-Over Cart Drawer & Quick-View Modal */}
-                      <CartDrawerSaaS />
+                      {/* Multi-Vendor Slide-Over Cart Drawer & Quick-View Modal */}
+                      <CartDrawer />
                       <ProductQuickViewModal />
                       <B2BQuoteModal />
 

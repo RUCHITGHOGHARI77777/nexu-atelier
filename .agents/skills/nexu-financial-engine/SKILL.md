@@ -63,3 +63,4 @@ $$\text{Net Seller Payout (Paise)} = \text{Gross Item Sales} - \text{Platform Co
 - The platform reconciles internal GMV against payment gateway logs via `FinancialReconciliation`:
   $$\text{Discrepancy} = |\text{Internal Captured} - \text{Gateway Captured}|$$
 - If $\text{Discrepancy} > 0$, status is marked `DISCREPANCY_DETECTED` and escalates to finance admin.
+

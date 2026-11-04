@@ -8,9 +8,23 @@ import { ProductCardSaaS } from "./ProductCardSaaS";
 
 export function NewArrivalsSpotlight() {
   const { products } = useStore();
-  // Take first 4 distinct items as new studio releases
+  const sourceProducts = products && products.length > 0 ? products : PRELOADED_PRODUCTS;
+
+  // Filter and prioritize genuine master loom, textile, and artisanal workshop releases
+  const loomProducts = sourceProducts.filter(
+    (p) =>
+      p.category === "Fashion & Apparel" ||
+      p.title.toLowerCase().includes("silk") ||
+      p.title.toLowerCase().includes("wool") ||
+      p.title.toLowerCase().includes("loom") ||
+      p.title.toLowerCase().includes("hand-") ||
+      p.title.toLowerCase().includes("linen")
+  );
+
   const displayList: StoreProduct[] =
-    products && products.length > 0 ? products.slice(0, 4) : PRELOADED_PRODUCTS.slice(0, 4);
+    loomProducts.length >= 4
+      ? loomProducts.slice(0, 4)
+      : [...loomProducts, ...sourceProducts.filter((p) => !loomProducts.includes(p))].slice(0, 4);
 
   return (
     <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
