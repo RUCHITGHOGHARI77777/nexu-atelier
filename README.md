@@ -152,10 +152,18 @@ For security, environment variables must be defined in `.env.local` or `.env.pro
 ---
 
 ## 9. Technical Documentation Directory
-For deep architectural and audit details, review the authoritative documentation files in the repository root:
+For deep architectural and audit details, review the authoritative documentation files in the repository:
+* 📄 [`docs/PRD.md`](./docs/PRD.md) — Product Requirements Document (vision, market context, personas, functional & non-functional requirements)
+* 📄 [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — Technical Architecture (system diagrams, multi-vendor splitting, Prisma schema, GST pipeline)
+* 📄 [`docs/RULES.md`](./docs/RULES.md) — Engineering Rules of Engagement (invariants, integer paise math, anti-IDOR standards)
+* 📄 [`docs/DESIGN.md`](./docs/DESIGN.md) — Design System & Editorial Guidelines (tokens, typography, component specs, WCAG AA)
+* 📄 [`docs/TASKS.md`](./docs/TASKS.md) — Master Task Register & Verification Matrix (P0/P1/P2 status & test proof)
+* 📄 [`docs/MEMORY.md`](./docs/MEMORY.md) — AI Context & Engineering Memory (seed credentials, route endpoints, architecture invariants)
+* 📁 [`docs/company-evaluation/`](./docs/company-evaluation/) — 20 Comprehensive Company Evaluation Reports (Overview, Feature Matrix, Security, DB, APIs, 3-Role Tests, Multi-Vendor, Integrations, UI/UX, Performance, Deployment, Runbooks)
+* 📁 [`docs/company-demo/`](./docs/company-demo/) — Company Presentation Deck (HTML & PPTX), Demo Script, Evaluator Q&A, and Runbook
 * 📄 [`NEXU_OWNER_GUIDE.md`](./NEXU_OWNER_GUIDE.md) — Non-technical operational guide for marketplace operations
 * 📄 [`PRODUCTION_BUILD_REPORT.md`](./PRODUCTION_BUILD_REPORT.md) — Route catalog, bundle sizes, and tree-shaking
 * 📄 [`INTEGRATION_STATUS.md`](./INTEGRATION_STATUS.md) — Service-by-service transparency matrix (Live vs Demo)
-* 📄 [`DATABASE_DATA_AUDIT.md`](./DATABASE_DATA_AUDIT.md) — Complete 764-order financial audit breakdown
+* 📄 [`DATABASE_DATA_AUDIT.md`](./DATABASE_DATA_AUDIT.md) — Complete 778-order financial audit breakdown
 * 📄 [`SECURITY_FINAL_AUDIT.md`](./SECURITY_FINAL_AUDIT.md) — OWASP ASVS Level 2, anti-IDOR, and backup runbooks
 * 📄 [`DEPLOYMENT_GUIDE.md`](./DEPLOYMENT_GUIDE.md) — Staging and production deployment runbooks
