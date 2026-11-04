@@ -133,3 +133,4 @@ The core software architecture is complete and audited. Before launching public 
 1. **Simulated Couriers:** Parcel status updates currently advance programmatically or via manual supplier dashboard input rather than real-time GPS courier webhooks.
 2. **Single Currency Base:** All database calculations are pinned to Indian Rupee paise (`INR`). Multi-currency display is supported on the frontend, but bank settlements require INR bank accounts.
 3. **Image Storage:** Product images currently reference high-resolution Unsplash CDNs and local assets; enterprise S3 bucket integration is ready in code but requires AWS IAM credentials.
+

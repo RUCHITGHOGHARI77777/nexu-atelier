@@ -275,3 +275,4 @@ for title, desc in milestones:
 output_path = "docs/company-demo/NEXU_ATELIER_Company_Presentation.pptx"
 prs.save(output_path)
 print(f"PowerPoint presentation generated successfully: {output_path}")
+

@@ -41,3 +41,4 @@ try {
   console.error("Backup failed:", err.message);
   process.exit(1);
 }
+

@@ -65,3 +65,4 @@ These features are part of the commercial roadmap and are not yet implemented in
 | **Finances** | **Automated Razorpay Route Escrow Splits** | Direct automated bank disbursement of net proceeds to supplier accounts using Razorpay Route / Cashfree Split Payouts API. | Milestone 2 |
 | **Marketing** | **Studio Performance Ads** | Internal sponsored product placements within category search results with transparent CPC bidding. | Milestone 5 |
 | **International** | **Multi-Currency Settlements** | Dynamic currency conversion (USD, EUR, GBP, AED) with international customs duty estimators for export dispatches. | Milestone 5 |
+

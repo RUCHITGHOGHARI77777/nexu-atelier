@@ -87,3 +87,4 @@
 > - *To transition from this staging demo to public commercial launch, all that remains is inserting live production API credentials for Razorpay, Meta WhatsApp Cloud API, and an enterprise SMTP provider.*
 >
 > *NEXU ATELIER delivers institutional stability with bespoke artisan luxury. Thank you, and I would be delighted to answer your questions or demonstrate any specific subsystem in detail."*
+
