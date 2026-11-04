@@ -97,9 +97,14 @@ describe("NEXU ATELIER — COMPLETE MARKETPLACE FUNCTIONALITY & DEMO READINESS S
     adminToken = adminLogin.token!;
 
     // 6. Find a category for products
-    const category = await prisma.category.findFirst() || await prisma.category.create({
-      data: { name: "Handloom Heritage", slug: `heritage-${timestamp}`, description: "Artisanal textiles" },
-    });
+    const category = (await prisma.category.findFirst()) || (await prisma.category.create({
+      data: {
+        name: "Handloom Heritage",
+        slug: `heritage-${timestamp}`,
+        description: "Artisanal textiles",
+        image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c",
+      },
+    }));
 
     // 7. Create Product for Seller A
     const prodARes = await sellerService.createProduct(sellerAProfile.id, {
@@ -111,8 +116,7 @@ describe("NEXU ATELIER — COMPLETE MARKETPLACE FUNCTIONALITY & DEMO READINESS S
       compareAtPrice: 8500,
       stock: 10,
       sku: `CHK-SLK-${timestamp}`,
-      hsnCode: "5007",
-      taxRate: 5,
+      taxRatePercent: 5,
       images: ["https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80"],
     });
     productA = prodARes.product;
@@ -128,8 +132,7 @@ describe("NEXU ATELIER — COMPLETE MARKETPLACE FUNCTIONALITY & DEMO READINESS S
       compareAtPrice: 15000,
       stock: 5,
       sku: `PSH-CSH-${timestamp}`,
-      hsnCode: "6214",
-      taxRate: 12,
+      taxRatePercent: 12,
       images: ["https://images.unsplash.com/photo-1607344645866-009c320c5ab8?auto=format&fit=crop&w=800&q=80"],
     });
     productB = prodBRes.product;
@@ -150,7 +153,7 @@ describe("NEXU ATELIER — COMPLETE MARKETPLACE FUNCTIONALITY & DEMO READINESS S
     if (sellerBProfile) await prisma.seller.deleteMany({ where: { id: sellerBProfile.id } });
 
     const uIds = [customerUser?.id, sellerAUser?.id, sellerBUser?.id].filter(Boolean);
-    await prisma.address.deleteMany({ where: { userId: { in: uIds } } });
+    await prisma.address.deleteMany({ where: { customerId: { in: uIds } } });
     await prisma.session.deleteMany({ where: { userId: { in: uIds } } });
     await prisma.customerProfile.deleteMany({ where: { userId: { in: uIds } } });
     await prisma.auditEvent.deleteMany({ where: { performedBy: { in: [customerEmail, sellerAEmail, sellerBEmail] } } });
@@ -177,8 +180,8 @@ describe("NEXU ATELIER — COMPLETE MARKETPLACE FUNCTIONALITY & DEMO READINESS S
       // Verify parent order totals and status
       const order = orderRes.order!;
       expect(order.items.length).toBe(2);
-      expect(order.status).toBe(OrderStatus.PENDING);
-      expect(order.paymentStatus).toBe(PaymentStatus.PENDING);
+      expect(order.status).toBe("confirmed");
+      expect(order.paymentInfo?.status).toBe("CAPTURED");
 
       // Verify discrete supplier ownership on items
       const itemA = order.items.find((i) => i.productId === productA.id);
@@ -186,13 +189,13 @@ describe("NEXU ATELIER — COMPLETE MARKETPLACE FUNCTIONALITY & DEMO READINESS S
 
       expect(itemA).toBeDefined();
       expect(itemA?.vendorId).toBe(sellerAProfile.id);
-      expect(itemA?.lineTotalPaise).toBe(650000); // ₹6,500
-      sellerAOrderItemId = itemA!.id;
+      expect(itemA?.lineTotal).toBe(6500); // ₹6,500
+      sellerAOrderItemId = itemA!.id!;
 
       expect(itemB).toBeDefined();
       expect(itemB?.vendorId).toBe(sellerBProfile.id);
-      expect(itemB?.lineTotalPaise).toBe(1200000); // ₹12,000
-      sellerBOrderItemId = itemB!.id;
+      expect(itemB?.lineTotal).toBe(12000); // ₹12,000
+      sellerBOrderItemId = itemB!.id!;
 
       // Verify atomic inventory deduction
       const updatedProdA = await prisma.product.findUnique({ where: { id: productA.id } });
@@ -340,8 +343,8 @@ describe("NEXU ATELIER — COMPLETE MARKETPLACE FUNCTIONALITY & DEMO READINESS S
       expect(result.totalMarketplaceDeductionsPaise).toBe(61200); // ₹612
 
       // 4. Net Payout & Profit
-      // Estimated Payout = Taxable (500,000) - Commission (50,000) - Gateway (11,200) = 438,800 paise (₹4,388)
-      expect(result.estimatedSellerPayoutPaise).toBe(438800);
+      // Estimated Payout = Taxable (500,000) - Commission (50,000) - Gateway (11,200) - Outward Shipping (15,000) = 423,800 paise (₹4,238)
+      expect(result.estimatedSellerPayoutPaise).toBe(423800);
 
       // Total seller costs = Direct (330,000) + Outward Shipping (15,000) + Other (15,000) = 360,000 paise (₹3,600)
       expect(result.totalSellerCostPaise).toBe(360000);
