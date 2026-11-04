@@ -219,12 +219,12 @@ export default function TrackOrderPage() {
             <button
               type="button"
               onClick={() => {
-                setOrderNumber("ORD-2026-51277");
-                setContact("patron@nexu.studio");
+                setOrderNumber("ORD-2026-10008");
+                setContact("priya@nexu.studio");
               }}
               className="text-amber-700 hover:underline font-mono cursor-pointer"
             >
-              ORD-2026-51277 (patron@nexu.studio)
+              ORD-2026-10008 (priya@nexu.studio)
             </button>
           </div>
         </div>

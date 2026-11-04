@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   Sparkles,
-  Clock,
+  ShoppingBag,
   ArrowRight,
   ShieldCheck,
   Building2,
@@ -13,7 +13,7 @@ import {
   Award,
   Star,
   CheckCircle2,
-  Flame,
+  PackageCheck,
 } from "lucide-react";
 import { useStore, PRELOADED_PRODUCTS } from "@/context/StoreContext";
 import { formatCurrency } from "@/lib/formatters";
@@ -23,51 +23,27 @@ export function BentoHeroSection() {
   const spotlightProduct = PRELOADED_PRODUCTS[0]; // Sony WH-1000XM5
   const [imgSrc, setImgSrc] = useState(spotlightProduct.images[0]);
 
-  // Live 24-hour countdown timer
-  const [timeLeft, setTimeLeft] = useState({ hours: 7, minutes: 42, seconds: 18 });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: 59, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        }
-        return { hours: 23, minutes: 59, seconds: 59 };
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatNumber = (n: number) => n.toString().padStart(2, "0");
-
   return (
     <section className="relative pt-6 pb-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         {/* Main Bento Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          {/* Bento Item 1: Spotlight Deal of the Day (7 Columns) */}
+          {/* Bento Item 1: Spotlight Curated Piece (7 Columns) */}
           <div className="lg:col-span-7 rounded-3xl bg-white/75 backdrop-blur-2xl border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.07)] p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-300">
             {/* Soft Ambient Light Gradient */}
             <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-gradient-to-br from-blue-100/60 to-emerald-100/40 blur-3xl pointer-events-none" />
 
             <div className="space-y-4 relative z-10">
-              {/* Badge & Timer Strip */}
+              {/* Badge & Atelier Strip */}
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200/80">
-                  <Flame className="w-3.5 h-3.5 text-rose-600" />
-                  <span>Studio Allocation of the Day</span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-900 text-white shadow-xs">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Curated Atelier Spotlight</span>
                 </span>
 
                 <div className="flex items-center gap-1.5 font-mono text-xs text-slate-700 bg-slate-100/90 px-3 py-1 rounded-full border border-slate-200">
-                  <Clock className="w-3.5 h-3.5 text-slate-500" />
-                  <span className="font-semibold text-slate-900">
-                    {formatNumber(timeLeft.hours)}:{formatNumber(timeLeft.minutes)}:{formatNumber(timeLeft.seconds)}
-                  </span>
-                  <span className="text-[10px] text-slate-500">remaining</span>
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="font-semibold text-slate-900">Direct From Verified Maker</span>
                 </div>
               </div>
 
@@ -118,7 +94,7 @@ export function BentoHeroSection() {
                   fill
                   onError={() => setImgSrc("https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80")}
                   sizes="(max-width: 640px) 100vw, 400px"
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="object-contain p-3 group-hover:scale-105 transition-transform duration-500"
                 />
                 <span className="absolute bottom-2.5 left-2.5 px-2.5 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-mono font-semibold">
                   By {spotlightProduct.supplier.name}
@@ -131,7 +107,8 @@ export function BentoHeroSection() {
                   onClick={() => addToCart(spotlightProduct)}
                   className="w-full py-3.5 px-5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-98"
                 >
-                  <span>Claim Studio Piece (Add to Bag)</span>
+                  <ShoppingBag className="w-4 h-4" />
+                  <span>Add to Bag</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
 
@@ -146,41 +123,36 @@ export function BentoHeroSection() {
             </div>
           </div>
 
-          {/* Bento Column 2: Secondary Supporting Feature Bento Cards (5 Columns) */}
+          {/* Bento Column 2: Supporting Curated Pillars (5 Columns) */}
           <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
-            {/* Bento Card 2: B2B Procurement with GST Input Credit */}
+            {/* Bento Card 2: Direct Atelier Craftsmanship */}
             <div className="rounded-3xl bg-white/75 backdrop-blur-2xl border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.07)] p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
-                    B2B Wholesale Procurement
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-100 text-slate-800 border border-slate-200">
+                    Artisan Collective
                   </span>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                    {activeRegion.taxShort} Input Credit
+                  <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                    Verified Origin
                   </span>
                 </div>
                 <h3 className="text-base font-extrabold text-slate-950">
-                  Bulk Studio Packaging & Custom Corporate Gifting
+                  Direct From Master Ateliers & Craftsmen
                 </h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Direct factory tier rates for luxury glass apothecary, organic linen tote bundles, and industrial acoustic panels.
+                  Every textile, precision acoustic monitor, and stoneware vessel is commissioned directly from certified ateliers with verified provenance.
                 </p>
               </div>
 
               <div className="pt-4 flex items-center justify-between text-xs">
-                <span className="font-mono text-slate-500">Tier Rates from ₹198/unit</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedCategory("B2B Wholesale Packs");
-                    const el = document.getElementById("catalog-grid") || document.querySelector("section");
-                    el?.scrollIntoView({ behavior: "smooth" });
-                  }}
+                <span className="font-mono text-slate-500">Independently Audited</span>
+                <Link
+                  href="/stores"
                   className="font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors cursor-pointer"
                 >
-                  <span>Explore B2B Wholesale</span>
+                  <span>Explore Brand Boutiques</span>
                   <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -192,11 +164,11 @@ export function BentoHeroSection() {
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <h3 className="text-base font-extrabold text-slate-950">
-                    Artisan Escrow & Blue Dart Air Logistics
+                    Patron Escrow & Insured Air Logistics
                   </h3>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Payment is locked safely in RBI-compliant escrow until your consignment is delivered and inspected. Every shipment is consigned with priority air tracking.
+                  Payment is held securely in RBI-compliant escrow until your consignment is unboxed and inspected. Shipped via tracked courier with doorstep verification.
                 </p>
               </div>
 
@@ -206,12 +178,12 @@ export function BentoHeroSection() {
                   <span className="text-[10px] text-slate-500">Maker Verified</span>
                 </div>
                 <div>
-                  <span className="font-extrabold text-sm text-slate-950 font-mono block">99.8%</span>
-                  <span className="text-[10px] text-slate-500">On-Time Air Dispatch</span>
+                  <span className="font-extrabold text-sm text-slate-950 font-mono block">Express</span>
+                  <span className="text-[10px] text-slate-500">Air Dispatch</span>
                 </div>
                 <div>
-                  <span className="font-extrabold text-sm text-slate-950 font-mono block">₹4.8 Cr+</span>
-                  <span className="text-[10px] text-slate-500">Escrow Settled</span>
+                  <span className="font-extrabold text-sm text-slate-950 font-mono block">7 Days</span>
+                  <span className="text-[10px] text-slate-500">Atelier Returns</span>
                 </div>
               </div>
             </div>

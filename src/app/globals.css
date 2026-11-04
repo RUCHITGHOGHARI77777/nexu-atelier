@@ -3,8 +3,24 @@
 @tailwind utilities;
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  /* Official NEXU Master Design System Tokens */
+  --nexu-surface: #ffffff;
+  --nexu-canvas: #f6f7f9;
+  --nexu-secondary: #f8fafc;
+  --nexu-text-primary: #17191f;
+  --nexu-text-secondary: #64748b;
+  --nexu-text-muted: #94a3b8;
+  --nexu-border-main: #e5e7eb;
+  --nexu-border-strong: #d1d5db;
+  --nexu-accent: #2457c5;
+  --nexu-accent-hover: #1d46a6;
+  --nexu-accent-subtle: #eef4ff;
+  --nexu-success: #15803d;
+  --nexu-warning: #b45309;
+  --nexu-danger: #b91c1c;
+
+  --background: #f6f7f9;
+  --foreground: #17191f;
 }
 
 * {

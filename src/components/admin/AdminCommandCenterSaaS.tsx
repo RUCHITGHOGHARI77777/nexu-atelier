@@ -341,7 +341,7 @@ export function AdminCommandCenterSaaS() {
           }`}
         >
           <TrendingUp className="w-3.5 h-3.5" />
-          <span>📊 Executive Overview & Analytics</span>
+          <span>Executive Overview</span>
         </button>
 
         <button
@@ -354,7 +354,7 @@ export function AdminCommandCenterSaaS() {
           }`}
         >
           <Building2 className="w-3.5 h-3.5" />
-          <span>🏢 Supplier Governance ({suppliers.length})</span>
+          <span>Supplier Governance ({suppliers.length})</span>
         </button>
 
         <button
@@ -367,7 +367,7 @@ export function AdminCommandCenterSaaS() {
           }`}
         >
           <Landmark className="w-3.5 h-3.5" />
-          <span>📜 NPCI UTR Audit Log ({orders.length})</span>
+          <span>NPCI UTR Audit Log ({orders.length})</span>
         </button>
 
         <button
@@ -375,12 +375,12 @@ export function AdminCommandCenterSaaS() {
           onClick={() => setActiveTab("WHITE_LABEL")}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === "WHITE_LABEL"
-              ? "bg-blue-600 text-white shadow-sm ring-2 ring-blue-500/20"
-              : "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 hover:text-blue-900 border border-blue-200"
+              ? "bg-slate-950 text-white shadow-sm"
+              : "bg-white/80 text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200"
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-          <span>⚙️ White-Label Reseller Brand Engine</span>
+          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          <span>White-Label Brand Engine</span>
         </button>
 
         <button
@@ -388,12 +388,12 @@ export function AdminCommandCenterSaaS() {
           onClick={() => setActiveTab("IMPACT_GOVERNANCE")}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === "IMPACT_GOVERNANCE"
-              ? "bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-500/20"
-              : "bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-800 hover:text-emerald-950 border border-emerald-200"
+              ? "bg-slate-950 text-white shadow-sm"
+              : "bg-white/80 text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200"
           }`}
         >
           <HeartHandshake className="w-3.5 h-3.5 text-emerald-600" />
-          <span>🛡️ Social Impact & Governance (9.9/10)</span>
+          <span>Impact & ESG Governance</span>
         </button>
 
         <button
@@ -401,12 +401,12 @@ export function AdminCommandCenterSaaS() {
           onClick={() => setActiveTab("INFRASTRUCTURE")}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === "INFRASTRUCTURE"
-              ? "bg-purple-700 text-white shadow-sm ring-2 ring-purple-500/20"
-              : "bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-800 hover:text-purple-950 border border-purple-200"
+              ? "bg-slate-950 text-white shadow-sm"
+              : "bg-white/80 text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200"
           }`}
         >
-          <Server className="w-3.5 h-3.5 text-purple-600" />
-          <span>☁️ Cloud & Capacity Auto-Scale</span>
+          <Server className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Infrastructure & Cloud</span>
         </button>
 
         <button
@@ -414,12 +414,12 @@ export function AdminCommandCenterSaaS() {
           onClick={() => setActiveTab("AUDIT_MATRIX")}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === "AUDIT_MATRIX"
-              ? "bg-slate-900 text-white shadow-sm ring-2 ring-slate-900/20"
-              : "bg-gradient-to-r from-indigo-50 to-slate-100 text-indigo-900 hover:text-indigo-950 border border-indigo-200"
+              ? "bg-slate-950 text-white shadow-sm"
+              : "bg-white/80 text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200"
           }`}
         >
-          <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-          <span>🏛️ Architecture & Security Matrix (15/15)</span>
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Security & Compliance Matrix</span>
         </button>
       </div>
 

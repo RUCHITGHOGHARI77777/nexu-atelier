@@ -112,7 +112,7 @@ export function FirebaseAuthModal({
 
     try {
       // Calls official Firebase signInWithPopup (no simulated fake fallback)
-      const { userProfile, idToken } = await signInWithGoogle("customer");
+      const { userProfile, idToken } = await signInWithGoogle(selectedPortal);
 
       // Transmit genuine credentials to server endpoint for PostgreSQL persistence & HTTP-only session cookie
       const res = await loginWithGoogle({

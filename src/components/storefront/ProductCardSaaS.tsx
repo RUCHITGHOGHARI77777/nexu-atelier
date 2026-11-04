@@ -41,17 +41,17 @@ export function ProductCardSaaS({ product }: { product: StoreProduct }) {
       onMouseLeave={() => setIsHovered(false)}
       className="group relative rounded-2xl bg-white/75 backdrop-blur-2xl border border-white/90 ring-1 ring-slate-900/5 shadow-[0_8px_30px_rgb(15,23,42,0.04)] hover:shadow-[0_20px_50px_rgb(37,99,235,0.08)] hover:-translate-y-1 transition-all duration-300 ease-out p-4 flex flex-col justify-between overflow-hidden"
     >
-      {/* Top Media Container */}
+      {/* Top Media Container with Luxury 4:5 Portrait Ratio */}
       <div
         onClick={() => setQuickViewProduct(product)}
-        className="relative aspect-square w-full rounded-xl overflow-hidden bg-slate-100 border border-slate-200/50 mb-3.5 cursor-pointer"
+        className="relative aspect-[4/5] w-full rounded-xl overflow-hidden bg-slate-50 border border-slate-200/60 mb-3.5 cursor-pointer flex items-center justify-center transition-colors group-hover:bg-slate-100/60"
       >
         <SafeImage
           src={product.images[0] || imgSrc}
           alt={product.title}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
-          className="object-cover group-hover:scale-106 transition-transform duration-500 ease-out"
+          className="object-contain p-3 group-hover:scale-105 transition-transform duration-500 ease-out"
         />
 
         {/* Floating Badges */}

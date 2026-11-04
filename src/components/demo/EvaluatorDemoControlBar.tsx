@@ -215,7 +215,7 @@ export function EvaluatorDemoControlBar() {
 
           <span className="text-xs font-black tracking-tight text-slate-950 flex items-center gap-1.5">
             <Zap className="w-3.5 h-3.5 text-blue-600 fill-blue-600" />
-            <span>⚡ QA & CEO Live Flow Runner</span>
+            <span>QA & Evaluation Flow Runner</span>
           </span>
 
           <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 transition-colors ml-0.5" />
@@ -231,7 +231,7 @@ export function EvaluatorDemoControlBar() {
               </div>
               <div>
                 <h4 className="text-xs font-black text-slate-950">
-                  ⚡ QA & CEO Live Flow Runner
+                  QA & Evaluation Flow Runner
                 </h4>
                 <p className="text-[10px] text-slate-500">
                   Complete End-to-End Enterprise Flow in 60s

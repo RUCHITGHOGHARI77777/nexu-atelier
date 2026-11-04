@@ -329,24 +329,24 @@ export function SupplierPortalSaaS() {
           </p>
         </div>
 
-        {/* KPI 2: 100% Net Take-Home Bank Profit */}
-        <div className="rounded-2xl border border-white/90 ring-1 ring-slate-900/5 bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-5 shadow-lg shadow-emerald-500/15 space-y-2">
-          <div className="flex items-center justify-between text-xs text-emerald-100 font-mono">
-            <span className="font-bold">100% Net Bank Profit</span>
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white">
+        {/* KPI 2: Net Seller Profit */}
+        <div className="rounded-2xl border border-white/90 ring-1 ring-slate-900/5 bg-white/75 backdrop-blur-2xl p-5 shadow-[0_8px_30px_rgb(15,23,42,0.04)] space-y-2 hover:shadow-md transition-all">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-mono">
+            <span>Net Bank Settlement</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-black font-mono tracking-tight text-white">
+            <span className="text-2xl font-black font-mono tracking-tight text-slate-950">
               {formatCurrency(netSellerTakeHomeProfit)}
             </span>
-            <span className="text-[10px] font-bold bg-white text-emerald-800 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
               0% Fee
             </span>
           </div>
-          <p className="text-[11px] text-emerald-100">
-            ₹0 lost to Amazon/Flipkart/Meesho commissions
+          <p className="text-[11px] text-slate-500">
+            100% Direct P2P settlement to merchant account
           </p>
         </div>
 
@@ -472,7 +472,7 @@ export function SupplierPortalSaaS() {
                 <span>Kanban Order Fulfillment Engine</span>
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Complete workflow from Pending Customer Order $\to$ Accept $\to$ Pack & Print Label $\to$ Direct Dispatch.
+                Complete workflow from Pending Customer Order → Accept → Pack & Print Label → Direct Dispatch.
               </p>
             </div>
 
