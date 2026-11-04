@@ -51,3 +51,4 @@ Duration:    84.2s
 4. **Tenant Isolation:**
    - In `seller-service.test.ts`: Seller A queries Seller B's products.
    - *Result:* Passed. Throws `UnauthorizedError`.
+

@@ -56,3 +56,4 @@ The pricing engine handles both modes to accommodate artisan inputs:
   $$\text{Tax Amount} = \text{Final MRP} - \text{Taxable Base}$$
 
 All numbers are rounded to the nearest integer paisa and verified across automated test suites (`supplier-product-costing-integration.test.ts`).
+

@@ -59,3 +59,4 @@
 * Transparent breakdown of customer payment:
   - `Gross Item Price` + `Collected GST` - `Platform Commission (7%)` - `TCS (1%)` = `Net Supplier Payout`.
 * Funds remain in `ESCROW_HOLD` during transit and release into `AVAILABLE_FOR_PAYOUT` 3 days after verified courier delivery.
+

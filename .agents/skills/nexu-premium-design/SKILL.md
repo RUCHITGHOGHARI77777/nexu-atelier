@@ -31,3 +31,4 @@ Activate this skill when:
 - [ ] No placeholder brand names (e.g. "AaraMart" or "Shopify" references strictly purged).
 - [ ] Default currency display formatted as Indian Rupee (`₹` or `INR`), zero stray USD/GBP defaults.
 - [ ] Responsive across mobile (375px), tablet (768px), and desktop (1280px+).
+

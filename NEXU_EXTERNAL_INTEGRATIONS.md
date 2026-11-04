@@ -38,3 +38,4 @@ Every simulated service operates on **real internal business logic backed by Pos
    - Allocates unique tracking AWBs (e.g. `BD-AIR-173000...`).
    - Simulates shipment transitions: `MANIFEST_CREATED` $\rightarrow$ `PICKED_UP` $\rightarrow$ `IN_TRANSIT` $\rightarrow$ `DELIVERED`.
    - Allows testing of RTO (Return to Origin) and automated customer refund triggers.
+

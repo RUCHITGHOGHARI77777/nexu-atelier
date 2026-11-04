@@ -65,3 +65,4 @@
 * **Underlying Fix:** Updated label to "HDFC Bank Transaction Alert" and ensured all auth OTPs explicitly badge as WhatsApp Cloud API.
 * **Verification Test:** Visual review in simulator interface.
 * **Status:** 🟢 **VERIFIED RESOLVED**
+

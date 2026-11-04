@@ -70,3 +70,4 @@ An independent inspection of `package.json`, `node_modules`, and runtime lockfil
 4. **Database Orders Truth:**  
    * *Earlier Reports:* 764+ orders.  
    * *Actual Code:* Database contains exactly **764 orders** representing browser test journeys, stabilization runs, and patron accounts with **₹33.12 Lakhs** in reconciled financial volume. Zero data has been purged.
+

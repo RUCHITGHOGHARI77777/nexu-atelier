@@ -27,3 +27,4 @@
    * If customer initiates a return for buyer remorse vs damaged goods, who bears the return shipping fee (Seller vs Platform vs Customer)?
 4. **Cash on Delivery (COD) Surcharge:**
    * Default COD limit is ₹5,000 with a ₹50 handling charge. Owner must confirm whether COD should be enabled platform-wide.
+

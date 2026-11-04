@@ -52,3 +52,4 @@ $$\text{Break-Even Price} = \frac{\text{Total Cost}}{1 - (\text{Commission Rate}
 [Day 5 to Day 8: Inspection]──► 3-day inspection window for returns/disputes.
 [Day 8: Settlement Release] ──► Escrow released to AVAILABLE_FOR_PAYOUT; batch payout to seller's bank.
 ```
+

@@ -41,3 +41,4 @@ Activate this skill when:
 - [ ] Cart calculations match database order amounts down to the exact single paisa.
 - [ ] Coupon codes validate expiration date, minimum cart subtotal, and per-user usage limits.
 - [ ] Concurrent order placements on the last available stock unit result in 1 success and 1 clean out-of-stock rejection (zero overselling).
+

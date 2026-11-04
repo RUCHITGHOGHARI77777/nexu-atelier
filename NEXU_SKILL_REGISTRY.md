@@ -36,3 +36,4 @@
    $\rightarrow$ Activate `nexu-premium-design` and `web-design-guidelines` to preserve the warm minimalist luxury white theme.
 5. **When adding or validating external services (Meta Ads, Razorpay, WhatsApp):**  
    $\rightarrow$ Activate `nexu-integrations-automation` to prevent simulation misrepresentation.
+

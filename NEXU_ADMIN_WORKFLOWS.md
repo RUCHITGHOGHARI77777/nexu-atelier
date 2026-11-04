@@ -52,3 +52,4 @@
 ### Step 6: Immutable Cryptographic Audit Trail (`/admin/audit-logs`)
 * Every state-mutating operation (order cancellation, refund approval, product rejection, permission change) creates an immutable `AuditEvent` record.
 * Records actor ID, IP address, timestamp, previous state, and new state.
+

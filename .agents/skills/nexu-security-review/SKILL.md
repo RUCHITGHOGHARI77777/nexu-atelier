@@ -35,3 +35,4 @@ Activate this skill when:
 - [ ] SQL Injection prevented: 100% Prisma parameterized queries; zero raw SQL strings.
 - [ ] Rate limiting applied to authentication, OTP generation, and coupon verification endpoints.
 - [ ] File uploads restrict extensions to `.jpg`, `.jpeg`, `.png`, `.webp` with 5MB size caps.
+

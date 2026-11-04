@@ -89,3 +89,4 @@ To take the platform from verified demo to live commercial production:
 3. **Register Courier Account:** Link a [Shiprocket](https://shiprocket.in/) merchant account for automated courier pickups.
 4. **Deploy Application:** Follow [`DEPLOYMENT_GUIDE.md`](file:///d:/Ecommerce%20Project%20Real/DEPLOYMENT_GUIDE.md) to deploy on Vercel, Docker VPS, or AWS with a production PostgreSQL database.
 5. **Start Selling:** Onboard initial artisan studios and launch marketing campaigns!
+

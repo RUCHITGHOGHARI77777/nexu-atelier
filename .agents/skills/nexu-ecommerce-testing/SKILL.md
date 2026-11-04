@@ -34,3 +34,4 @@ Activate this skill when:
 - [ ] 0 test failures permitted before declaring any milestone complete.
 - [ ] Tests verify database state directly, not just mocked HTTP responses.
 - [ ] Invariant assertions verify mathematical equality down to the single paisa.
+

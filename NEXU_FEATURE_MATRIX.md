@@ -50,3 +50,4 @@
 | **Financial Vault & Escrow** | Admin | Trigger seller payout releases upon delivery | `src/app/admin/finances/page.tsx` | **Verified working** | None | `admin-service.test.ts` |
 | **Audit Logs (Immutable)** | Admin | Cryptographic activity log of administrative events | `src/app/admin/audit-logs/page.tsx` | **Verified working** | None | `database-integrity.test.ts` |
 | **Fraud Risk Engine** | Admin | Order risk scoring and automated cancellation | `src/lib/server/fraud-service.ts` | **Verified working** | None | `fraud-and-cod-engine.test.ts` |
+

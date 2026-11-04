@@ -60,3 +60,4 @@ pg_dump -U postgres -d nexu_dev -F c -b -v -f "D:\Ecommerce Project Real\backups
 createdb -U postgres -O postgres nexu_restored
 pg_restore -U postgres -d nexu_restored -v "D:\Ecommerce Project Real\backups\<dump_file_name>.dump"
 ```
+

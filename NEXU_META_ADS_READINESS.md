@@ -81,3 +81,4 @@ Before running ads, the platform owner must execute these steps in **Meta Busine
      META_CAPI_ACCESS_TOKEN="EAAXxxxxxxxxxxxxxxxxxxxxxxxx"
      ```
 4. **Catalog Connection:** Link the product feed URL in Meta Commerce Manager for retargeting and carousel catalog ads.
+

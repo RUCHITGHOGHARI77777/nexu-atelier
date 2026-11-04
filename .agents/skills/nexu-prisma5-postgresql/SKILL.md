@@ -37,3 +37,4 @@ Activate this skill when:
 - [ ] No raw unparameterized SQL strings (`$queryRawUnsafe` strictly prohibited).
 - [ ] Connection string includes connection pooling parameters (`?connection_limit=20&pool_timeout=10`).
 - [ ] All financial columns use integer types (`Int` or `BigInt` for paise).
+

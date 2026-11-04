@@ -35,3 +35,4 @@ To prevent distributed transaction failures (e.g. order saved in DB, but email A
 - [ ] No hardcoded production API secrets in source control.
 - [ ] All webhook endpoints verify cryptographic signatures.
 - [ ] External service outages gracefully degrade with retry queues rather than failing customer checkouts.
+

@@ -37,3 +37,4 @@ $$\text{Supplier Payout} = \text{Product Base} + \text{Collected GST} - \text{Pl
 - [ ] No product is arbitrarily assigned 5%, 12%, or 18% without statutory HSN verification.
 - [ ] Tax amounts are never mixed with supplier profit margins.
 - [ ] Credit notes and return reversals balance the platform escrow ledger to the exact single paisa.
+
