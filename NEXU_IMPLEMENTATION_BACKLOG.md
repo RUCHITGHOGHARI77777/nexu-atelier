@@ -35,3 +35,4 @@ In accordance with the directive:
 2. **Task 2 (BACKLOG-02):** Create `src/app/api/sellers/[slug]/route.ts` and update `src/app/store/[slug]/page.tsx` to fetch authentic PostgreSQL seller profiles and live approved products.
 3. **Task 3 (BACKLOG-03):** Verify layout and cart drawer mount behavior.
 4. **Task 4:** Re-run full test suites (`npm test` and browser E2E test).
+

@@ -171,3 +171,4 @@ Every audited capability across frontend interfaces, business logic layers, APIs
 | **Client-Side Price Trust** | Zero trust; all totals recalculated on server | **Verified** |
 | **IDOR Protection** | Strict tenant checks (`vendorId === seller.id`) across seller/admin endpoints | **Verified** |
 | **Rate Limiting & Abuse Prevention** | Memory/Redis rate limiting on auth, OTP, and checkout endpoints | **Verified** |
+

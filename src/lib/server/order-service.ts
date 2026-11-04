@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import {
   CheckoutRequestPayload,
   DeliveryMethod,
@@ -420,7 +421,8 @@ export class PrismaOrderService implements IOrderService {
         const estimatedTaxPaise = Math.round(subtotalPaise * 0.12);
         const totalPaise = Math.max(0, subtotalPaise + shippingFeePaise - discountPaise);
 
-        const orderId = `ORD-2026-${Date.now().toString().slice(-5)}${Math.floor(1000 + Math.random() * 9000)}`;
+        // Cryptographically strong unique Order ID enforced by database primary key constraint
+        const orderId = `ORD-2026-${crypto.randomBytes(6).toString("hex").toUpperCase()}`;
         const deliveryEta = new Date(
           Date.now() + 1000 * 60 * 60 * 24 * deliveryMethod.estimatedDays
         );
