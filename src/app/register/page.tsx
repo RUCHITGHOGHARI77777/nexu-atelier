@@ -63,21 +63,21 @@ export default function RegisterPage() {
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-100 mx-auto">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-900 mx-auto">
             <UserPlus className="w-5 h-5 stroke-1" />
           </div>
-          <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest block">
+          <span className="font-mono text-[10px] text-slate-500 uppercase tracking-widest block font-medium">
             PATRON REGISTRATION
           </span>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950">
             Create Patron Account
           </h1>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-slate-600">
             Join Nexu Atelier to commission artisan pieces and access direct studio tracking.
           </p>
         </div>
 
-        <div className="p-6 rounded-2xl border border-zinc-800 bg-zinc-950 space-y-4">
+        <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-4">
           {error && (
             <Alert variant="error" title="Registration Error">
               {error}
@@ -154,11 +154,11 @@ export default function RegisterPage() {
             </Button>
           </form>
 
-          <div className="pt-2 text-center text-xs text-zinc-500">
+          <div className="pt-2 text-center text-xs text-slate-500">
             <span>Already registered? </span>
             <Link
               href="/login"
-              className="text-zinc-200 hover:text-white font-semibold underline underline-offset-4"
+              className="text-slate-900 hover:text-slate-950 font-semibold underline underline-offset-4"
             >
               Sign in to your account
             </Link>

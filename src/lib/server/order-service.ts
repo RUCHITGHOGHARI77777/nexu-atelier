@@ -420,7 +420,7 @@ export class PrismaOrderService implements IOrderService {
         const estimatedTaxPaise = Math.round(subtotalPaise * 0.12);
         const totalPaise = Math.max(0, subtotalPaise + shippingFeePaise - discountPaise);
 
-        const orderId = `ORD-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+        const orderId = `ORD-2026-${Date.now().toString().slice(-5)}${Math.floor(1000 + Math.random() * 9000)}`;
         const deliveryEta = new Date(
           Date.now() + 1000 * 60 * 60 * 24 * deliveryMethod.estimatedDays
         );
@@ -550,8 +550,8 @@ export class PrismaOrderService implements IOrderService {
       });
 
       // Queue transactional order confirmation outbox notification
-      notificationService
-        .queueNotification({
+      try {
+        await notificationService.queueNotification({
           channel: "EMAIL",
           recipient: resultOrder.customerEmail,
           template: "ORDER_CONFIRMED",
@@ -563,8 +563,8 @@ export class PrismaOrderService implements IOrderService {
             itemCount: resultOrder.items.length,
             estimatedDeliveryDate: `${resultOrder.deliveryEstimatedDays} business days`,
           },
-        })
-        .catch(() => {});
+        });
+      } catch {}
 
       return { success: true, order: mapDbOrderToFrontend(resultOrder) };
     } catch (err: any) {
@@ -689,8 +689,8 @@ export class PrismaOrderService implements IOrderService {
       });
 
       // Queue transactional cancellation notification
-      notificationService
-        .queueNotification({
+      try {
+        await notificationService.queueNotification({
           channel: "EMAIL",
           recipient: updated.customerEmail,
           template: "ORDER_CANCELLED",
@@ -700,8 +700,8 @@ export class PrismaOrderService implements IOrderService {
             customerName: updated.customerName,
             reason: reason || "Cancelled by patron prior to studio dispatch.",
           },
-        })
-        .catch(() => {});
+        });
+      } catch {}
 
       return { success: true, order: mapDbOrderToFrontend(updated) };
     } catch {

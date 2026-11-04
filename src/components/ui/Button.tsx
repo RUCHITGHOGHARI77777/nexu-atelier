@@ -26,21 +26,21 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]";
+      "inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]";
 
     const variantStyles = {
       primary:
-        "bg-zinc-100 hover:bg-white text-zinc-950 shadow-sm border border-zinc-200/20 font-semibold",
+        "bg-slate-950 hover:bg-slate-800 text-white shadow-sm font-medium",
       secondary:
-        "bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700/60 shadow-sm",
+        "bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200 shadow-sm",
       outline:
-        "bg-transparent hover:bg-zinc-900 text-zinc-200 border border-zinc-800 hover:border-zinc-700",
+        "bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 hover:border-slate-300 shadow-sm",
       ghost:
-        "bg-transparent hover:bg-zinc-900 text-zinc-300 hover:text-white",
+        "bg-transparent hover:bg-slate-100 text-slate-600 hover:text-slate-900",
       destructive:
-        "bg-rose-600 hover:bg-rose-500 text-white shadow-sm border border-rose-500/20",
+        "bg-rose-600 hover:bg-rose-700 text-white shadow-sm",
       accent:
-        "bg-ochre hover:bg-ochre-hover text-zinc-950 font-bold shadow-sm",
+        "bg-[#2457C5] hover:bg-[#1d46a6] text-white font-medium shadow-sm",
     };
 
     const sizeStyles = {

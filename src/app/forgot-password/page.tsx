@@ -48,22 +48,22 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-100 mx-auto">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-900 mx-auto">
             <KeyRound className="w-5 h-5 stroke-1" />
           </div>
-          <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest block">
+          <span className="font-mono text-[10px] text-slate-500 uppercase tracking-widest block font-medium">
             PATRON ACCESS RECOVERY
           </span>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950">
             Reset Your Access Key
           </h1>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-slate-600">
             Enter your registered email address to receive secure access recovery instructions.
           </p>
         </div>
 
         {/* Card */}
-        <div className="p-6 rounded-2xl border border-zinc-800 bg-zinc-950 space-y-4">
+        <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-4">
           {error && (
             <Alert variant="error" title="Recovery Request Failed">
               {error}
@@ -72,21 +72,21 @@ export default function ForgotPasswordPage() {
 
           {submitted ? (
             <div className="space-y-4 py-2 text-center">
-              <div className="w-12 h-12 rounded-full bg-emerald-950/60 border border-emerald-800/80 flex items-center justify-center text-emerald-400 mx-auto">
+              <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mx-auto">
                 <CheckCircle2 className="w-6 h-6 stroke-1.5" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-sm font-semibold text-white">
+                <h3 className="text-sm font-semibold text-slate-950">
                   Instructions Dispatched
                 </h3>
-                <p className="text-xs text-zinc-400 leading-relaxed max-w-xs mx-auto">
-                  If an account exists for <span className="text-zinc-200 font-mono font-medium">{email}</span>, a secure recovery link has been queued to your inbox.
+                <p className="text-xs text-slate-600 leading-relaxed max-w-xs mx-auto">
+                  If an account exists for <span className="text-slate-900 font-mono font-medium">{email}</span>, a secure recovery link has been queued to your inbox.
                 </p>
               </div>
 
-              <div className="p-3 bg-zinc-900/60 border border-zinc-800/80 rounded-xl text-left space-y-1.5 text-[11px] text-zinc-400">
-                <div className="flex items-center gap-1.5 font-semibold text-zinc-200">
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-left space-y-1.5 text-[11px] text-slate-600">
+                <div className="flex items-center gap-1.5 font-semibold text-slate-900">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
                   <span>Security Safeguard</span>
                 </div>
                 <p>
@@ -97,7 +97,7 @@ export default function ForgotPasswordPage() {
               <div className="pt-2">
                 <Link
                   href="/login"
-                  className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
+                  className="w-full py-2.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Return to Sign In</span>
@@ -128,11 +128,11 @@ export default function ForgotPasswordPage() {
                 <ArrowRight className="w-4 h-4" />
               </Button>
 
-              <div className="pt-2 text-center text-xs text-zinc-500">
+              <div className="pt-2 text-center text-xs text-slate-500">
                 <span>Remembered your password? </span>
                 <Link
                   href="/login"
-                  className="text-zinc-200 hover:text-white font-semibold underline underline-offset-4"
+                  className="text-slate-900 hover:text-slate-950 font-semibold underline underline-offset-4"
                 >
                   Sign in
                 </Link>
@@ -142,7 +142,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         {/* Boundary Notice */}
-        <p className="text-[11px] text-zinc-500 text-center max-w-xs mx-auto font-mono">
+        <p className="text-[11px] text-slate-400 text-center max-w-xs mx-auto font-mono">
           Security Boundary: Password recovery tokens are single-use and cryptographically verified.
         </p>
       </div>

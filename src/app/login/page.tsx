@@ -64,47 +64,47 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-100 mx-auto">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-900 mx-auto">
             <Lock className="w-5 h-5 stroke-1" />
           </div>
-          <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest block">
+          <span className="font-mono text-[10px] text-slate-500 uppercase tracking-widest block font-medium">
             PATRON ACCESS
           </span>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950">
             Sign In to Nexu Atelier
           </h1>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-slate-600">
             Access your order history, saved addresses, and studio tracking.
           </p>
         </div>
 
         {/* Demo Fast-Login Strip */}
-        <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/60 space-y-2.5">
+        <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/80 space-y-2.5">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-zinc-200 flex items-center gap-1.5">
-              <UserCheck className="w-4 h-4 text-emerald-400" />
+            <span className="font-semibold text-slate-900 flex items-center gap-1.5">
+              <UserCheck className="w-4 h-4 text-emerald-600" />
               <span>Reviewer Fast Login</span>
             </span>
-            <span className="text-[10px] font-mono text-zinc-500">Demo Account</span>
+            <span className="text-[10px] font-mono text-slate-500">Demo Account</span>
           </div>
-          <p className="text-[11px] text-zinc-400 leading-normal">
+          <p className="text-[11px] text-slate-600 leading-normal">
             Authenticate instantly using the seeded demo patron profile:
           </p>
           <button
             type="button"
             onClick={handleQuickDemoLogin}
             disabled={isSubmitting}
-            className="w-full py-2 px-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-mono font-medium flex items-center justify-between border border-zinc-700/80 transition-colors"
+            className="w-full py-2 px-3 rounded-lg bg-white hover:bg-slate-50 text-slate-900 text-xs font-mono font-medium flex items-center justify-between border border-slate-200 shadow-sm transition-colors"
           >
             <span>patron@nexu.studio</span>
-            <span className="text-[11px] text-emerald-400 font-sans font-semibold">
+            <span className="text-[11px] text-emerald-600 font-sans font-semibold">
               1-Click Sign In →
             </span>
           </button>
         </div>
 
         {/* Form Card */}
-        <div className="p-6 rounded-2xl border border-zinc-800 bg-zinc-950 space-y-4">
+        <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-4">
           {error && (
             <Alert variant="error" title="Sign In Error">
               {error}
@@ -147,7 +147,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-end -mt-1">
               <Link
                 href="/forgot-password"
-                className="text-[11px] text-zinc-400 hover:text-zinc-200 transition-colors"
+                className="text-[11px] text-slate-500 hover:text-slate-950 transition-colors"
               >
                 Forgot your access key?
               </Link>
@@ -165,11 +165,11 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="pt-2 text-center text-xs text-zinc-500">
+          <div className="pt-2 text-center text-xs text-slate-500">
             <span>New patron? </span>
             <Link
               href="/register"
-              className="text-zinc-200 hover:text-white font-semibold underline underline-offset-4"
+              className="text-slate-900 hover:text-slate-950 font-semibold underline underline-offset-4"
             >
               Create an account
             </Link>
@@ -177,7 +177,7 @@ export default function LoginPage() {
         </div>
 
         {/* Boundary Notice */}
-        <p className="text-[11px] text-zinc-500 text-center max-w-xs mx-auto font-mono">
+        <p className="text-[11px] text-slate-400 text-center max-w-xs mx-auto font-mono">
           Security Boundary: Sessions are verified via HTTP-only cookies. No passwords or tokens are stored in browser localStorage.
         </p>
       </div>
