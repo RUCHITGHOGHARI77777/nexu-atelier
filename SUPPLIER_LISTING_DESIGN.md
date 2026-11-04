@@ -67,3 +67,4 @@ The supplier experience strictly adheres to the approved NEXU ATELIER light desi
 - **Typography:** Charcoal primary `#171717`, secondary `#626262`, muted `#767676`.
 - **Accents:** Luxury gold `#B78B45` for badges and focus states; subtle emerald `#21866F` for positive profit and confirmed statuses; soft rose `#C94A4A` for losses and blockers.
 - **Zero Heavy Black Cards:** Prominence is achieved through refined 1.5px/2px borders, tactile shadows (`shadow-xs`), and warm gold hover highlights.
+

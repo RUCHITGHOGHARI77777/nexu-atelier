@@ -249,9 +249,9 @@ export interface PlatformReview {
 }
 
 export const DEFAULT_WHITELABEL_CONFIG: WhiteLabelConfig = {
-  brandName: "AuraMart Enterprise",
+  brandName: "NEXU ATELIER",
   brandSubtitle: "Enterprise Multi-Vendor SaaS",
-  merchantUpiId: "auramart.enterprise@icici",
+  merchantUpiId: "nexu.atelier@icici",
   gstinNumber: "27AABCN8942Q1Z9",
   platformCommissionRate: 10,
   accentColor: "blue",
@@ -1682,7 +1682,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try {
       localStorage.removeItem("nexu_whitelabel_config");
     } catch {}
-    showToast("White-Label Branding reset to AuraMart Enterprise defaults", "info");
+    showToast("White-Label Branding reset to NEXU ATELIER defaults", "info");
   };
 
   const openPhoneSimulator = (data: PhoneSimulatorData) => {

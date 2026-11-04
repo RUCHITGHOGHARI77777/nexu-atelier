@@ -205,3 +205,4 @@ export function suggestGstRateForHsn(hsnCode: string, unitPriceINR: number = 0):
     ruleExplanation: `${record.hsnCode}: Standard ${record.defaultRatePercent}% applies (${record.notificationRef}).`,
   };
 }
+

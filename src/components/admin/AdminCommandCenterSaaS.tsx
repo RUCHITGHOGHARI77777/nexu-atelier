@@ -840,9 +840,9 @@ export function AdminCommandCenterSaaS() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {[
                 {
-                  name: "AuraMart Enterprise",
+                  name: "NEXU ATELIER",
                   subtitle: "Enterprise Multi-Vendor SaaS",
-                  upi: "auramart.enterprise@icici",
+                  upi: "nexu.atelier@icici",
                   gstin: "27AABCN8942Q1Z9",
                   commission: 10,
                   color: "blue" as const,
@@ -944,7 +944,7 @@ export function AdminCommandCenterSaaS() {
                     type="text"
                     value={wlBrandName}
                     onChange={(e) => setWlBrandName(e.target.value)}
-                    placeholder="e.g. AuraMart Enterprise"
+                    placeholder="e.g. NEXU ATELIER"
                     className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
                     required
                   />

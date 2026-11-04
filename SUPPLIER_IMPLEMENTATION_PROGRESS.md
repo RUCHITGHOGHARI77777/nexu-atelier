@@ -53,3 +53,4 @@
   - `wizard_step4_costing_calculator.png`
   - `wizard_step5_gst_shipping.png`
   - `wizard_step6_preview_submission.png`
+

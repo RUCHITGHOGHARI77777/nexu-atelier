@@ -21,3 +21,4 @@ export async function GET(request: Request) {
     hsnRecords: HSN_TAX_DIRECTORY,
   });
 }
+

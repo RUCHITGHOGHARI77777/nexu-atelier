@@ -84,3 +84,4 @@ $$\text{Effective Factor } F = 1 - \frac{C_{\text{rate}}}{100} - \frac{G_{\text{
 $$\text{Fixed Burden} = \text{Total Seller Cost} + \text{round}\left(\text{Customer Paid Shipping} \times \frac{G_{\text{rate}}}{100}\right)$$
 $$\text{Break-Even Price } (P_{\text{BE}}) = \text{round}\left( \frac{\text{Fixed Burden}}{F} \right)$$
 $$\text{Minimum Recommended Price } (P_{\text{rec}}) = \text{round}(P_{\text{BE}} \times 1.15) \quad \text{(15\% safety buffer)}$$
+

@@ -37,3 +37,4 @@ NEXU ATELIER operates as an e-commerce marketplace operator under Section 9(5) a
 1. **No Output GST as Profit:** Output GST is tax collected from the buyer for remittance to the government. It is strictly segregated from supplier contribution profit.
 2. **Input Tax Credit (ITC) Safeguard:** Suppliers may only claim ITC on procurement inputs if they possess a valid GST invoice, the supplier has uploaded the invoice to GSTR-1, and tax has been paid to the Government under Section 16(2) of the CGST Act. Non-recoverable taxes are included in direct production costs.
 3. **Historical Audit Preservation:** When an order is placed, the exact HSN code, applicable tax rate percentage, CGST/SGST/IGST breakdown, and statutory notification reference are permanently saved in the immutable order record.
+

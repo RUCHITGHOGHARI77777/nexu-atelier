@@ -58,3 +58,4 @@ stateDiagram-v2
 - **Automated Payout Accruals:** Net seller payout is calculated per order item, excluding output GST and marketplace commissions.
 - **Settlement Ledger:** Confirmed orders transition from `PENDING_SETTLEMENT` to `SETTLED` when the 7-day artisan replacement window elapses.
 - **Reports:** Automated generation of daily, weekly, and monthly CSV statements distinguishing estimated gross revenue from finalized bank settlements.
+

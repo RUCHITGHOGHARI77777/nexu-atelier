@@ -142,3 +142,25 @@
 - **Test Performed:** Automated text evaluation verified exact string occurrences across homepage and mega menu.
 - **Verification Result:** **VERIFIED PASS**.
 
+---
+
+### BUG-SUP-001
+- **Bug ID:** `BUG-SUP-001`
+- **Severity:** Medium (Brand Identity & Consistency)
+- **Page / URL:** Admin Command Center (`AdminCommandCenterSaaS.tsx`), Global Store Context (`StoreContext.tsx`)
+- **Symptoms:** Default white-label preset and UPI identifier defaulted to "AuraMart Enterprise" / `auramart.enterprise@icici`.
+- **Root Cause:** Legacy boilerplate preset data was not migrated to the official NEXU ATELIER identity.
+- **Fix Applied:** Replaced with "NEXU ATELIER", `nexu.atelier@icici`, and updated reset notification messages. Verified zero remaining references across all source files.
+- **Verification Result:** **VERIFIED PASS**.
+
+---
+
+### BUG-SUP-002
+- **Bug ID:** `BUG-SUP-002`
+- **Severity:** High (Functional Gap in Supplier Operations)
+- **Page / URL:** New Product Page (`/seller/products/new`)
+- **Symptoms:** Cumbersome single-page form lacked live statutory GST extraction, 4-tier cost inputs, and automated contribution margin calculation.
+- **Root Cause:** Sourcing and pricing was not connected to an authoritative integer paise calculation engine.
+- **Fix Applied:** Built `SupplierProductCreationWizard.tsx` with 6 guided steps, HSN directory integration under Notification 13/2025-Central Tax (Rate), and sticky dual-column live P&L ledger.
+- **Verification Result:** **VERIFIED PASS** (`tests/supplier-product-costing-integration.test.ts`).
+

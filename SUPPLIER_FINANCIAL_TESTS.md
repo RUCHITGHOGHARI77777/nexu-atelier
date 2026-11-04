@@ -49,3 +49,4 @@ Financial calculations, GST scenarios, cost summations, break-even thresholds, a
 - Selling Price: ₹1,200.
 - Contribution Profit: Negative ₹668.00.
 - **Verification:** **PASS** (System emits `CRITICAL LOSS WARNING` and flags `isLoss: true`).
+
