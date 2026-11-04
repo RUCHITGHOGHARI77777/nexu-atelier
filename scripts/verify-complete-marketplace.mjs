@@ -308,6 +308,20 @@ async function runAudit() {
     }
 
     // ----------------------------------------------------
+    // TEST 10B: Artisan Brand Storefront (/store/solstice-loom-studio)
+    // ----------------------------------------------------
+    console.log("\n[TEST 10B] Testing Artisan Brand Storefront...");
+    await page.goto(`${baseUrl}/store/solstice-loom-studio`, { waitUntil: "domcontentloaded", timeout: 20000 });
+    await new Promise((r) => setTimeout(r, 2000));
+
+    const storeHeading = await page.$eval("h1", (el) => el.textContent).catch(() => "");
+    if (storeHeading.includes("Solstice Loom Studio")) {
+      pass("Artisan Brand Storefront Loaded", storeHeading.trim());
+    } else {
+      fail("Artisan Brand Storefront", `Unexpected store heading: ${storeHeading}`);
+    }
+
+    // ----------------------------------------------------
     // TEST 11: Informational & Policy Pages Audit
     // ----------------------------------------------------
     console.log("\n[TEST 11] Testing Informational & Legal Policy Pages...");
@@ -368,3 +382,4 @@ async function runAudit() {
 }
 
 runAudit();
+

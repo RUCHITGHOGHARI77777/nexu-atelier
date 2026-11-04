@@ -18,9 +18,13 @@ import {
   Store,
   Menu,
   Sparkles,
+  RotateCcw,
+  Bell,
 } from "lucide-react";
 import { useStore } from "@/context/StoreContext";
 import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 import { REGIONS } from "@/lib/currency";
 import { FirebaseAuthModal } from "@/components/auth/FirebaseAuthModal";
 import { StorefrontMegaMenu } from "./StorefrontMegaMenu";
@@ -28,6 +32,8 @@ import { StorefrontMegaMenu } from "./StorefrontMegaMenu";
 export function CustomerStorefrontNavbar() {
   const router = useRouter();
   const { user: authUser, logout } = useAuth();
+  const { totals: cartTotals, openCartDrawer } = useCart();
+  const { wishlistCount } = useWishlist();
   const {
     searchQuery,
     setSearchQuery,
@@ -41,6 +47,9 @@ export function CustomerStorefrontNavbar() {
     formatPrice,
     showToast,
   } = useStore();
+
+  const totalBagCount = cartTotals?.itemCount > 0 ? cartTotals.itemCount : cartTotalCount;
+  const totalWishlistCount = wishlistCount > 0 ? wishlistCount : (wishlist?.length || 0);
 
   const [isRegionMenuOpen, setIsRegionMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -338,6 +347,15 @@ export function CustomerStorefrontNavbar() {
 
                       <div className="space-y-0.5">
                         <Link
+                          href="/account"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 transition-colors font-medium"
+                        >
+                          <User className="w-4 h-4 text-zinc-400" />
+                          <span>Patron Overview</span>
+                        </Link>
+
+                        <Link
                           href="/account/orders"
                           onClick={() => setIsUserMenuOpen(false)}
                           className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 transition-colors"
@@ -353,6 +371,24 @@ export function CustomerStorefrontNavbar() {
                         >
                           <MapPin className="w-4 h-4 text-zinc-400" />
                           <span>Saved Addresses</span>
+                        </Link>
+
+                        <Link
+                          href="/account/returns"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 transition-colors"
+                        >
+                          <RotateCcw className="w-4 h-4 text-zinc-400" />
+                          <span>Returns & Exchanges</span>
+                        </Link>
+
+                        <Link
+                          href="/account/notifications"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 transition-colors"
+                        >
+                          <Bell className="w-4 h-4 text-zinc-400" />
+                          <span>Notification Center</span>
                         </Link>
 
                         <Link
@@ -406,9 +442,9 @@ export function CustomerStorefrontNavbar() {
               title="Saved Collection"
             >
               <Heart className="w-4 h-4" />
-              {wishlist.length > 0 && (
+              {totalWishlistCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-zinc-900 text-white font-mono text-[9px] font-bold flex items-center justify-center">
-                  {wishlist.length}
+                  {totalWishlistCount}
                 </span>
               )}
             </Link>
@@ -416,14 +452,20 @@ export function CustomerStorefrontNavbar() {
             {/* Shopping Bag Trigger */}
             <button
               type="button"
-              onClick={() => setIsCartDrawerOpen(true)}
+              onClick={() => {
+                if (openCartDrawer) {
+                  openCartDrawer();
+                } else {
+                  setIsCartDrawerOpen(true);
+                }
+              }}
               className="relative px-3.5 py-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-98 cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4" />
               <span className="hidden sm:inline">Bag</span>
-              {cartTotalCount > 0 && (
+              {totalBagCount > 0 && (
                 <span className="px-1.5 py-0.2 rounded-full bg-white text-zinc-950 font-mono text-[10px] font-black">
-                  {cartTotalCount}
+                  {totalBagCount}
                 </span>
               )}
             </button>
@@ -504,6 +546,37 @@ export function CustomerStorefrontNavbar() {
                 className="p-2.5 rounded-xl bg-zinc-50 hover:bg-zinc-100 text-zinc-900 font-semibold"
               >
                 Artisan Studios
+              </Link>
+              <Link
+                href="/wishlist"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2.5 rounded-xl bg-zinc-50 hover:bg-zinc-100 text-zinc-900 font-semibold flex items-center justify-between"
+              >
+                <span>Saved Wishlist</span>
+                {totalWishlistCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-zinc-900 text-white font-mono text-[10px] font-bold">
+                    {totalWishlistCount}
+                  </span>
+                )}
+              </Link>
+              <Link
+                href="/cart"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2.5 rounded-xl bg-zinc-50 hover:bg-zinc-100 text-zinc-900 font-semibold flex items-center justify-between"
+              >
+                <span>Shopping Bag</span>
+                {totalBagCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-zinc-900 text-white font-mono text-[10px] font-bold">
+                    {totalBagCount}
+                  </span>
+                )}
+              </Link>
+              <Link
+                href="/account"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2.5 rounded-xl bg-zinc-50 hover:bg-zinc-100 text-zinc-900 font-semibold"
+              >
+                Patron Account
               </Link>
             </div>
           </div>

@@ -9,7 +9,6 @@
 **Automated Browser Audit:** 12 E2E Suites (26 Assertion Checkpoints Passed, 0 Failed)  
 **Compiler Status:** `npx tsc --noEmit` clean (0 errors)  
 
----
 
 ## 1. System Architecture & Portal Separation
 

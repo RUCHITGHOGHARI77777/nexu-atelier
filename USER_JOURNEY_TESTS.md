@@ -129,3 +129,4 @@ AUDIT COMPLETE: 26 PASSED, 0 FAILED
 - **Cross-Browser Verification:** Tested against Chromium engine in viewport dimensions `1440x900`, `768x1024`, and `375x812`.
 - **Accessibility:** Semantic HTML tags (`nav`, `main`, `section`, `article`, `footer`, `button`) utilized throughout.
 - **Security:** Zero client-side price trust; strict server recalculations on checkout; SQL injection prevention via Prisma parameterized queries; IDOR prevention across supplier and admin routes.
+

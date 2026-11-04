@@ -99,3 +99,4 @@ capture().catch((e) => {
   console.error("Visual QA script failure:", e);
   process.exit(1);
 });
+
