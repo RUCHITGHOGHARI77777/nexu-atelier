@@ -197,9 +197,14 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
         {/* Vendor attribution badge */}
         <div className="pt-2 flex items-center gap-2 text-xs">
           <span className="text-zinc-500">Crafted by:</span>
-          <span className="text-zinc-900 font-semibold underline underline-offset-4">
-            {product.vendor.name}
-          </span>
+          <Link
+            href={`/store/${product.vendor.slug || product.vendor.id}`}
+            className="text-zinc-900 font-semibold underline underline-offset-4 hover:text-blue-600 transition-colors flex items-center gap-1"
+            title={`Visit ${product.vendor.name} Brand Boutique`}
+          >
+            <Building2 className="w-3.5 h-3.5 text-zinc-400" />
+            <span>{product.vendor.name}</span>
+          </Link>
           <span className="text-zinc-400">•</span>
           <span className="text-zinc-500 font-mono text-[11px]">
             {product.vendor.location}
@@ -426,9 +431,9 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
             size="lg"
             onClick={handleBuyNow}
             disabled={product.stock === 0}
-            className="w-full flex items-center justify-center gap-2 font-bold bg-amber-500 hover:bg-amber-400 text-zinc-950 py-3 rounded-xl shadow-md transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 font-bold bg-slate-950 hover:bg-slate-800 text-white py-3 rounded-xl shadow-sm transition-all cursor-pointer"
           >
-            <Zap className="w-4 h-4 fill-zinc-950" />
+            <Zap className="w-4 h-4 fill-amber-400 text-amber-400" />
             <span>Buy Now • {formatCurrency(product.basePrice * quantity)}</span>
           </Button>
         </div>
@@ -451,30 +456,30 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
       </div>
 
       {/* Pincode Delivery Estimator */}
-      <div className="pt-4 border-t border-zinc-800/80">
+      <div className="pt-4 border-t border-zinc-100">
         <DeliveryEstimator />
       </div>
 
       {/* Size Guide Modal */}
       {isSizeGuideOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4"
           onClick={() => setIsSizeGuideOpen(false)}
         >
           <div
-            className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl"
+            className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <Ruler className="w-4 h-4 text-ochre" />
-                <h3 className="font-bold text-sm text-white">
+                <Ruler className="w-4 h-4 text-blue-600" />
+                <h3 className="font-bold text-sm text-slate-950">
                   {product.category === "Footwear" ? "Footwear Sizing Chart" : "Apparel Measurement Guide"}
                 </h3>
               </div>
               <button
                 onClick={() => setIsSizeGuideOpen(false)}
-                className="text-zinc-400 hover:text-white p-1"
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg transition-colors cursor-pointer"
                 aria-label="Close size guide"
               >
                 <X className="w-4 h-4" />
@@ -483,54 +488,55 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
 
             {product.category === "Footwear" ? (
               <div className="text-xs space-y-3">
-                <p className="text-zinc-400">
+                <p className="text-slate-600">
                   Our footwear is crafted on standard Goodyear-welted European lasts with a generous toe box.
                 </p>
                 <table className="w-full text-left font-mono border-collapse">
                   <thead>
-                    <tr className="border-b border-zinc-800 text-zinc-500">
+                    <tr className="border-b border-slate-200 text-slate-500">
                       <th className="py-2">UK</th>
                       <th className="py-2">US</th>
                       <th className="py-2">EU</th>
                       <th className="py-2">Foot (cm)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
-                    <tr><td className="py-1.5">UK 7</td><td>8.0</td><td>41</td><td>25.5 cm</td></tr>
-                    <tr><td className="py-1.5">UK 8</td><td>9.0</td><td>42</td><td>26.5 cm</td></tr>
-                    <tr><td className="py-1.5">UK 9</td><td>10.0</td><td>43</td><td>27.5 cm</td></tr>
-                    <tr><td className="py-1.5">UK 10</td><td>11.0</td><td>44</td><td>28.5 cm</td></tr>
-                    <tr><td className="py-1.5">UK 11</td><td>12.0</td><td>45</td><td>29.5 cm</td></tr>
+                  <tbody className="divide-y divide-slate-100 text-slate-800">
+                    <tr><td className="py-1.5 font-bold">UK 7</td><td>8.0</td><td>41</td><td>25.5 cm</td></tr>
+                    <tr><td className="py-1.5 font-bold">UK 8</td><td>9.0</td><td>42</td><td>26.5 cm</td></tr>
+                    <tr><td className="py-1.5 font-bold">UK 9</td><td>10.0</td><td>43</td><td>27.5 cm</td></tr>
+                    <tr><td className="py-1.5 font-bold">UK 10</td><td>11.0</td><td>44</td><td>28.5 cm</td></tr>
+                    <tr><td className="py-1.5 font-bold">UK 11</td><td>12.0</td><td>45</td><td>29.5 cm</td></tr>
                   </tbody>
                 </table>
               </div>
             ) : (
               <div className="text-xs space-y-3">
-                <p className="text-zinc-400">
+                <p className="text-slate-600">
                   Garments are hand-cut by master tailors with standard ease for comfortable drape.
                 </p>
                 <table className="w-full text-left font-mono border-collapse">
                   <thead>
-                    <tr className="border-b border-zinc-800 text-zinc-500">
+                    <tr className="border-b border-slate-200 text-slate-500">
                       <th className="py-2">Size</th>
                       <th className="py-2">Chest</th>
                       <th className="py-2">Waist</th>
                       <th className="py-2">Length</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
-                    <tr><td className="py-1.5">XS</td><td>34&quot;</td><td>28&quot;</td><td>46&quot;</td></tr>
-                    <tr><td className="py-1.5">S</td><td>36&quot;</td><td>30&quot;</td><td>47&quot;</td></tr>
-                    <tr><td className="py-1.5">M</td><td>38&quot;</td><td>32&quot;</td><td>48&quot;</td></tr>
-                    <tr><td className="py-1.5">L</td><td>41&quot;</td><td>35&quot;</td><td>49&quot;</td></tr>
-                    <tr><td className="py-1.5">XL</td><td>44&quot;</td><td>38&quot;</td><td>50&quot;</td></tr>
+                  <tbody className="divide-y divide-slate-100 text-slate-800">
+                    <tr><td className="py-1.5 font-bold">XS</td><td>34&quot;</td><td>28&quot;</td><td>46&quot;</td></tr>
+                    <tr><td className="py-1.5 font-bold">S</td><td>36&quot;</td><td>30&quot;</td><td>47&quot;</td></tr>
+                    <tr><td className="py-1.5 font-bold">M</td><td>38&quot;</td><td>32&quot;</td><td>48&quot;</td></tr>
+                    <tr><td className="py-1.5 font-bold">L</td><td>41&quot;</td><td>35&quot;</td><td>49&quot;</td></tr>
+                    <tr><td className="py-1.5 font-bold">XL</td><td>44&quot;</td><td>38&quot;</td><td>50&quot;</td></tr>
                   </tbody>
                 </table>
               </div>
             )}
 
-            <div className="pt-2 text-[11px] text-zinc-500 border-t border-zinc-800">
-              Complimentary 7-day studio exchanges if sizing requires adjustment.
+            <div className="pt-2 text-[11px] text-slate-500 border-t border-slate-100 flex items-center justify-between">
+              <span>Complimentary 7-day studio exchanges if sizing requires adjustment.</span>
+              <span className="font-mono text-emerald-700 font-semibold">100% Guaranteed</span>
             </div>
           </div>
         </div>

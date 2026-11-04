@@ -118,3 +118,4 @@ Defined in `src/app/globals.css`:
 - [x] Server-authoritative checkout totals computed in minor units (paise) with zero floating-point drift.
 - [x] Idempotency keys enforced on order placement and refund execution.
 - [x] Genuine Google OAuth popup flow and PBKDF2 salt-hashing maintained.
+

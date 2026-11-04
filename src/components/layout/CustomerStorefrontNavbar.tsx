@@ -130,13 +130,13 @@ export function CustomerStorefrontNavbar() {
 
             <span className="text-slate-300">•</span>
 
-            {/* Link to Seller Hub */}
+            {/* Customer Order Tracking */}
             <Link
-              href="/seller"
+              href="/track-order"
               className="hover:text-slate-950 transition-colors flex items-center gap-1 font-medium text-slate-700"
             >
-              <Store className="w-3.5 h-3.5 text-slate-500" />
-              <span>Seller Hub</span>
+              <Package className="w-3.5 h-3.5 text-slate-500" />
+              <span>Track Order</span>
             </Link>
 
             <span className="text-slate-300">•</span>
