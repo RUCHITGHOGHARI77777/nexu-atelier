@@ -30,3 +30,4 @@ The codebase contains zero missing functional logic. The remaining external inte
 2. **Resend Email Service:** `RESEND_API_KEY`, `EMAIL_FROM`.
 3. **Razorpay Live Merchant Gateway:** `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`.
 4. **Shiprocket / Delhivery Courier:** `SHIPROCKET_EMAIL`, `SHIPROCKET_PASSWORD`, `SHIPPING_WEBHOOK_SECRET`.
+

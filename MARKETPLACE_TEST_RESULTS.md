@@ -78,3 +78,4 @@ Test Files  30 passed (30)
 - **Passed:** 27
 - **Failed:** 0
 - **Scope Tested:** Homepage CTAs, Lookbook Links, Typeahead Search, Catalog Filters, PDP Variants, Pincode Estimator, Cart Page, Checkout Page, Consignment Tracking, Promotions Hub, Artisan Brand Storefront, 9 Informational & Legal Policy Pages, Mobile Viewport Navigation Drawer.
+
