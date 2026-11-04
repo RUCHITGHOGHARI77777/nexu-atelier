@@ -42,7 +42,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, a
                 </li>
                 <li>
                   <Link
-                    href="/shop?category=Fashion%20%26%20Apparel"
+                    href="/shop?category=Apparel"
                     onClick={onClose}
                     className="text-zinc-600 hover:text-zinc-950 transition-colors block py-0.5"
                   >
@@ -51,7 +51,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, a
                 </li>
                 <li>
                   <Link
-                    href="/shop?category=Home%20%26%20Kitchen"
+                    href="/shop?category=Objects%20%26%20Living"
                     onClick={onClose}
                     className="text-zinc-600 hover:text-zinc-950 transition-colors block py-0.5"
                   >
@@ -60,7 +60,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, a
                 </li>
                 <li>
                   <Link
-                    href="/shop?category=Electronics"
+                    href="/shop?category=Audio%20%26%20Tech"
                     onClick={onClose}
                     className="text-zinc-600 hover:text-zinc-950 transition-colors block py-0.5"
                   >
@@ -69,11 +69,11 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, a
                 </li>
                 <li>
                   <Link
-                    href="/shop?category=B2B%20Wholesale%20Packs"
+                    href="/shop?category=Footwear"
                     onClick={onClose}
                     className="text-zinc-600 hover:text-zinc-950 transition-colors block py-0.5"
                   >
-                    B2B Guild Wholesale Commissions
+                    Bench-Made Heritage Footwear
                   </Link>
                 </li>
               </ul>
@@ -102,7 +102,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, a
                 </li>
                 <li>
                   <Link
-                    href="/shop?search=Jaipur"
+                    href="/shop?q=Jaipur"
                     onClick={onClose}
                     className="block group p-2.5 rounded-xl hover:bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all"
                   >
@@ -116,7 +116,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, a
                 </li>
                 <li>
                   <Link
-                    href="/shop?search=Kashmir"
+                    href="/shop?q=Kashmir"
                     onClick={onClose}
                     className="block group p-2.5 rounded-xl hover:bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all"
                   >
@@ -134,7 +134,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, a
             {/* Col 3 & 4: Editorial Visual Feature Card (6 cols) */}
             <div className="col-span-6 grid grid-cols-2 gap-4">
               <Link
-                href="/product/chanderi-silk-festive-saree"
+                href="/product/chanderi-silk-embroidered-anarkali-robe"
                 onClick={onClose}
                 className="group relative rounded-2xl overflow-hidden bg-zinc-900 aspect-4/3 flex flex-col justify-end p-5 text-white shadow-md"
               >
@@ -146,14 +146,14 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, a
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="relative z-20 space-y-1">
-                  <span className="text-[10px] font-mono tracking-widest uppercase text-amber-300">
+                  <span className="text-[10px] font-mono tracking-widest uppercase text-amber-300 font-semibold">
                     Masterpiece Spotlight
                   </span>
                   <h4 className="text-sm font-bold text-white group-hover:underline">
-                    Chanderi Zari Silk Saree
+                    Chanderi Embroidered Robe
                   </h4>
                   <p className="text-[11px] text-zinc-300 line-clamp-1">
-                    Hand-woven with real silver thread zari in Madhya Pradesh.
+                    Hand-woven with real gold thread zari in Surat, Gujarat.
                   </p>
                 </div>
               </Link>
@@ -171,7 +171,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, a
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="relative z-20 space-y-1">
-                  <span className="text-[10px] font-mono tracking-widest uppercase text-blue-300">
+                  <span className="text-[10px] font-mono tracking-widest uppercase text-blue-300 font-semibold">
                     The Living Heritage
                   </span>
                   <h4 className="text-sm font-bold text-white group-hover:underline">
@@ -189,7 +189,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, a
         {activeMenu === "guilds" && (
           <div className="grid grid-cols-4 gap-6">
             <Link
-              href="/category/apparel"
+              href="/shop?category=Apparel"
               onClick={onClose}
               className="group p-4 rounded-2xl border border-zinc-200 hover:border-zinc-300 bg-zinc-50/50 hover:bg-white transition-all space-y-2"
             >
@@ -205,7 +205,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, a
             </Link>
 
             <Link
-              href="/shop?category=Electronics"
+              href="/shop?category=Audio%20%26%20Tech"
               onClick={onClose}
               className="group p-4 rounded-2xl border border-zinc-200 hover:border-zinc-300 bg-zinc-50/50 hover:bg-white transition-all space-y-2"
             >
@@ -221,7 +221,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, a
             </Link>
 
             <Link
-              href="/shop?category=Home%20%26%20Kitchen"
+              href="/shop?category=Objects%20%26%20Living"
               onClick={onClose}
               className="group p-4 rounded-2xl border border-zinc-200 hover:border-zinc-300 bg-zinc-50/50 hover:bg-white transition-all space-y-2"
             >
@@ -237,18 +237,18 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, a
             </Link>
 
             <Link
-              href="/shop?category=B2B%20Wholesale%20Packs"
+              href="/shop?category=Footwear"
               onClick={onClose}
               className="group p-4 rounded-2xl border border-zinc-200 hover:border-zinc-300 bg-zinc-50/50 hover:bg-white transition-all space-y-2"
             >
               <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold text-xs">
-                B2B
+                FW
               </div>
               <h4 className="text-xs font-bold text-zinc-900 group-hover:text-blue-600">
-                Guild Wholesale & Boutique
+                Leather Goods & Footwear
               </h4>
               <p className="text-[11px] text-zinc-500 line-clamp-2">
-                Curated bulk lots for international luxury retailers and interior designers.
+                Goodyear-welted derbies, full-grain card folios, and artisan sandals.
               </p>
             </Link>
           </div>

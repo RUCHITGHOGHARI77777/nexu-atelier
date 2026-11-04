@@ -27,7 +27,7 @@ const DEFAULT_CATEGORIES: LiveCategory[] = [
   },
   {
     id: "cat_audio",
-    slug: "electronics",
+    slug: "audio-electronics",
     name: "Acoustic Engineering",
     description: "Bespoke point-to-point hand-wired vacuum tube amplifiers and acoustic monitors.",
     image: "https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=800&q=80",
@@ -35,18 +35,18 @@ const DEFAULT_CATEGORIES: LiveCategory[] = [
   },
   {
     id: "cat_home",
-    slug: "home-kitchen",
+    slug: "home-objects",
     name: "Foundry & Brassware",
     description: "Heavy lost-wax cast temple urlis, incense vessels, and organic terracotta ceramics.",
     image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80",
     _count: { products: 14 },
   },
   {
-    id: "cat_wholesale",
-    slug: "wholesale",
-    name: "Guild Wholesale",
-    description: "Curated bulk atelier lots for international interior designers and boutique retailers.",
-    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
+    id: "cat_footwear",
+    slug: "footwear-leather",
+    name: "Leather & Heritage Footwear",
+    description: "Goodyear-welted vegetable-tanned leather derbies, boots, and hand-stitched kolhapuri sandals.",
+    image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=800&q=80",
     _count: { products: 8 },
   },
 ];
@@ -62,7 +62,14 @@ export const FeaturedCategories: React.FC = () => {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.categories) && data.categories.length > 0) {
-            setCategories(data.categories);
+            const valid = data.categories.filter(
+              (c: any) =>
+                !c.name?.toLowerCase().includes("test") &&
+                !c.slug?.toLowerCase().includes("cust-cat")
+            );
+            if (valid.length > 0) {
+              setCategories(valid);
+            }
           }
         }
       } catch {

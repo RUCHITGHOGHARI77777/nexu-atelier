@@ -15,7 +15,7 @@ export function CatalogContent() {
 
   // Initialize filters from URL query parameters
   const initialCategory = (searchParams.get("category") as ProductCategory) || "All";
-  const initialQuery = searchParams.get("q") || "";
+  const initialQuery = searchParams.get("q") || searchParams.get("search") || "";
   const initialSort = (searchParams.get("sort") as SortOption) || "featured";
 
   const [filters, setFilters] = useState<FilterState>({
@@ -37,7 +37,7 @@ export function CatalogContent() {
   // Sync state if query params change externally
   useEffect(() => {
     const cat = (searchParams.get("category") as ProductCategory) || "All";
-    const q = searchParams.get("q") || "";
+    const q = searchParams.get("q") || searchParams.get("search") || "";
     const s = (searchParams.get("sort") as SortOption) || "featured";
     setFilters((prev) => ({
       ...prev,

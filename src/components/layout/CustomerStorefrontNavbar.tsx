@@ -50,11 +50,11 @@ export function CustomerStorefrontNavbar() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const popularSearches = [
-    "Chanderi Silk Saree",
-    "Mulberry Kimono",
-    "Walnut Acoustic Monitors",
-    "Cast Brass Urli",
-    "Kashmir Cashmere",
+    "Chanderi Silk",
+    "Bandhej Saree",
+    "SoundPulse Earbuds",
+    "Brass Urli",
+    "Leather Derby",
   ];
 
   const handleCategorySelect = (catValue: string) => {
@@ -267,7 +267,7 @@ export function CustomerStorefrontNavbar() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && searchQuery.trim()) {
-                    router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+                    router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
                   }
                 }}
                 placeholder="Search luxury silks, acoustic audio, cast brass..."
@@ -297,7 +297,7 @@ export function CustomerStorefrontNavbar() {
                       type="button"
                       onMouseDown={() => {
                         setSearchQuery(item);
-                        router.push(`/shop?search=${encodeURIComponent(item)}`);
+                        router.push(`/shop?q=${encodeURIComponent(item)}`);
                       }}
                       className="px-2.5 py-1 rounded-lg text-xs bg-zinc-100 hover:bg-zinc-900 hover:text-white text-zinc-700 transition-colors"
                     >
@@ -452,7 +452,7 @@ export function CustomerStorefrontNavbar() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && searchQuery.trim()) {
-                    router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+                    router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
                     setIsMobileMenuOpen(false);
                   }
                 }}
