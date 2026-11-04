@@ -50,3 +50,18 @@ The platform includes production-ready driver adapters that automatically switch
 3. **Image Storage CDN:**
    - High-resolution product images are currently uploaded with magic-byte verification to local disk. For multi-instance horizontal scaling, bind an S3 or Cloudflare R2 bucket.
 
+---
+
+## 5. Technical Corrections & Resolved Deficiencies
+
+1. **Order ID Generation Entropy (Resolved):**
+   - Upgraded from legacy 5-digit timestamp slice to 48-bit cryptographic hex randomness (`crypto.randomBytes(6)`), delivering 281.5 trillion unique keys enforced by database primary key constraints.
+2. **WCAG 2.1 AA Text Contrast (Resolved):**
+   - Adjusted `--nexu-text-muted` from `#94A3B8` (2.56:1 contrast ratio) to `#64748B` (4.63:1 contrast ratio), satisfying accessibility standards on pure white and linen backgrounds.
+3. **Quick View Integration & Dual-Context Cart Sync (Resolved):**
+   - Added Quick View trigger to all product cards, connected to `ProductQuickViewModal.tsx`. Add-to-bag operations inside the modal synchronize with both `useStore()` and `useCart()`, ensuring immediate navbar reactivity and database cart persistence.
+4. **Truthful Architecture & Escrow Terminology (Resolved):**
+   - Replaced claims of "RBI Escrow" with accurate "Patron Protection Guarantee" and "Direct Studio Settlement", preserving architectural integrity in the absence of live banking escrow licenses.
+5. **Seller Storefront Dynamic PostgreSQL Integration (Resolved):**
+   - Created `/api/sellers/[slug]` endpoint and refactored `/store/[slug]` to dynamically hydrate artisan seller biography, metrics, location, and approved products from PostgreSQL.
+

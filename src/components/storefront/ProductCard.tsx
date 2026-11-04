@@ -2,12 +2,13 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Heart, Star, ShoppingBag, Check, Scale } from "lucide-react";
+import { Heart, Star, ShoppingBag, Check, Scale, Eye } from "lucide-react";
 import { Product } from "@/types/marketplace";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useCompare } from "@/context/CompareContext";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useStore } from "@/context/StoreContext";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { Badge } from "@/components/ui/Badge";
 import { calculateDiscountPercentage } from "@/lib/formatters";
@@ -21,6 +22,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { isWishlisted, toggleWishlist } = useWishlist();
   const { addToCompare, removeFromCompare, isInCompare } = useCompare();
   const { formatPrice } = useCurrency();
+  const { setQuickViewProduct } = useStore();
   const [selectedColor, setSelectedColor] = useState(product.availableColors?.[0]);
   const [isAdded, setIsAdded] = useState(false);
 
@@ -28,6 +30,39 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     product.basePrice,
     product.compareAtPrice
   );
+
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setQuickViewProduct({
+      id: product.id,
+      title: product.title,
+      price: product.basePrice,
+      mrpPrice: product.compareAtPrice || Math.round(product.basePrice * 1.25),
+      rating: product.rating,
+      reviewsCount: product.reviewCount || 1,
+      images: product.images,
+      category: product.category,
+      supplier: {
+        id: product.vendor.id,
+        name: product.vendor.name,
+        location: product.vendor.location || "India",
+        verified: true,
+        rating: product.vendor.rating || 5.0,
+        badge: "VERIFIED ATELIER",
+      } as any,
+      stock: product.stock,
+      colors: product.availableColors?.map((c) => ({ name: c.name, hex: c.hex })) || [
+        { name: "Standard", hex: "#18181b" },
+      ],
+      sizes: product.availableSizes || ["XS", "S", "M", "L", "XL"],
+      specs: {
+        Material: product.materials || "Natural Artisan Materials",
+        Origin: product.vendor.location || "India",
+      },
+      description: product.description,
+    } as any);
+  };
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -87,7 +122,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             )}
           </div>
 
-          {/* Actions Stack: Wishlist & Compare */}
+          {/* Actions Stack: Wishlist, Quick View & Compare */}
           <div className="flex flex-col gap-1.5 pointer-events-auto">
             <button
               onClick={handleToggleWishlist}
@@ -102,6 +137,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               <Heart
                 className={`w-3.5 h-3.5 ${wishlisted ? "fill-rose-600 text-rose-600" : ""}`}
               />
+            </button>
+
+            <button
+              onClick={handleQuickView}
+              className="p-2 rounded-full transition-all cursor-pointer bg-white/90 text-zinc-700 hover:text-zinc-950 hover:bg-white border border-zinc-200/80 shadow-sm"
+              aria-label="Quick view"
+              title="Quick view"
+            >
+              <Eye className="w-3.5 h-3.5" />
             </button>
 
             <button

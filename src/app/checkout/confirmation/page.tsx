@@ -37,7 +37,7 @@ const FIVE_DELIVERY_STAGES = [
     stage: 1,
     key: "CONFIRMED",
     label: "Order Confirmed & Invoice Generated",
-    subtitle: "Payment authorized via 256-bit NPCI UPI Escrow. Official GST tax invoice issued.",
+    subtitle: "Payment authorized via 256-bit NPCI UPI Gateway. Official GST tax invoice issued.",
     icon: FileText,
   },
   {
@@ -65,7 +65,7 @@ const FIVE_DELIVERY_STAGES = [
     stage: 5,
     key: "DELIVERED",
     label: "Delivered",
-    subtitle: "Handed over to patron. 100% verified & Escrow payout released to maker.",
+    subtitle: "Handed over to patron. 100% verified & direct payout released to maker.",
     icon: CheckCircle2,
   },
 ];

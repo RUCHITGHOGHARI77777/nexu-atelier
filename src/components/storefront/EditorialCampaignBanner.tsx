@@ -16,7 +16,7 @@ export function EditorialCampaignBanner() {
           {/* Main Statement */}
           <div className="lg:col-span-8 space-y-4 max-w-2xl">
             <span className="text-[11px] font-mono tracking-widest uppercase text-amber-400 font-bold block">
-              THE PATRON ESCROW PROTOCOL
+              THE PATRON PROTECTION PROTOCOL
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight text-white font-serif">
               Direct From Master Looms. <br className="hidden sm:inline" />
@@ -61,7 +61,7 @@ export function EditorialCampaignBanner() {
             </div>
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md space-y-1">
               <span className="text-2xl sm:text-3xl font-extrabold text-blue-400 font-mono">7-Day</span>
-              <p className="text-[11px] text-zinc-400">Artisan exchange and escrow guarantee</p>
+              <p className="text-[11px] text-zinc-400">Artisan exchange and authenticity guarantee</p>
             </div>
           </div>
         </div>

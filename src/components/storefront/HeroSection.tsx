@@ -106,7 +106,7 @@ export const HeroSection: React.FC = () => {
                   100%
                 </span>
                 <span className="text-[11px] text-zinc-500 uppercase tracking-wider block mt-0.5">
-                  Doorstep Escrow
+                  Verified Dispatch
                 </span>
               </div>
             </div>

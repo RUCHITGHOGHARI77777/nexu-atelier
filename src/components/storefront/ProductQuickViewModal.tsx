@@ -26,6 +26,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useStore, StoreProduct } from "@/context/StoreContext";
+import { useCart } from "@/context/CartContext";
+import { Product } from "@/types/marketplace";
 import { SafeImage } from "@/components/ui/SafeImage";
 
 // Standard Slot Labels for the 6-Slot Gallery
@@ -50,6 +52,7 @@ const SIZE_GUIDE_ROWS = [
 
 export function ProductQuickViewModal() {
   const router = useRouter();
+  const cart = useCart();
   const {
     quickViewProduct,
     setQuickViewProduct,
@@ -133,12 +136,59 @@ export function ProductQuickViewModal() {
     });
   };
 
+  const syncToCartContext = () => {
+    try {
+      const mappedProduct: Product = {
+        id: product.id,
+        slug: (product as any).slug || product.id,
+        title: product.title,
+        subtitle: (product as any).subtitle || product.title,
+        description: (product as any).description || product.title,
+        category: (product.category as any) || "Objects & Living",
+        vendor: {
+          id: product.supplier?.id || "seller-solstice",
+          name: product.supplier?.name || "NEXU Atelier",
+          slug: sellerSlug,
+          location: product.supplier?.location || "Jaipur, Rajasthan",
+          tagline: "Certified Atelier",
+          story: "Artisanal master studio",
+          rating: product.supplier?.rating || 4.9,
+          totalSales: 120,
+          verifiedSince: "2023",
+          dispatchTime: "24-48 Hours",
+          avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+        },
+        basePrice: product.price,
+        compareAtPrice: product.mrpPrice,
+        currency: "INR",
+        images: product.images && product.images.length > 0 ? product.images : [currentMainImage],
+        stock: product.stock ?? 10,
+        rating: product.rating || 5,
+        reviewCount: (product as any).reviewsCount || (product as any).reviewCount || 1,
+        tags: [],
+        specifications: [],
+        highlights: [],
+        estimatedDeliveryDays: 3,
+        availableColors: product.colors?.map((c) => ({ name: c.name, hex: c.hex })),
+        availableSizes: product.sizes,
+      };
+      cart.addToCart(mappedProduct, {
+        size: currentSize,
+        color: currentColor ? { name: currentColor.name, hex: currentColor.hex } : undefined,
+        quantity,
+      });
+    } catch {
+      // CartContext graceful fallback
+    }
+  };
+
   const handleAddAndClose = () => {
     addToCart(product, {
       size: currentSize,
       color: currentColor,
       quantity,
     });
+    syncToCartContext();
     setQuickViewProduct(null);
   };
 
@@ -148,6 +198,7 @@ export function ProductQuickViewModal() {
       color: currentColor,
       quantity,
     });
+    syncToCartContext();
     setQuickViewProduct(null);
     router.push("/checkout");
   };

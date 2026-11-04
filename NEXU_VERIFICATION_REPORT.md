@@ -136,3 +136,4 @@ All screenshot artifacts are persisted in both `D:\Ecommerce Project Real\screen
 3. **Order ID Entropy:** Replaced timestamp slicing with `crypto.randomBytes(6)` hexadecimal entropy backed by PostgreSQL `@id` primary key constraint.
 4. **WCAG AA Contrast Calibration:** Corrected `--nexu-text-muted` from `#94A3B8` to `#64748B`, restoring 4.63:1 contrast.
 5. **Responsive Verification:** Captured 6 high-fidelity responsive screenshots across mobile, tablet, and widescreen viewports with 0 horizontal overflow.
+

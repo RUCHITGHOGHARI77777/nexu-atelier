@@ -99,9 +99,9 @@ export function BrandStorySection() {
                 <Sparkles className="w-4 h-4 text-indigo-600" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-zinc-950">100% Escrow Release</h4>
+                <h4 className="text-xs font-bold text-zinc-950">Direct Studio Settlement</h4>
                 <p className="text-[11px] text-zinc-500 leading-snug mt-0.5">
-                  Funds protected and settled via NEFT/IMPS with banking UTR receipts.
+                  Artisans receive direct payout with verified banking transaction receipts.
                 </p>
               </div>
             </div>
