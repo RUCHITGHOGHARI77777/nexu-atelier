@@ -111,7 +111,7 @@ export const ArtisanSpotlight: React.FC = () => {
             <div>
               <Link
                 href={`/catalog?maker=${encodeURIComponent(displaySeller.name)}`}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs sm:text-sm transition-colors shadow-xs"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] font-semibold text-xs sm:text-sm transition-colors shadow-xs"
               >
                 <span>Explore {displaySeller.name} Pieces</span>
                 <ArrowRight className="w-4 h-4" />

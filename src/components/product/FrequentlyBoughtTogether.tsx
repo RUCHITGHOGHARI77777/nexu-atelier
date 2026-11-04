@@ -108,8 +108,8 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
                         onClick={() => toggleItem(item.id)}
                         className={`w-4 h-4 rounded border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
                           isSelected
-                            ? "bg-zinc-900 border-zinc-900 text-white"
-                            : "border-zinc-300 bg-white"
+                            ? "bg-white border-2 border-[#171717] text-[#171717]"
+                            : "border-[#E8E8E4] bg-[#FAFAF8]"
                         }`}
                         aria-label={`Select ${item.title}`}
                       >

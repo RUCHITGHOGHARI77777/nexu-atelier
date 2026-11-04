@@ -102,7 +102,7 @@ export default function BrandedStorefrontPage() {
         <div>
           <Link
             href="/shop"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-950 text-white text-xs font-semibold hover:bg-zinc-800 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] text-xs font-semibold transition-colors shadow-xs"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Return to Master Catalog</span>

@@ -222,7 +222,7 @@ export function CustomerStorefrontNavbar() {
           {/* Brand Logo & Editorial Wordmark */}
           <div className="flex items-center gap-6 shrink-0">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 rounded-lg bg-zinc-950 text-white flex items-center justify-center font-bold text-sm tracking-widest shadow-xs">
+              <div className="w-8 h-8 rounded-lg bg-[#FAFAF8] text-[#171717] border border-[#E8E8E4] flex items-center justify-center font-bold text-sm tracking-widest shadow-xs">
                 N
               </div>
               <div className="flex flex-col">
@@ -500,12 +500,12 @@ export function CustomerStorefrontNavbar() {
                   setIsCartDrawerOpen(true);
                 }
               }}
-              className="relative px-3.5 py-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-98 cursor-pointer"
+              className="relative px-3.5 py-2 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] text-xs font-bold flex items-center gap-2 shadow-xs transition-all active:scale-98 cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4" />
               <span className="hidden sm:inline">Bag</span>
               {totalBagCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-white text-zinc-950 font-mono text-[10px] font-black">
+                <span className="px-1.5 py-0.2 rounded-full bg-[#F8F2E6] text-[#B78B45] border border-[#B78B45]/30 font-mono text-[10px] font-black">
                   {totalBagCount}
                 </span>
               )}

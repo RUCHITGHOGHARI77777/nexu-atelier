@@ -28,7 +28,7 @@ export default function NotFound() {
             variant="primary"
             size="md"
             href="/catalog"
-            className="flex items-center gap-2 bg-slate-950 text-white hover:bg-slate-800"
+            className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Return to Catalog</span>

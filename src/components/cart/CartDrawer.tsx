@@ -70,16 +70,16 @@ export const CartDrawer: React.FC = () => {
       {/* Backdrop */}
       <div
         onClick={closeCartDrawer}
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
+        className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300"
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-white border-l border-zinc-200 shadow-2xl flex flex-col justify-between text-zinc-900">
+        <div className="w-screen max-w-md bg-white border-l border-[#E8E8E4] shadow-2xl flex flex-col justify-between text-[#171717]">
           {/* Drawer Header */}
-          <div className="px-6 py-4 border-b border-zinc-200 bg-white flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-[#E8E8E4] bg-white flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <ShoppingBag className="w-4 h-4 text-zinc-700" />
-              <h2 className="text-sm font-bold text-zinc-950 uppercase tracking-wider">
+              <ShoppingBag className="w-4 h-4 text-[#171717]" />
+              <h2 className="text-sm font-bold text-[#171717] uppercase tracking-wider">
                 Shopping Bag ({totals.itemCount})
               </h2>
             </div>
@@ -287,7 +287,7 @@ export const CartDrawer: React.FC = () => {
                 <Link
                   href="/checkout"
                   onClick={closeCartDrawer}
-                  className="w-full py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
+                  className="w-full py-3 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all duration-200 cursor-pointer"
                 >
                   <span>Proceed to Checkout</span>
                   <ArrowRight className="w-4 h-4" />
@@ -296,14 +296,14 @@ export const CartDrawer: React.FC = () => {
                 <Link
                   href="/cart"
                   onClick={closeCartDrawer}
-                  className="w-full py-2.5 rounded-xl border border-zinc-300 bg-white hover:bg-zinc-100 text-zinc-800 font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer text-center"
+                  className="w-full py-2.5 rounded-xl border border-[#E8E8E4] bg-[#FAFAF8] hover:bg-white text-[#171717] font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer text-center"
                 >
                   <span>View Full Bag Breakdown</span>
                 </Link>
 
                 <button
                   onClick={clearCart}
-                  className="w-full text-center text-[11px] text-zinc-400 hover:text-rose-600 transition-colors pt-1 cursor-pointer font-medium"
+                  className="w-full text-center text-[11px] text-[#767676] hover:text-[#A63232] transition-colors pt-1 cursor-pointer font-medium"
                 >
                   Clear Bag
                 </button>

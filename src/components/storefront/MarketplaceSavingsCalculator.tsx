@@ -85,8 +85,8 @@ export function MarketplaceSavingsCalculator({ onOpenLaunchModal }: MarketplaceS
             onClick={() => setActiveTab("calculator")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "calculator"
-                ? "bg-slate-950 text-white shadow-md shadow-slate-950/15"
-                : "bg-white/80 hover:bg-slate-100 text-slate-700 border border-slate-200/80"
+                ? "bg-white text-[#171717] border-2 border-[#171717] shadow-xs"
+                : "bg-white hover:bg-[#FAFAF8] text-[#626262] border border-[#E8E8E4]"
             }`}
           >
             📊 Live Profit Calculator
@@ -96,8 +96,8 @@ export function MarketplaceSavingsCalculator({ onOpenLaunchModal }: MarketplaceS
             onClick={() => setActiveTab("matrix")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "matrix"
-                ? "bg-slate-950 text-white shadow-md shadow-slate-950/15"
-                : "bg-white/80 hover:bg-slate-100 text-slate-700 border border-slate-200/80"
+                ? "bg-white text-[#171717] border-2 border-[#171717] shadow-xs"
+                : "bg-white hover:bg-[#FAFAF8] text-[#626262] border border-[#E8E8E4]"
             }`}
           >
             ⚖️ 5-Way Marketplace Matrix

@@ -170,12 +170,12 @@ export function ProductCardSaaS({ product }: { product: StoreProduct }) {
         {/* Floating Badges */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 items-start z-10 pointer-events-none">
           {product.badge && (
-            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono uppercase tracking-wider bg-zinc-950 text-white shadow-xs">
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono uppercase tracking-wider bg-[#F8F2E6] text-[#8A631E] border border-[#B78B45]/40 shadow-xs">
               {product.badge}
             </span>
           )}
           {discountPercent > 0 && (
-            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-emerald-700 text-white shadow-xs">
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-[#EAF6F0] text-[#21866F] border border-[#21866F]/30 shadow-xs">
               {discountPercent}% OFF
             </span>
           )}
@@ -284,13 +284,13 @@ export function ProductCardSaaS({ product }: { product: StoreProduct }) {
               disabled={product.stock === 0 || isAdding}
               className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed ${
                 isAdded
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "bg-zinc-100 hover:bg-zinc-200 text-zinc-900"
+                  ? "bg-[#EAF6F0] text-[#21866F] border border-[#21866F]/40 shadow-xs"
+                  : "bg-[#FAFAF8] hover:bg-[#F5F6F4] text-[#171717] border border-[#E8E8E4]"
               }`}
             >
               {isAdded ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-white" />
+                  <Check className="w-3.5 h-3.5 text-[#21866F]" />
                   <span>Added</span>
                 </>
               ) : (
@@ -305,7 +305,7 @@ export function ProductCardSaaS({ product }: { product: StoreProduct }) {
               type="button"
               onClick={handleBuyNow}
               disabled={product.stock === 0}
-              className="py-2.5 px-3 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold flex items-center justify-center gap-1 transition-all shadow-sm active:scale-98 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="py-2.5 px-3 rounded-xl bg-white hover:bg-[#FAFAF8] border-1.5 border-[#171717] hover:border-[#B78B45] text-[#171717] hover:text-[#B78B45] text-xs font-bold flex items-center justify-center gap-1 transition-all shadow-xs active:scale-98 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span>Buy Now</span>
               <ArrowRight className="w-3 h-3" />

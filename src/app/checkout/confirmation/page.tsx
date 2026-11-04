@@ -412,18 +412,18 @@ function ConfirmationContent() {
           <button
             type="button"
             onClick={handlePrintInvoice}
-            className="px-4 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-98 cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] text-xs font-bold flex items-center gap-2 shadow-xs transition-all active:scale-98 cursor-pointer"
           >
-            <Printer className="w-4 h-4 text-emerald-400" />
+            <Printer className="w-4 h-4 text-[#21866F]" />
             <span>Download Official Receipt (Print / PDF)</span>
           </button>
 
           <Link
             href="/"
-            className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors"
+            className="px-4 py-2.5 rounded-xl bg-[#FAFAF8] hover:bg-white border border-[#E8E8E4] text-[#171717] text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors"
           >
             <span>Return to Storefront</span>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            <ChevronRight className="w-3.5 h-3.5 text-[#767676]" />
           </Link>
         </div>
       </div>
@@ -439,8 +439,8 @@ function ConfirmationContent() {
               onClick={() => setLogisticsTab("FORWARD")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
                 logisticsTab === "FORWARD"
-                  ? "bg-slate-950 text-white shadow-sm"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  ? "bg-white text-[#171717] border-2 border-[#171717] shadow-xs"
+                  : "bg-[#FAFAF8] text-[#626262] border border-[#E8E8E4] hover:bg-white"
               }`}
             >
               <Truck className="w-3.5 h-3.5" />
@@ -659,9 +659,9 @@ function ConfirmationContent() {
                 <button
                   type="button"
                   onClick={() => setIsReturnModalOpen(true)}
-                  className="px-6 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center gap-2 shadow-md cursor-pointer transition-all"
+                  className="px-6 py-2.5 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] text-xs font-bold inline-flex items-center gap-2 shadow-xs cursor-pointer transition-all"
                 >
-                  <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                  <RotateCcw className="w-3.5 h-3.5 text-[#B78B45]" />
                   <span>Initiate Return / Exchange (Zero Penalty)</span>
                 </button>
               </div>
@@ -797,19 +797,19 @@ function ConfirmationContent() {
 
       {/* --- MODAL: INITIATE RETURN / EXCHANGE --- */}
       {isReturnModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 text-slate-900 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative bg-white rounded-3xl border border-[#E8E8E4] shadow-2xl max-w-md w-full p-6 text-[#171717] space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E8E8E4]">
               <div className="flex items-center gap-2">
-                <RotateCcw className="w-5 h-5 text-amber-600" />
-                <h3 className="font-extrabold text-base text-slate-950">
+                <RotateCcw className="w-5 h-5 text-[#B78B45]" />
+                <h3 className="font-extrabold text-base text-[#171717]">
                   Initiate Direct Studio Return
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsReturnModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer"
+                className="w-7 h-7 rounded-full bg-[#FAFAF8] hover:bg-[#F5F6F4] text-[#767676] flex items-center justify-center cursor-pointer border border-[#E8E8E4]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -817,11 +817,11 @@ function ConfirmationContent() {
 
             <form onSubmit={handleInitiateReturnSubmit} className="space-y-4 text-xs">
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-700">Select Return / Exchange Reason *</label>
+                <label className="font-bold text-[#626262]">Select Return / Exchange Reason *</label>
                 <select
                   value={returnReason}
                   onChange={(e) => setReturnReason(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-medium"
+                  className="w-full px-3 py-2 rounded-xl border border-[#E8E8E4] bg-white font-medium text-[#171717]"
                 >
                   <option value="Size or fit adjustment required (Exchange for S/M/L)">Size or fit adjustment required (Exchange for S/M/L)</option>
                   <option value="Color shade variation in natural studio light">Color shade variation in natural studio light</option>
@@ -830,7 +830,7 @@ function ConfirmationContent() {
                 </select>
               </div>
 
-              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 space-y-1">
+              <div className="p-3 rounded-xl bg-[#EAF6F0] border border-[#21866F]/20 text-[11px] text-[#21866F] space-y-1">
                 <p className="font-bold">🛡️ Guaranteed Return Terms:</p>
                 <p>• Zero return shipping fee (Courier absorbs or studio covers)</p>
                 <p>• Free doorstep pickup by Blue Dart associate</p>
@@ -841,13 +841,13 @@ function ConfirmationContent() {
                 <button
                   type="button"
                   onClick={() => setIsReturnModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-semibold cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-[#E8E8E4] text-[#626262] font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-bold cursor-pointer shadow-md"
+                  className="px-5 py-2 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] font-bold cursor-pointer shadow-xs"
                 >
                   Confirm & Schedule Pickup 🚚
                 </button>
@@ -858,27 +858,27 @@ function ConfirmationContent() {
       )}
 
       {/* --- OFFICIAL TAX-COMPLIANT BRANDED INVOICE CARD --- */}
-      <div className="printable-invoice-card relative max-w-4xl mx-auto rounded-3xl border border-white/80 bg-white/95 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.06)] p-6 sm:p-10 space-y-8 overflow-hidden print:border-none print:shadow-none print:p-0">
+      <div className="printable-invoice-card relative max-w-4xl mx-auto rounded-3xl border border-[#E8E8E4] bg-white/95 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.06)] p-6 sm:p-10 space-y-8 overflow-hidden print:border-none print:shadow-none print:p-0">
         {/* Authentic "PAID & ESCROW VERIFIED" Watermark Stamp */}
         <div className="absolute top-1/2 right-12 -translate-y-1/2 -rotate-12 pointer-events-none select-none opacity-25 sm:opacity-30 print:opacity-40">
-          <div className="border-4 border-dashed border-emerald-600 rounded-3xl p-6 text-center shadow-xs">
-            <span className="text-5xl font-black font-mono tracking-widest text-emerald-700 block">
+          <div className="border-4 border-dashed border-[#21866F] rounded-3xl p-6 text-center shadow-xs">
+            <span className="text-5xl font-black font-mono tracking-widest text-[#21866F] block">
               PAID
             </span>
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-800 block mt-1">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#21866F] block mt-1">
               NPCI ESCROW VERIFIED • 256-BIT
             </span>
-            <span className="text-[10px] font-mono text-emerald-800/80 block mt-0.5">
+            <span className="text-[10px] font-mono text-[#21866F]/80 block mt-0.5">
               UTR: {displayOrder.paymentDetails.utrNumber}
             </span>
           </div>
         </div>
 
         {/* Invoice Header */}
-        <div className="pb-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="pb-6 border-b border-[#E8E8E4] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-slate-950 text-white flex items-center justify-center font-bold text-sm">
+              <div className="w-8 h-8 rounded-xl bg-[#FAFAF8] text-[#171717] border border-[#E8E8E4] flex items-center justify-center font-bold text-sm">
                 {store.whiteLabelConfig.brandName.charAt(0).toUpperCase()}
               </div>
               <h3 className="text-xl font-extrabold text-slate-950 tracking-tight">
@@ -1056,10 +1056,10 @@ function ConfirmationContent() {
           </div>
           <Link
             href="/#seller-onboarding"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold shadow-2xs transition-all print:hidden"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] text-[11px] font-bold shadow-2xs transition-all print:hidden"
           >
             <span>Launch Free Store</span>
-            <ArrowRight className="w-3 h-3 text-emerald-400" />
+            <ArrowRight className="w-3 h-3 text-[#21866F]" />
           </Link>
         </div>
       </div>
@@ -1068,7 +1068,7 @@ function ConfirmationContent() {
       <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 print:hidden">
         <Link
           href="/"
-          className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold shadow-2xs transition-colors"
+          className="px-4 py-2.5 rounded-xl border border-[#E8E8E4] bg-white hover:bg-[#FAFAF8] text-[#171717] text-xs font-semibold shadow-2xs transition-colors"
         >
           ← Return to Curated Catalog
         </Link>
@@ -1076,9 +1076,9 @@ function ConfirmationContent() {
         <button
           type="button"
           onClick={handlePrintInvoice}
-          className="px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
+          className="px-5 py-2.5 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] text-xs font-bold flex items-center gap-2 shadow-xs transition-all active:scale-98 cursor-pointer"
         >
-          <Printer className="w-4 h-4 text-emerald-400" />
+          <Printer className="w-4 h-4 text-[#21866F]" />
           <span>Download Official Receipt (Print / PDF)</span>
         </button>
       </div>

@@ -328,8 +328,8 @@ export default function SavedAddressesPage() {
                     onClick={() => setType(t)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize border transition-all ${
                       type === t
-                        ? "bg-zinc-950 text-white border-zinc-950 shadow-xs"
-                        : "bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100"
+                        ? "bg-white text-[#171717] border-2 border-[#171717] shadow-xs font-bold"
+                        : "bg-[#FAFAF8] text-[#626262] border-[#E8E8E4] hover:bg-white"
                     }`}
                   >
                     {t}

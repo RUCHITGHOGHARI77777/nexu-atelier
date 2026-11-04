@@ -30,7 +30,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-xs font-medium text-slate-700 select-none"
+            className="block text-xs font-semibold text-[#171717] select-none"
           >
             {label}
           </label>
@@ -45,10 +45,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             ref={ref}
             disabled={disabled}
-            className={`w-full bg-white text-sm text-slate-900 placeholder-slate-400 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-1 disabled:opacity-50 disabled:cursor-not-allowed ${
+            className={`w-full bg-white text-sm text-[#171717] placeholder-[#929292] rounded-xl border transition-all duration-200 focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed ${
               error
                 ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20"
-                : "border-slate-200 hover:border-slate-300 focus:border-slate-950 focus:ring-slate-950/20"
+                : "border-[#E8E8E4] hover:border-[#D4D4CF] focus:border-[#B78B45] focus:ring-[#B78B45]/20"
             } ${startIcon ? "pl-9" : "pl-3.5"} ${endIcon ? "pr-9" : "pr-3.5"} py-2 h-10 ${className}`}
             {...props}
           />

@@ -24,14 +24,14 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
     <div
       onMouseEnter={onMouseEnter}
       onMouseLeave={onClose}
-      className="absolute top-full left-0 w-full bg-white border-b border-zinc-200 shadow-2xl z-50 animate-in fade-in slide-in-from-top-1 duration-150"
+      className="absolute top-full left-0 w-full bg-white border-b border-[#E8E8E4] shadow-xl z-50 transition-all duration-200"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeMenu === "collections" && (
           <div className="grid grid-cols-12 gap-8 items-start">
             {/* Col 1: Curated Seasonal Edits (3 cols) */}
             <div className="col-span-3 space-y-4">
-              <span className="text-[11px] font-mono uppercase tracking-widest text-zinc-500 font-semibold block border-b border-zinc-100 pb-2">
+              <span className="text-[11px] font-mono uppercase tracking-widest text-[#767676] font-semibold block border-b border-[#E8E8E4] pb-2">
                 Seasonal Lookbooks
               </span>
               <ul className="space-y-2.5 text-xs">
@@ -39,10 +39,10 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
                   <Link
                     href="/collections"
                     onClick={onClose}
-                    className="font-medium text-zinc-900 hover:text-blue-600 transition-colors flex items-center justify-between group"
+                    className="font-medium text-[#171717] hover:text-[#B78B45] transition-colors flex items-center justify-between group"
                   >
                     <span>Autumn / Winter 2026 Drop</span>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#F8F2E6] text-[#8A631E] border border-[#B78B45]/40">
                       NEW
                     </span>
                   </Link>
@@ -51,7 +51,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
                   <Link
                     href="/shop?category=Apparel"
                     onClick={onClose}
-                    className="text-zinc-600 hover:text-zinc-950 transition-colors block py-0.5"
+                    className="text-[#626262] hover:text-[#171717] transition-colors block py-0.5"
                   >
                     Royal Benaras & Chanderi Silks
                   </Link>
@@ -60,7 +60,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
                   <Link
                     href="/shop?category=Objects%20%26%20Living"
                     onClick={onClose}
-                    className="text-zinc-600 hover:text-zinc-950 transition-colors block py-0.5"
+                    className="text-[#626262] hover:text-[#171717] transition-colors block py-0.5"
                   >
                     Lost-Wax Cast Brassware
                   </Link>
@@ -69,7 +69,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
                   <Link
                     href="/shop?category=Audio%20%26%20Tech"
                     onClick={onClose}
-                    className="text-zinc-600 hover:text-zinc-950 transition-colors block py-0.5"
+                    className="text-[#626262] hover:text-[#171717] transition-colors block py-0.5"
                   >
                     Audiophile Acoustic Monitors
                   </Link>
@@ -78,7 +78,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
                   <Link
                     href="/shop?category=Footwear"
                     onClick={onClose}
-                    className="text-zinc-600 hover:text-zinc-950 transition-colors block py-0.5"
+                    className="text-[#626262] hover:text-[#171717] transition-colors block py-0.5"
                   >
                     Bench-Made Heritage Footwear
                   </Link>
@@ -88,7 +88,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
 
             {/* Col 2: Featured Artisan Studios (3 cols) */}
             <div className="col-span-3 space-y-4">
-              <span className="text-[11px] font-mono uppercase tracking-widest text-zinc-500 font-semibold block border-b border-zinc-100 pb-2">
+              <span className="text-[11px] font-mono uppercase tracking-widest text-[#767676] font-semibold block border-b border-[#E8E8E4] pb-2">
                 Independent Ateliers
               </span>
               <ul className="space-y-3 text-xs">
@@ -96,13 +96,13 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
                   <Link
                     href="/store/solstice-loom-studio"
                     onClick={onClose}
-                    className="block group p-2.5 rounded-xl hover:bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all"
+                    className="block group p-2.5 rounded-xl hover:bg-[#FAFAF8] border border-transparent hover:border-[#E8E8E4] transition-all"
                   >
-                    <div className="font-semibold text-zinc-900 group-hover:text-blue-600 flex items-center gap-1.5">
+                    <div className="font-semibold text-[#171717] group-hover:text-[#B78B45] flex items-center gap-1.5">
                       <span>Solstice Loom Studio</span>
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#21866F]" />
                     </div>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">
+                    <p className="text-[11px] text-[#626262] mt-0.5">
                       Surat & Ahmedabad • Mulberry Silks & Khadi
                     </p>
                   </Link>
@@ -111,12 +111,12 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
                   <Link
                     href="/shop?q=Jaipur"
                     onClick={onClose}
-                    className="block group p-2.5 rounded-xl hover:bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all"
+                    className="block group p-2.5 rounded-xl hover:bg-[#FAFAF8] border border-transparent hover:border-[#E8E8E4] transition-all"
                   >
-                    <div className="font-semibold text-zinc-900 group-hover:text-blue-600">
+                    <div className="font-semibold text-[#171717] group-hover:text-[#B78B45]">
                       Jaipur Heritage Looms
                     </div>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">
+                    <p className="text-[11px] text-[#626262] mt-0.5">
                       Rajasthan • Natural Vegetable Dye Hand-Blocks
                     </p>
                   </Link>
@@ -125,12 +125,12 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
                   <Link
                     href="/shop?q=Kashmir"
                     onClick={onClose}
-                    className="block group p-2.5 rounded-xl hover:bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all"
+                    className="block group p-2.5 rounded-xl hover:bg-[#FAFAF8] border border-transparent hover:border-[#E8E8E4] transition-all"
                   >
-                    <div className="font-semibold text-zinc-900 group-hover:text-blue-600">
+                    <div className="font-semibold text-[#171717] group-hover:text-[#B78B45]">
                       Kashmir Pashmina Guild
                     </div>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">
+                    <p className="text-[11px] text-[#626262] mt-0.5">
                       Srinagar • Grade-A Handspun Cashmere
                     </p>
                   </Link>
@@ -143,7 +143,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
               <Link
                 href="/product/chanderi-silk-embroidered-anarkali-robe"
                 onClick={onClose}
-                className="group relative rounded-2xl overflow-hidden bg-zinc-900 aspect-4/3 flex flex-col justify-end p-5 text-white shadow-md"
+                className="group relative rounded-2xl overflow-hidden bg-[#FAFAF8] border border-[#E8E8E4] aspect-4/3 flex flex-col justify-end p-5 text-white shadow-xs"
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10" />
                 <Image
@@ -168,7 +168,7 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
               <Link
                 href="/collections"
                 onClick={onClose}
-                className="group relative rounded-2xl overflow-hidden bg-zinc-900 aspect-4/3 flex flex-col justify-end p-5 text-white shadow-md"
+                className="group relative rounded-2xl overflow-hidden bg-[#FAFAF8] border border-[#E8E8E4] aspect-4/3 flex flex-col justify-end p-5 text-white shadow-xs"
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10" />
                 <Image
@@ -198,15 +198,15 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
             <Link
               href="/shop?category=Apparel"
               onClick={onClose}
-              className="group p-4 rounded-2xl border border-zinc-200 hover:border-zinc-300 bg-zinc-50/50 hover:bg-white transition-all space-y-2"
+              className="group p-4 rounded-2xl border border-[#E8E8E4] hover:border-[#B78B45] bg-white hover:shadow-sm transition-all space-y-2"
             >
-              <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold text-xs">
+              <div className="w-8 h-8 rounded-xl bg-white border border-[#E8E8E4] text-[#171717] group-hover:border-[#B78B45] group-hover:text-[#B78B45] shadow-2xs flex items-center justify-center font-bold text-xs transition-colors">
                 TX
               </div>
-              <h4 className="text-xs font-bold text-zinc-900 group-hover:text-blue-600">
+              <h4 className="text-xs font-bold text-[#171717] group-hover:text-[#B78B45] transition-colors">
                 Fine Textiles & Silks
               </h4>
-              <p className="text-[11px] text-zinc-500 line-clamp-2">
+              <p className="text-[11px] text-[#626262] line-clamp-2">
                 Handspun raw mulberry silks, organic khadi robes, and heirloom sarees.
               </p>
             </Link>
@@ -214,15 +214,15 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
             <Link
               href="/shop?category=Audio%20%26%20Tech"
               onClick={onClose}
-              className="group p-4 rounded-2xl border border-zinc-200 hover:border-zinc-300 bg-zinc-50/50 hover:bg-white transition-all space-y-2"
+              className="group p-4 rounded-2xl border border-[#E8E8E4] hover:border-[#B78B45] bg-white hover:shadow-sm transition-all space-y-2"
             >
-              <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold text-xs">
+              <div className="w-8 h-8 rounded-xl bg-white border border-[#E8E8E4] text-[#171717] group-hover:border-[#B78B45] group-hover:text-[#B78B45] shadow-2xs flex items-center justify-center font-bold text-xs transition-colors">
                 AU
               </div>
-              <h4 className="text-xs font-bold text-zinc-900 group-hover:text-blue-600">
+              <h4 className="text-xs font-bold text-[#171717] group-hover:text-[#B78B45] transition-colors">
                 Acoustic Engineering
               </h4>
-              <p className="text-[11px] text-zinc-500 line-clamp-2">
+              <p className="text-[11px] text-[#626262] line-clamp-2">
                 Bespoke point-to-point tube amplifiers and solid-walnut studio monitors.
               </p>
             </Link>
@@ -230,15 +230,15 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
             <Link
               href="/shop?category=Objects%20%26%20Living"
               onClick={onClose}
-              className="group p-4 rounded-2xl border border-zinc-200 hover:border-zinc-300 bg-zinc-50/50 hover:bg-white transition-all space-y-2"
+              className="group p-4 rounded-2xl border border-[#E8E8E4] hover:border-[#B78B45] bg-white hover:shadow-sm transition-all space-y-2"
             >
-              <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold text-xs">
+              <div className="w-8 h-8 rounded-xl bg-white border border-[#E8E8E4] text-[#171717] group-hover:border-[#B78B45] group-hover:text-[#B78B45] shadow-2xs flex items-center justify-center font-bold text-xs transition-colors">
                 BR
               </div>
-              <h4 className="text-xs font-bold text-zinc-900 group-hover:text-blue-600">
+              <h4 className="text-xs font-bold text-[#171717] group-hover:text-[#B78B45] transition-colors">
                 Foundry & Brassware
               </h4>
-              <p className="text-[11px] text-zinc-500 line-clamp-2">
+              <p className="text-[11px] text-[#626262] line-clamp-2">
                 Heavy cast brass temple urlis, incense burners, and terracotta vessels.
               </p>
             </Link>
@@ -246,15 +246,15 @@ export const StorefrontMegaMenu: React.FC<MegaMenuProps> = ({
             <Link
               href="/shop?category=Footwear"
               onClick={onClose}
-              className="group p-4 rounded-2xl border border-zinc-200 hover:border-zinc-300 bg-zinc-50/50 hover:bg-white transition-all space-y-2"
+              className="group p-4 rounded-2xl border border-[#E8E8E4] hover:border-[#B78B45] bg-white hover:shadow-sm transition-all space-y-2"
             >
-              <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold text-xs">
+              <div className="w-8 h-8 rounded-xl bg-white border border-[#E8E8E4] text-[#171717] group-hover:border-[#B78B45] group-hover:text-[#B78B45] shadow-2xs flex items-center justify-center font-bold text-xs transition-colors">
                 FW
               </div>
-              <h4 className="text-xs font-bold text-zinc-900 group-hover:text-blue-600">
+              <h4 className="text-xs font-bold text-[#171717] group-hover:text-[#B78B45] transition-colors">
                 Leather Goods & Footwear
               </h4>
-              <p className="text-[11px] text-zinc-500 line-clamp-2">
+              <p className="text-[11px] text-[#626262] line-clamp-2">
                 Goodyear-welted derbies, full-grain card folios, and artisan sandals.
               </p>
             </Link>

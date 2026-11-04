@@ -230,7 +230,7 @@ export function ProductReviews({ productId, productTitle }: ProductReviewsProps)
         </div>
         <Button
           onClick={() => setShowWriteModal(true)}
-          className="bg-zinc-900 hover:bg-zinc-800 text-white font-semibold px-6 py-2.5 rounded-lg shadow-sm transition-all self-start md:self-auto"
+          className="bg-white hover:bg-[#FAFAF8] text-[#171717] border border-[#171717] hover:border-[#B78B45] hover:text-[#B78B45] font-semibold px-6 py-2.5 rounded-lg shadow-xs transition-all self-start md:self-auto"
         >
           Write a Review
         </Button>
@@ -382,7 +382,7 @@ export function ProductReviews({ productId, productTitle }: ProductReviewsProps)
           </p>
           <Button
             onClick={() => setShowWriteModal(true)}
-            className="bg-zinc-900 hover:bg-zinc-800 text-white text-xs px-5 py-2 font-semibold"
+            className="bg-white hover:bg-[#FAFAF8] text-[#171717] border border-[#171717] hover:border-[#B78B45] hover:text-[#B78B45] text-xs px-5 py-2 font-semibold shadow-xs"
           >
             Write a Review
           </Button>
@@ -563,8 +563,8 @@ export function ProductReviews({ productId, productTitle }: ProductReviewsProps)
 
       {/* Write Review Modal */}
       {showWriteModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-zinc-200 rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 md:p-8 shadow-2xl relative text-zinc-900">
+        <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-[#E8E8E4] rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 md:p-8 shadow-2xl relative text-[#171717]">
             <button
               onClick={() => setShowWriteModal(false)}
               className="absolute top-5 right-5 text-zinc-400 hover:text-zinc-950"
@@ -708,7 +708,7 @@ export function ProductReviews({ productId, productTitle }: ProductReviewsProps)
                 <Button
                   type="submit"
                   disabled={submitSubmitting}
-                  className="bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs px-6"
+                  className="bg-white hover:bg-[#FAFAF8] text-[#171717] border border-[#171717] hover:border-[#B78B45] hover:text-[#B78B45] font-semibold text-xs px-6 shadow-xs"
                 >
                   {submitSubmitting ? "Publishing..." : "Submit Review"}
                 </Button>
@@ -720,8 +720,8 @@ export function ProductReviews({ productId, productTitle }: ProductReviewsProps)
 
       {/* Report Review Modal */}
       {showReportModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-zinc-200 rounded-2xl w-full max-w-md p-6 shadow-2xl relative text-zinc-900">
+        <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-[#E8E8E4] rounded-2xl w-full max-w-md p-6 shadow-2xl relative text-[#171717]">
             <button
               onClick={() => setShowReportModal(false)}
               className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-950"
@@ -804,18 +804,18 @@ export function ProductReviews({ productId, productTitle }: ProductReviewsProps)
       {selectedPhoto && (
         <div
           onClick={() => setSelectedPhoto(null)}
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
+          className="fixed inset-0 z-50 bg-white/95 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
         >
           <div className="relative max-w-3xl max-h-[85vh]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={selectedPhoto}
               alt="Enlarged patron photo"
-              className="max-w-full max-h-[85vh] rounded-xl object-contain shadow-2xl"
+              className="max-w-full max-h-[85vh] rounded-xl object-contain shadow-2xl border border-[#E8E8E4] bg-[#FAFAF8]"
             />
             <button
               onClick={() => setSelectedPhoto(null)}
-              className="absolute top-3 right-3 bg-white/80 text-zinc-900 p-2 rounded-full hover:bg-white shadow-lg"
+              className="absolute top-3 right-3 bg-white text-[#171717] hover:text-[#B78B45] p-2 rounded-full border border-[#E8E8E4] shadow-lg cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>

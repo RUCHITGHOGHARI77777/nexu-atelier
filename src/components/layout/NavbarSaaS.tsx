@@ -396,12 +396,12 @@ export function NavbarSaaS() {
             <button
               type="button"
               onClick={() => setIsCartDrawerOpen(true)}
-              className="relative px-3.5 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-98"
+              className="relative px-3.5 py-2 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] text-xs font-bold flex items-center gap-2 shadow-xs transition-all active:scale-98 cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4" />
               <span className="hidden sm:inline">Bag</span>
               {cartTotalCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-slate-950 font-mono text-[10px] font-extrabold">
+                <span className="px-1.5 py-0.2 rounded-full bg-[#F8F2E6] text-[#B78B45] border border-[#B78B45]/30 font-mono text-[10px] font-bold">
                   {cartTotalCount}
                 </span>
               )}

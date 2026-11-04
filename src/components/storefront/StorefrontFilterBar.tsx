@@ -77,16 +77,16 @@ export function StorefrontFilterBar() {
                 key={cat.name}
                 type="button"
                 onClick={() => setSelectedCategory(cat.name)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-2 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-2 cursor-pointer ${
                   isSelected
-                    ? "bg-slate-950 text-white shadow-md"
-                    : "bg-white/80 hover:bg-white text-slate-700 hover:text-slate-950 border border-slate-200/80 shadow-2xs"
+                    ? "bg-white text-[#171717] border-2 border-[#171717] shadow-xs font-bold"
+                    : "bg-white hover:bg-[#FAFAF8] text-[#626262] hover:text-[#171717] border border-[#E8E8E4] shadow-2xs"
                 }`}
               >
                 <span>{cat.label}</span>
                 <span
                   className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                    isSelected ? "bg-slate-800 text-slate-200" : "bg-slate-100 text-slate-600"
+                    isSelected ? "bg-[#F8F2E6] text-[#B78B45] font-bold" : "bg-[#FAFAF8] text-[#767676]"
                   }`}
                 >
                   {count}
@@ -100,10 +100,10 @@ export function StorefrontFilterBar() {
         <button
           type="button"
           onClick={() => setIsFilterPanelOpen((prev) => !prev)}
-          className={`px-3.5 py-2 rounded-xl text-xs font-semibold shrink-0 flex items-center gap-2 border transition-all ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-semibold shrink-0 flex items-center gap-2 border transition-all cursor-pointer ${
             isFilterPanelOpen || hasActiveFilters
-              ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-              : "bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 shadow-2xs"
+              ? "bg-white text-[#171717] border-2 border-[#171717] shadow-xs font-bold"
+              : "bg-white hover:bg-[#FAFAF8] text-[#626262] border border-[#E8E8E4] shadow-2xs"
           }`}
         >
           <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -167,10 +167,10 @@ export function StorefrontFilterBar() {
                 <button
                   type="button"
                   onClick={() => setMinRating(0)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                     minRating === 0
-                      ? "bg-slate-900 text-white font-bold"
-                      : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                      ? "bg-[#FAFAF8] text-[#171717] font-bold border border-[#E8E8E4] shadow-xs"
+                      : "bg-white text-[#626262] border border-[#E8E8E4] hover:bg-[#FAFAF8]"
                   }`}
                 >
                   All Ratings

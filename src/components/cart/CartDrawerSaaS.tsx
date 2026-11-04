@@ -108,7 +108,7 @@ export function CartDrawerSaaS() {
       {/* Backdrop */}
       <div
         onClick={() => setIsCartDrawerOpen(false)}
-        className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity"
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
@@ -167,7 +167,7 @@ export function CartDrawerSaaS() {
                 <button
                   type="button"
                   onClick={() => setIsCartDrawerOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-950 text-white text-xs font-bold shadow-xs hover:bg-slate-800 transition-colors"
+                  className="px-4 py-2 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] border border-[#171717] hover:border-[#B78B45] hover:text-[#B78B45] text-xs font-bold shadow-xs transition-colors cursor-pointer"
                 >
                   Start Exploring
                 </button>
@@ -253,7 +253,7 @@ export function CartDrawerSaaS() {
                   />
                   <button
                     type="submit"
-                    className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors shrink-0"
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] border border-[#171717] hover:border-[#B78B45] hover:text-[#B78B45] text-xs font-bold transition-colors shrink-0 shadow-xs cursor-pointer"
                   >
                     Apply
                   </button>
@@ -330,9 +330,9 @@ export function CartDrawerSaaS() {
               <button
                 type="button"
                 onClick={handleCheckout}
-                className="w-full py-3.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-98"
+                className="w-full py-3.5 px-4 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all active:scale-98 cursor-pointer"
               >
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <ShieldCheck className="w-4 h-4 text-[#21866F]" />
                 <span>Proceed to Checkout ({formatPrice(grandTotal)})</span>
                 <ArrowRight className="w-4 h-4" />
               </button>

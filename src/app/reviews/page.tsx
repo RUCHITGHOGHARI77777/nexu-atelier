@@ -55,9 +55,9 @@ export default function TrustWallPage() {
         <button
           type="button"
           onClick={() => setIsSubmitModalOpen(true)}
-          className="px-4 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-md active:scale-98 cursor-pointer transition-all"
+          className="px-4 py-2 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-98 cursor-pointer transition-all"
         >
-          <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+          <Star className="w-3.5 h-3.5 text-[#B78B45] fill-[#B78B45]" />
           <span>✍️ Submit Live Review (1 to 10 Score)</span>
         </button>
       </div>
@@ -88,15 +88,15 @@ export default function TrustWallPage() {
           </div>
 
           {/* Big Live Overall Score Badge */}
-          <div className="p-6 rounded-3xl bg-slate-950 text-white shadow-xl text-center space-y-2 shrink-0 border border-slate-800">
-            <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest block font-bold">
+          <div className="p-6 rounded-3xl bg-white text-[#171717] shadow-xl text-center space-y-2 shrink-0 border border-[#E8E8E4]">
+            <span className="text-[10px] font-mono text-[#21866F] uppercase tracking-widest block font-bold">
               OVERALL PLATFORM SCORE
             </span>
             <div className="flex items-baseline justify-center gap-1">
-              <span className="text-4xl sm:text-5xl font-black font-mono tracking-tight text-white">
+              <span className="text-4xl sm:text-5xl font-black font-mono tracking-tight text-[#171717]">
                 {platformOverallScore}
               </span>
-              <span className="text-sm font-mono text-slate-400 font-bold">/ 10</span>
+              <span className="text-sm font-mono text-[#767676] font-bold">/ 10</span>
             </div>
             <div className="flex items-center justify-center gap-1 text-amber-400">
               {[...Array(5)].map((_, i) => (
@@ -165,8 +165,8 @@ export default function TrustWallPage() {
             onClick={() => setFilterType("ALL")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               filterType === "ALL"
-                ? "bg-slate-950 text-white shadow-xs"
-                : "text-slate-600 hover:text-slate-950 hover:bg-slate-100"
+                ? "bg-white text-[#171717] border-2 border-[#171717] shadow-xs font-bold"
+                : "text-[#626262] hover:text-[#171717] hover:bg-[#FAFAF8]"
             }`}
           >
             All Reviews ({reviews.length})
@@ -246,11 +246,11 @@ export default function TrustWallPage() {
               </div>
 
               {/* Score Meter */}
-              <div className="px-3 py-1.5 rounded-2xl bg-slate-950 text-white font-mono text-center shrink-0">
-                <span className="text-base font-black text-amber-400 block leading-none">
+              <div className="px-3 py-1.5 rounded-2xl bg-[#FAFAF8] text-[#171717] border border-[#E8E8E4] font-mono text-center shrink-0">
+                <span className="text-base font-black text-[#B78B45] block leading-none">
                   {rev.ratingScore}
                 </span>
-                <span className="text-[9px] text-slate-400 block font-bold">/ 10</span>
+                <span className="text-[9px] text-[#767676] block font-bold">/ 10</span>
               </div>
             </div>
 

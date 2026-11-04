@@ -83,7 +83,7 @@ export default function ReplacementPolicyPage() {
               <div className="flex flex-wrap gap-3 pt-2">
                 <Link
                   href="/account/orders"
-                  className="px-4 py-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold"
+                  className="px-4 py-2 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] text-xs font-semibold shadow-xs"
                 >
                   Manage in My Orders
                 </Link>

@@ -234,7 +234,7 @@ export default function TicketDetailPage({ params }: Props) {
                 type="submit"
                 size="sm"
                 disabled={sending || !replyMessage.trim()}
-                className="bg-zinc-950 hover:bg-zinc-800 text-white flex items-center gap-1.5"
+                className="bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] flex items-center gap-1.5 shadow-xs"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>{sending ? "Sending..." : "Send Message"}</span>

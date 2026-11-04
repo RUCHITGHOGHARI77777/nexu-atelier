@@ -9,7 +9,7 @@ export function AppFooter() {
 
   if (pathname.startsWith("/admin") || pathname.startsWith("/seller")) {
     return (
-      <footer className="py-6 px-4 bg-slate-950 border-t border-slate-800 text-center text-xs text-slate-500 font-mono">
+      <footer className="py-6 px-4 bg-[#FAFAF8] border-t border-[#E8E8E4] text-center text-xs text-[#767676] font-mono">
         <span>NEXU Enterprise Multi-Store SaaS Engine &copy; {new Date().getFullYear()}</span>
         <span className="mx-2">•</span>
         <span>PostgreSQL 17.10 Isolated Ledger</span>

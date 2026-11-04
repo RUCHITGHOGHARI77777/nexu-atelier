@@ -95,7 +95,7 @@ export default function AboutPage() {
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Link
               href="/catalog"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-zinc-900 text-white text-xs sm:text-sm font-semibold hover:bg-zinc-800 transition-all shadow-md active:scale-95"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] text-xs sm:text-sm font-semibold transition-all shadow-xs active:scale-95"
             >
               <span>Explore Curated Archive</span>
               <ArrowRight className="w-4 h-4" />

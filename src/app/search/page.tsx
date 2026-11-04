@@ -124,7 +124,7 @@ function SearchPageContent() {
             />
             <button
               type="submit"
-              className="absolute right-2 px-5 py-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs transition-colors cursor-pointer"
+              className="absolute right-2 px-5 py-2 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] font-semibold text-xs transition-colors cursor-pointer shadow-xs"
             >
               Search
             </button>
@@ -217,7 +217,7 @@ function SearchPageContent() {
                   onClick={() => handleCategoryFilter(catName)}
                   className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all shrink-0 cursor-pointer ${
                     isSelected
-                      ? "bg-zinc-950 text-white shadow-xs"
+                      ? "bg-white text-[#171717] border-2 border-[#171717] shadow-xs font-bold"
                       : "bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-50"
                   }`}
                 >
@@ -249,7 +249,7 @@ function SearchPageContent() {
             <div className="pt-2 flex flex-wrap justify-center gap-3">
               <Link
                 href="/catalog"
-                className="px-4 py-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold transition-colors"
+                className="px-4 py-2 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] text-xs font-semibold transition-colors shadow-xs"
               >
                 Browse All Pieces
               </Link>

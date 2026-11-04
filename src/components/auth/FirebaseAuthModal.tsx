@@ -262,7 +262,7 @@ export function FirebaseAuthModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="relative w-full max-w-lg rounded-3xl border border-slate-200/90 bg-white shadow-2xl p-6 sm:p-8 space-y-6 text-slate-900 max-h-[92vh] overflow-y-auto">
         {/* Close Button */}
         <button
@@ -276,7 +276,7 @@ export function FirebaseAuthModal({
         {/* Modal Header */}
         <div className="space-y-1 pr-8">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-slate-900 text-white text-[10px] font-mono font-bold uppercase tracking-wider">
+            <span className="px-2.5 py-0.5 rounded-full bg-[#FAFAF8] border border-[#E8E8E4] text-[#171717] text-[10px] font-mono font-bold uppercase tracking-wider">
               NEXU Identity
             </span>
             <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-mono font-bold">
@@ -308,7 +308,7 @@ export function FirebaseAuthModal({
               }}
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                 selectedPortal === "customer"
-                  ? "border-slate-950 bg-slate-950 text-white shadow-sm"
+                  ? "border-2 border-[#171717] bg-[#FAFAF8] text-[#171717] shadow-xs ring-2 ring-[#B78B45]/20 font-bold"
                   : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-900"
               }`}
             >
@@ -334,7 +334,7 @@ export function FirebaseAuthModal({
               }}
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                 selectedPortal === "seller"
-                  ? "border-slate-950 bg-slate-950 text-white shadow-sm"
+                  ? "border-2 border-[#171717] bg-[#FAFAF8] text-[#171717] shadow-xs ring-2 ring-[#B78B45]/20 font-bold"
                   : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-900"
               }`}
             >
@@ -360,7 +360,7 @@ export function FirebaseAuthModal({
               }}
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                 selectedPortal === "admin"
-                  ? "border-slate-950 bg-slate-950 text-white shadow-sm"
+                  ? "border-2 border-[#171717] bg-[#FAFAF8] text-[#171717] shadow-xs ring-2 ring-[#B78B45]/20 font-bold"
                   : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-900"
               }`}
             >
@@ -383,7 +383,7 @@ export function FirebaseAuthModal({
         {activeUser && (
           <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs">
+              <div className="w-8 h-8 rounded-full bg-[#FAFAF8] text-[#171717] border border-[#E8E8E4] flex items-center justify-center font-bold text-xs">
                 {activeUser.displayName ? activeUser.displayName.charAt(0).toUpperCase() : "U"}
               </div>
               <div>
@@ -537,7 +537,7 @@ export function FirebaseAuthModal({
               <button
                 type="submit"
                 disabled={isVerifying}
-                className="w-full py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-2.5 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] text-xs font-bold shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 {isVerifying ? "Authenticating..." : `Sign In to ${selectedPortal === "seller" ? "Seller Hub" : selectedPortal === "admin" ? "Admin Center" : "Account"}`}
               </button>
@@ -562,7 +562,7 @@ export function FirebaseAuthModal({
                   <button
                     type="button"
                     onClick={handleSendOtp}
-                    className="px-3.5 py-2 rounded-xl bg-slate-950 text-white text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                    className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] text-xs font-bold transition-colors cursor-pointer shrink-0 shadow-xs"
                   >
                     {otpSent ? "Resend" : "Send OTP"}
                   </button>
@@ -593,7 +593,7 @@ export function FirebaseAuthModal({
                     type="button"
                     disabled={isVerifying}
                     onClick={handleVerifyOtp}
-                    className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-sm cursor-pointer transition-all"
+                    className="w-full py-2.5 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] text-xs font-bold shadow-xs cursor-pointer transition-all"
                   >
                     {isVerifying ? "Verifying..." : "Verify & Sign In"}
                   </button>

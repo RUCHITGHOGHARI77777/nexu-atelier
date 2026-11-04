@@ -774,8 +774,8 @@ export default function CheckoutPage() {
                           onClick={() => setNewType(t)}
                           className={`px-2.5 py-1 rounded text-xs capitalize border transition-colors ${
                             newType === t
-                              ? "bg-zinc-950 text-white font-bold border-zinc-950"
-                              : "bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100"
+                              ? "bg-white text-[#171717] font-bold border-2 border-[#171717] shadow-xs"
+                              : "bg-[#FAFAF8] text-[#626262] border-[#E8E8E4] hover:bg-white"
                           }`}
                         >
                           {t}

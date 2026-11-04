@@ -136,7 +136,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
       {/* Full-Screen Lightbox Modal */}
       {isLightboxOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-white/95 backdrop-blur-md p-4"
           onClick={() => setIsLightboxOpen(false)}
         >
           <div
@@ -146,7 +146,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
             {/* Close Button */}
             <button
               onClick={() => setIsLightboxOpen(false)}
-              className="absolute top-2 right-2 p-2 rounded-full bg-zinc-900/80 text-zinc-300 hover:text-white border border-zinc-800 transition-colors z-10"
+              className="absolute top-2 right-2 p-2 rounded-full bg-white text-[#171717] hover:text-[#B78B45] border border-[#E8E8E4] shadow-md transition-colors z-10 cursor-pointer"
               aria-label="Close high-resolution viewer"
             >
               <X className="w-5 h-5" />
@@ -156,7 +156,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
             {images.length > 1 && (
               <button
                 onClick={handlePrev}
-                className="absolute left-2 p-2.5 rounded-full bg-zinc-900/80 text-zinc-300 hover:text-white border border-zinc-800 transition-colors z-10"
+                className="absolute left-2 p-2.5 rounded-full bg-white text-[#171717] hover:text-[#B78B45] border border-[#E8E8E4] shadow-md transition-colors z-10 cursor-pointer"
                 aria-label="Previous image"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -164,7 +164,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
             )}
 
             {/* Main Modal Image */}
-            <div className="relative w-full h-[80vh] rounded-xl overflow-hidden">
+            <div className="relative w-full h-[80vh] rounded-xl overflow-hidden bg-[#FAFAF8] border border-[#E8E8E4]">
               <ImageWithFallback
                 src={activeImage}
                 alt={title}
@@ -178,7 +178,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
             {images.length > 1 && (
               <button
                 onClick={handleNext}
-                className="absolute right-2.5 p-2.5 rounded-full bg-zinc-900/80 text-zinc-300 hover:text-white border border-zinc-800 transition-colors z-10"
+                className="absolute right-2.5 p-2.5 rounded-full bg-white text-[#171717] hover:text-[#B78B45] border border-[#E8E8E4] shadow-md transition-colors z-10 cursor-pointer"
                 aria-label="Next image"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -186,7 +186,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
             )}
 
             {/* Counter */}
-            <div className="absolute bottom-2 text-xs font-mono text-zinc-400 bg-zinc-950/80 px-3 py-1 rounded-full border border-zinc-800">
+            <div className="absolute bottom-2 text-xs font-mono text-[#171717] bg-white px-3 py-1 rounded-full border border-[#E8E8E4] shadow-sm">
               {currentIndex + 1} / {images.length}
             </div>
           </div>

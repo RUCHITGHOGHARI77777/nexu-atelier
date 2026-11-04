@@ -32,6 +32,27 @@ const config: Config = {
           accent: "#c28832",
           emerald: "#10b981", // for positive status indicators
         },
+        atelier: {
+          surface: "#FFFFFF",
+          canvas: "#FAFAF8",
+          section: "#F5F6F4",
+          border: "#E8E8E4",
+          "border-strong": "#D4D4CF",
+          charcoal: "#171717",
+          slate: "#626262",
+          muted: "#767676",
+          gold: "#B78B45",
+          "gold-soft": "#F8F2E6",
+          "gold-dark": "#8A631E",
+          emerald: "#21866F",
+          "emerald-soft": "#EAF6F0",
+          rose: "#C2410C",
+          "rose-soft": "#FDF2E9",
+        },
+      },
+      transitionTimingFunction: {
+        fluid: "cubic-bezier(0.16, 1, 0.3, 1)",
+        "fluid-spring": "cubic-bezier(0.34, 1.56, 0.64, 1)",
       },
       fontFamily: {
         sans: [

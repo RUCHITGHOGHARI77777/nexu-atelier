@@ -268,26 +268,26 @@ export function InteractivePaymentModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden text-slate-900 animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative bg-white rounded-3xl border border-[#E8E8E4] shadow-2xl max-w-lg w-full overflow-hidden text-[#171717] animate-in zoom-in-95 duration-200">
         
         {/* MANDATORY DISCLAIMER BANNER */}
-        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-center text-xs font-mono font-bold text-amber-900 flex items-center justify-center gap-2">
-          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+        <div className="bg-[#F8F2E6] border-b border-[#E8E8E4] px-4 py-2 text-center text-xs font-mono font-bold text-[#B78B45] flex items-center justify-center gap-2">
+          <AlertCircle className="w-4 h-4 text-[#B78B45] shrink-0" />
           <span>DEMO PAYMENT — NO REAL MONEY WILL BE TRANSFERRED.</span>
         </div>
 
         {/* Modal Top Bar */}
-        <div className="p-6 pb-4 border-b border-zinc-100 flex items-center justify-between">
+        <div className="p-6 pb-4 border-b border-[#E8E8E4] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-zinc-950 text-white flex items-center justify-center font-bold text-sm tracking-tight shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-[#FAFAF8] text-[#171717] border border-[#E8E8E4] flex items-center justify-center font-bold text-sm tracking-tight shadow-xs">
               {whiteLabelConfig.brandName.charAt(0).toUpperCase()}
             </div>
             <div>
-              <span className="text-[10px] font-mono font-bold tracking-widest text-zinc-500 uppercase block">
+              <span className="text-[10px] font-mono font-bold tracking-widest text-[#767676] uppercase block">
                 {whiteLabelConfig.brandName.toUpperCase()} PAY • DEMO SANDBOX
               </span>
-              <h3 className="text-sm font-extrabold text-zinc-950 flex items-center gap-1.5">
+              <h3 className="text-sm font-extrabold text-[#171717] flex items-center gap-1.5">
                 <span>
                   {method === "UPI"
                     ? "UPI Instant Payment Sandbox"
@@ -297,7 +297,7 @@ export function InteractivePaymentModal({
                     ? "Cash on Delivery Verification"
                     : `${method} Gateway`}
                 </span>
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[#21866F]" />
               </h3>
             </div>
           </div>
@@ -391,7 +391,7 @@ export function InteractivePaymentModal({
                             type="button"
                             onClick={handleVerifyVpa}
                             disabled={isVerifyingVpa || isVpaVerified}
-                            className="px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-200 disabled:text-zinc-400 text-white text-xs font-semibold transition-all cursor-pointer"
+                            className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#FAFAF8] disabled:bg-[#FAFAF8] disabled:text-[#767676] text-[#171717] border border-[#171717] hover:border-[#B78B45] hover:text-[#B78B45] text-xs font-semibold transition-all cursor-pointer shadow-xs"
                           >
                             {isVerifyingVpa ? "Verifying..." : isVpaVerified ? "Verified" : "Verify VPA"}
                           </button>
@@ -459,9 +459,9 @@ export function InteractivePaymentModal({
                         type="button"
                         id="demo-start-qr-payment"
                         onClick={handleStartUpiPayment}
-                        className="w-full py-3 px-4 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                        className="w-full py-3 px-4 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
                       >
-                        <CheckCircle2 className="w-4 h-4" />
+                        <CheckCircle2 className="w-4 h-4 text-[#21866F]" />
                         <span>Simulate Scanned & Run 10s Processing</span>
                       </button>
                     </div>
@@ -482,16 +482,16 @@ export function InteractivePaymentModal({
                       onClick={() => setSelectedTestCard("SUCCESS_CARD")}
                       className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
                         selectedTestCard === "SUCCESS_CARD"
-                          ? "bg-slate-900 text-white border-slate-900 shadow-md"
-                          : "bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100"
+                          ? "bg-[#FAFAF8] text-[#171717] border-2 border-[#171717] shadow-xs ring-2 ring-[#B78B45]/20 font-bold"
+                          : "bg-white text-[#626262] border-[#E8E8E4] hover:bg-[#FAFAF8]"
                       }`}
                     >
                       <div className="flex items-center justify-between text-xs font-mono">
                         <span className="font-bold flex items-center gap-2">
-                          <CreditCard className="w-4 h-4" />
+                          <CreditCard className="w-4 h-4 text-[#171717]" />
                           <span>4242 •••• •••• 4242</span>
                         </span>
-                        <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-700/50">
+                        <span className="text-[10px] uppercase font-bold text-[#21866F] bg-[#EAF6F0] px-2 py-0.5 rounded border border-[#21866F]/30">
                           Simulates Success
                         </span>
                       </div>
@@ -506,16 +506,16 @@ export function InteractivePaymentModal({
                       onClick={() => setSelectedTestCard("DECLINE_CARD")}
                       className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
                         selectedTestCard === "DECLINE_CARD"
-                          ? "bg-slate-900 text-white border-slate-900 shadow-md"
-                          : "bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100"
+                          ? "bg-[#FAFAF8] text-[#171717] border-2 border-[#171717] shadow-xs ring-2 ring-[#B78B45]/20 font-bold"
+                          : "bg-white text-[#626262] border-[#E8E8E4] hover:bg-[#FAFAF8]"
                       }`}
                     >
                       <div className="flex items-center justify-between text-xs font-mono">
                         <span className="font-bold flex items-center gap-2">
-                          <CreditCard className="w-4 h-4" />
+                          <CreditCard className="w-4 h-4 text-[#171717]" />
                           <span>4000 •••• •••• 0002</span>
                         </span>
-                        <span className="text-[10px] uppercase font-bold text-rose-400 bg-rose-950/60 px-2 py-0.5 rounded border border-rose-700/50">
+                        <span className="text-[10px] uppercase font-bold text-[#A63232] bg-[#FAF0F0] px-2 py-0.5 rounded border border-[#A63232]/30">
                           Simulates Decline
                         </span>
                       </div>
@@ -537,9 +537,9 @@ export function InteractivePaymentModal({
                     type="button"
                     id="demo-start-card-payment"
                     onClick={handleStartCardPayment}
-                    className="w-full py-3.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
+                    className="w-full py-3.5 px-4 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
                   >
-                    <CheckCircle2 className="w-4 h-4" />
+                    <CheckCircle2 className="w-4 h-4 text-[#21866F]" />
                     <span>Authorize Demo Card Payment ({formatPrice(payableAmountINR)})</span>
                   </button>
                 </div>
@@ -586,9 +586,9 @@ export function InteractivePaymentModal({
                   <button
                     type="button"
                     onClick={() => triggerSuccess()}
-                    className="w-full py-3.5 px-4 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
+                    className="w-full py-3.5 px-4 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
                   >
-                    <CheckCircle2 className="w-4 h-4" />
+                    <CheckCircle2 className="w-4 h-4 text-[#21866F]" />
                     <span>Authorize Demo {method}</span>
                   </button>
                 </div>
@@ -723,7 +723,7 @@ export function InteractivePaymentModal({
                     setSimScenario("SUCCESS");
                     setStage("IDLE");
                   }}
-                  className="flex-1 py-3 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 py-3 px-4 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   <span>Retry Demo Payment</span>

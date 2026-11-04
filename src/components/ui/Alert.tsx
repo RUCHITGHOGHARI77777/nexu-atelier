@@ -17,24 +17,24 @@ export const Alert: React.FC<AlertProps> = ({
 }) => {
   const styles = {
     info: {
-      bg: "bg-zinc-900/90 border-zinc-800 text-zinc-300",
-      icon: <Info className="w-4 h-4 text-zinc-400 shrink-0" />,
-      titleColor: "text-zinc-100",
+      bg: "bg-[#FAFAF8] border-[#E8E8E4] text-[#171717]",
+      icon: <Info className="w-4 h-4 text-[#626262] shrink-0" />,
+      titleColor: "text-[#171717]",
     },
     success: {
-      bg: "bg-emerald-950/40 border-emerald-500/30 text-emerald-300",
-      icon: <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />,
-      titleColor: "text-emerald-200",
+      bg: "bg-[#EAF6F0] border-[#21866F]/30 text-[#21866F]",
+      icon: <CheckCircle2 className="w-4 h-4 text-[#21866F] shrink-0" />,
+      titleColor: "text-[#15803D]",
     },
     warning: {
-      bg: "bg-amber-950/40 border-amber-500/30 text-amber-300",
-      icon: <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />,
-      titleColor: "text-amber-200",
+      bg: "bg-[#F8F2E6] border-[#B78B45]/40 text-[#8A631E]",
+      icon: <AlertTriangle className="w-4 h-4 text-[#B78B45] shrink-0" />,
+      titleColor: "text-[#8A631E]",
     },
     error: {
-      bg: "bg-rose-950/40 border-rose-500/30 text-rose-300",
-      icon: <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />,
-      titleColor: "text-rose-200",
+      bg: "bg-[#FDF2E9] border-[#C2410C]/30 text-[#C2410C]",
+      icon: <AlertCircle className="w-4 h-4 text-[#C2410C] shrink-0" />,
+      titleColor: "text-[#9A3412]",
     },
   };
 

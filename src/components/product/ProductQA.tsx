@@ -224,9 +224,9 @@ export function ProductQA({ productId, productSlug, productTitle }: ProductQAPro
 
         <Button
           onClick={() => setShowAskModal(true)}
-          className="bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-mono uppercase tracking-wider py-2.5 px-5 rounded-lg border border-zinc-900 transition-all flex items-center gap-2 self-start md:self-auto shadow-xs"
+          className="bg-white hover:bg-[#FAFAF8] text-[#171717] border border-[#171717] hover:border-[#B78B45] hover:text-[#B78B45] text-xs font-mono uppercase tracking-wider py-2.5 px-5 rounded-lg transition-all flex items-center gap-2 self-start md:self-auto shadow-xs"
         >
-          <Plus className="w-4 h-4 text-amber-400" />
+          <Plus className="w-4 h-4 text-[#B78B45]" />
           Ask a Question
         </Button>
       </div>
@@ -273,7 +273,7 @@ export function ProductQA({ productId, productSlug, productTitle }: ProductQAPro
           </p>
           <Button
             onClick={() => setShowAskModal(true)}
-            className="bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-mono uppercase tracking-wider py-2 px-4 rounded-lg"
+            className="bg-white hover:bg-[#FAFAF8] text-[#171717] border border-[#171717] hover:border-[#B78B45] hover:text-[#B78B45] text-xs font-mono uppercase tracking-wider py-2 px-4 rounded-lg shadow-xs"
           >
             Post the First Question
           </Button>
@@ -405,7 +405,7 @@ export function ProductQA({ productId, productSlug, productTitle }: ProductQAPro
                         type="button"
                         onClick={() => handleAnswerSubmit(q.id)}
                         disabled={submittingReply || !replyText.trim()}
-                        className="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-mono uppercase tracking-wider rounded font-medium flex items-center gap-1 disabled:opacity-50"
+                        className="px-3 py-1 bg-white hover:bg-[#FAFAF8] text-[#171717] border border-[#171717] hover:border-[#B78B45] hover:text-[#B78B45] text-xs font-mono uppercase tracking-wider rounded font-medium flex items-center gap-1 disabled:opacity-50 shadow-xs cursor-pointer"
                       >
                         {submittingReply ? "Posting..." : "Post Answer"}
                       </button>
@@ -420,44 +420,44 @@ export function ProductQA({ productId, productSlug, productTitle }: ProductQAPro
 
       {/* Ask Question Modal */}
       {showAskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white border border-zinc-200 rounded-2xl p-6 max-w-lg w-full shadow-2xl relative text-zinc-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white border border-[#E8E8E4] rounded-2xl p-6 max-w-lg w-full shadow-2xl relative text-[#171717]">
             <button
               onClick={() => setShowAskModal(false)}
-              className="absolute right-4 top-4 text-zinc-400 hover:text-zinc-950 transition-colors"
+              className="absolute right-4 top-4 text-[#767676] hover:text-[#171717] transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-2 text-xs font-mono text-amber-700 uppercase tracking-wider mb-1 font-semibold">
+            <div className="flex items-center gap-2 text-xs font-mono text-[#B78B45] uppercase tracking-wider mb-1 font-semibold">
               <Sparkles className="w-3.5 h-3.5" /> Atelier Inquiry
             </div>
-            <h3 className="text-xl font-bold text-zinc-950 mb-2">
+            <h3 className="text-xl font-bold text-[#171717] mb-2">
               Inquire About {productTitle}
             </h3>
-            <p className="text-xs text-zinc-600 mb-4">
+            <p className="text-xs text-[#626262] mb-4">
               Your inquiry will be visible to the master artisan and fellow patrons who own this piece.
             </p>
 
             {askSuccess ? (
               <div className="py-8 text-center space-y-2">
-                <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-                <p className="text-zinc-950 font-bold text-base">Inquiry Submitted</p>
-                <p className="text-xs text-zinc-600">
+                <CheckCircle2 className="w-10 h-10 text-[#21866F] mx-auto" />
+                <p className="text-[#171717] font-bold text-base">Inquiry Submitted</p>
+                <p className="text-xs text-[#626262]">
                   Thank you. Your question has been recorded and posted to the dialogue board.
                 </p>
               </div>
             ) : (
               <form onSubmit={handleAskQuestion} className="space-y-4">
                 {askError && (
-                  <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2">
+                  <div className="p-3 rounded-lg bg-[#FAF0F0] border border-[#F2D6D6] text-xs text-[#A63232] flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     {askError}
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-xs font-mono uppercase text-zinc-700 mb-1.5 font-medium">
+                  <label className="block text-xs font-mono uppercase text-[#626262] mb-1.5 font-medium">
                     Your Question
                   </label>
                   <textarea
@@ -467,9 +467,9 @@ export function ProductQA({ productId, productSlug, productTitle }: ProductQAPro
                     rows={4}
                     required
                     maxLength={500}
-                    className="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-amber-600 transition-colors"
+                    className="w-full bg-[#FAFAF8] border border-[#E8E8E4] rounded-xl p-3 text-sm text-[#171717] placeholder-[#767676] focus:outline-none focus:bg-white focus:border-[#B78B45] transition-colors"
                   />
-                  <div className="flex justify-between items-center text-[11px] font-mono text-zinc-500 mt-1">
+                  <div className="flex justify-between items-center text-[11px] font-mono text-[#767676] mt-1">
                     <span>Minimum 5 characters</span>
                     <span>{newQuestion.length}/500</span>
                   </div>
@@ -487,7 +487,7 @@ export function ProductQA({ productId, productSlug, productTitle }: ProductQAPro
                   <Button
                     type="submit"
                     disabled={submittingQuestion || !newQuestion.trim()}
-                    className="bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-mono uppercase tracking-wider font-semibold"
+                    className="bg-white hover:bg-[#FAFAF8] text-[#171717] border border-[#171717] hover:border-[#B78B45] hover:text-[#B78B45] text-xs font-mono uppercase tracking-wider font-semibold shadow-xs"
                   >
                     {submittingQuestion ? "Transmitting..." : "Submit Inquiry"}
                   </Button>

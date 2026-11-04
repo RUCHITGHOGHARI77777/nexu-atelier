@@ -197,7 +197,7 @@ export default function TrackOrderPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] font-semibold text-xs sm:text-sm transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -288,9 +288,9 @@ export default function TrackOrderPage() {
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                             isDone
-                              ? "bg-zinc-950 text-white shadow-xs"
-                              : "bg-zinc-100 text-zinc-400 border border-zinc-200"
-                          } ${isCurrent ? "ring-2 ring-amber-500 ring-offset-2" : ""}`}
+                              ? "bg-white text-[#171717] border-2 border-[#171717] shadow-xs"
+                              : "bg-[#FAFAF8] text-[#767676] border border-[#E8E8E4]"
+                          } ${isCurrent ? "ring-2 ring-[#B78B45] ring-offset-2" : ""}`}
                         >
                           {isDone ? <CheckCircle2 className="w-4 h-4" /> : stage.step}
                         </div>

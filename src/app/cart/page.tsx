@@ -544,12 +544,12 @@ export default function CartPage() {
                         setCouponInput(e.target.value.toUpperCase());
                         setCouponError("");
                       }}
-                      className="flex-1 px-3 py-2 text-xs font-mono uppercase bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-zinc-950 focus:bg-white text-zinc-900"
+                      className="flex-1 px-3 py-2 text-xs font-mono uppercase bg-[#FAFAF8] border border-[#E8E8E4] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#B78B45] focus:bg-white text-[#171717]"
                     />
                     <button
                       type="submit"
                       disabled={isApplyingCoupon || !couponInput.trim()}
-                      className="px-3 py-2 text-xs font-bold rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      className="px-3 py-2 text-xs font-bold rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] border border-[#171717] hover:border-[#B78B45] hover:text-[#B78B45] disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-xs cursor-pointer"
                     >
                       {isApplyingCoupon ? "..." : "Apply"}
                     </button>

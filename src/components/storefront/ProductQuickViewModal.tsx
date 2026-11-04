@@ -206,9 +206,9 @@ export function ProductQuickViewModal() {
   const currentMainImage = product.images[activeImageIdx] || product.images[0] || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200">
       {/* Modal Container */}
-      <div className="relative bg-white/95 backdrop-blur-2xl rounded-3xl border border-white/95 ring-1 ring-slate-900/10 shadow-[0_25px_70px_rgba(15,23,42,0.22)] max-w-5xl w-full max-h-[94vh] overflow-y-auto text-slate-900 animate-in zoom-in-95 duration-200">
+      <div className="relative bg-white/95 backdrop-blur-2xl rounded-3xl border border-[#E8E8E4] shadow-[0_20px_60px_rgba(0,0,0,0.08)] max-w-5xl w-full max-h-[94vh] overflow-y-auto text-[#171717] animate-in zoom-in-95 duration-200">
         
         {/* Header Close & Breadcrumb Bar */}
         <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-6 py-3.5 border-b border-slate-100 flex items-center justify-between">
@@ -287,7 +287,7 @@ export function ProductQuickViewModal() {
 
               {/* Current Slot Label Overlay */}
               <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
-                <span className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold bg-slate-950/80 text-white backdrop-blur-md">
+                <span className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold bg-white/95 text-[#171717] border border-[#E8E8E4] shadow-xs backdrop-blur-md">
                   View {activeImageIdx + 1}/6: {GALLERY_SLOT_LABELS[activeImageIdx] || "Studio Angle"}
                 </span>
               </div>
@@ -297,7 +297,7 @@ export function ProductQuickViewModal() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-500">
                 <span>Studio Multi-Angle Views ({product.images.length} Loaded):</span>
-                <span className="text-emerald-700 font-bold">Apple / Nike Studio Lighting</span>
+                <span className="text-[#21866F] font-bold">Apple / Nike Studio Lighting</span>
               </div>
               <div className="grid grid-cols-6 gap-2">
                 {Array.from({ length: 6 }).map((_, idx) => {
@@ -312,10 +312,10 @@ export function ProductQuickViewModal() {
                       disabled={!hasImage}
                       className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all p-0.5 cursor-pointer ${
                         isSelected
-                          ? "border-slate-950 ring-2 ring-slate-950/20 scale-105 shadow-md"
+                          ? "border-[#171717] ring-2 ring-[#B78B45]/30 scale-105 shadow-sm"
                           : hasImage
-                          ? "border-slate-200 hover:border-slate-400 opacity-80 hover:opacity-100"
-                          : "border-dashed border-slate-200 opacity-30 cursor-not-allowed bg-slate-50"
+                          ? "border-[#E8E8E4] hover:border-[#D4D4CF] opacity-80 hover:opacity-100"
+                          : "border-dashed border-[#E8E8E4] opacity-30 cursor-not-allowed bg-[#FAFAF8]"
                       }`}
                       title={GALLERY_SLOT_LABELS[idx]}
                     >
@@ -483,10 +483,10 @@ export function ProductQuickViewModal() {
                       onClick={() => setSelectedSize(s)}
                       className={`py-2 px-1 text-center rounded-xl text-xs font-mono transition-all flex flex-col items-center justify-center gap-0.5 ${
                         isSelected
-                          ? "bg-slate-950 text-white shadow-md ring-2 ring-slate-950/20"
+                          ? "bg-white border-2 border-[#171717] text-[#171717] shadow-xs font-bold"
                           : isOutOfStock
-                          ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60"
-                          : "bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 cursor-pointer"
+                          ? "bg-[#FAFAF8] text-[#929292] border border-[#E8E8E4] cursor-not-allowed opacity-60"
+                          : "bg-white hover:bg-[#FAFAF8] text-[#171717] border border-[#E8E8E4] hover:border-[#D4D4CF] cursor-pointer"
                       }`}
                     >
                       <span className="font-bold">{s}</span>
@@ -560,7 +560,7 @@ export function ProductQuickViewModal() {
                 />
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-xl bg-slate-950 text-white text-xs font-bold hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+                  className="px-4 py-1.5 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] text-xs font-bold transition-colors shrink-0 cursor-pointer shadow-xs"
                 >
                   Verify PIN
                 </button>
@@ -606,19 +606,19 @@ export function ProductQuickViewModal() {
                 <button
                   type="button"
                   onClick={handleAddAndClose}
-                  className="py-3 px-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xs font-bold flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-98 cursor-pointer"
+                  className="py-3 px-4 rounded-xl border border-[#E8E8E4] bg-[#FAFAF8] hover:bg-[#F5F6F4] text-[#171717] text-xs font-bold flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-98 cursor-pointer"
                 >
-                  <ShoppingBag className="w-4 h-4 text-slate-700" />
+                  <ShoppingBag className="w-4 h-4 text-[#171717]" />
                   <span>Add to Bag</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleBuyNowAndNavigate}
-                  className="py-3 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
+                  className="py-3 px-4 rounded-xl bg-white hover:bg-[#FAFAF8] border-1.5 border-[#171717] hover:border-[#B78B45] text-[#171717] hover:text-[#B78B45] text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all active:scale-98 cursor-pointer"
                 >
                   <span>Direct UPI / Card Checkout</span>
-                  <ArrowRight className="w-4 h-4 text-emerald-400" />
+                  <ArrowRight className="w-4 h-4 text-[#B78B45]" />
                 </button>
               </div>
 
@@ -814,42 +814,42 @@ export function ProductQuickViewModal() {
 
         {/* --- INLINE SIZE GUIDE MODAL POPUP --- */}
         {isSizeGuideOpen && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
-            <div className="relative bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 text-slate-900 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="relative bg-white rounded-3xl border border-[#E8E8E4] shadow-2xl max-w-lg w-full p-6 text-[#171717] space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E8E8E4]">
                 <div className="flex items-center gap-2">
-                  <Ruler className="w-5 h-5 text-indigo-600" />
-                  <h3 className="font-black text-base text-slate-950">
+                  <Ruler className="w-5 h-5 text-[#B78B45]" />
+                  <h3 className="font-black text-base text-[#171717]">
                     Architectural Size & Fit Guide
                   </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsSizeGuideOpen(false)}
-                  className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer"
+                  className="w-7 h-7 rounded-full bg-[#FAFAF8] hover:bg-[#F5F6F4] text-[#767676] flex items-center justify-center cursor-pointer border border-[#E8E8E4]"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-[#626262]">
                 All garments are cut with precision tailored ease. Measurements taken flat in inches and centimeters.
               </p>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs font-mono border-collapse">
                   <thead>
-                    <tr className="border-b-2 border-slate-900 text-[10px] uppercase text-slate-500">
+                    <tr className="border-b-2 border-[#171717] text-[10px] uppercase text-[#767676]">
                       <th className="py-2">Size</th>
                       <th className="py-2">Chest</th>
                       <th className="py-2">Length</th>
                       <th className="py-2">Shoulder</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-[#E8E8E4]">
                     {SIZE_GUIDE_ROWS.map((row) => (
-                      <tr key={row.size} className="hover:bg-slate-50">
-                        <td className="py-2 font-bold text-indigo-700">{row.size}</td>
+                      <tr key={row.size} className="hover:bg-[#FAFAF8]">
+                        <td className="py-2 font-bold text-[#B78B45]">{row.size}</td>
                         <td className="py-2">{row.chestIn} ({row.chestCm})</td>
                         <td className="py-2">{row.lengthIn} ({row.lengthCm})</td>
                         <td className="py-2">{row.shoulderIn} ({row.shoulderCm})</td>
@@ -859,8 +859,8 @@ export function ProductQuickViewModal() {
                 </table>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1">
-                <p className="font-bold text-slate-900">💡 Fit Recommendation:</p>
+              <div className="p-3 rounded-xl bg-[#FAFAF8] border border-[#E8E8E4] text-[11px] text-[#626262] space-y-1">
+                <p className="font-bold text-[#171717]">💡 Fit Recommendation:</p>
                 <p>
                   Regular relaxed drop-shoulder cut. If you prefer a tailored slim silhouette, we recommend sizing down one size.
                 </p>
@@ -869,7 +869,7 @@ export function ProductQuickViewModal() {
               <button
                 type="button"
                 onClick={() => setIsSizeGuideOpen(false)}
-                className="w-full py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer transition-colors"
+                className="w-full py-2.5 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] text-xs font-bold cursor-pointer transition-colors shadow-xs"
               >
                 Close Fit Table
               </button>

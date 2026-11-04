@@ -336,10 +336,10 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
                   }}
                   className={`px-3.5 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                     isOutOfStock
-                      ? "opacity-40 line-through bg-zinc-50 border-zinc-200 cursor-not-allowed text-zinc-400"
+                      ? "opacity-40 line-through bg-[#FAFAF8] border-[#E8E8E4] cursor-not-allowed text-[#767676]"
                       : isSelected
-                      ? "bg-zinc-900 text-white border-zinc-900 shadow-sm font-bold"
-                      : "bg-zinc-100 text-zinc-800 border-zinc-200 hover:border-zinc-400"
+                      ? "bg-white text-[#171717] border-2 border-[#171717] shadow-xs font-bold ring-2 ring-[#B78B45]/20"
+                      : "bg-[#FAFAF8] text-[#171717] border border-[#E8E8E4] hover:border-[#171717]/40"
                   }`}
                 >
                   {size} {isOutOfStock ? "(Out)" : ""}
@@ -439,11 +439,11 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
             size="lg"
             onClick={handleAddToCart}
             disabled={product.stock === 0 || isAdded}
-            className="w-full flex items-center justify-center gap-2 font-semibold bg-white hover:bg-zinc-50 text-zinc-900 border border-zinc-300 shadow-sm py-3 rounded-xl cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 font-semibold bg-[#FAFAF8] hover:bg-white text-[#171717] border border-[#E8E8E4] hover:border-[#171717] shadow-xs py-3 rounded-xl transition-all duration-200 cursor-pointer"
           >
             {isAdded ? (
               <>
-                <Check className="w-4 h-4 text-emerald-600" />
+                <Check className="w-4 h-4 text-[#21866F]" />
                 <span>Added to Bag</span>
               </>
             ) : product.stock === 0 ? (
@@ -461,9 +461,9 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
             size="lg"
             onClick={handleBuyNow}
             disabled={product.stock === 0}
-            className="w-full flex items-center justify-center gap-2 font-bold bg-slate-950 hover:bg-slate-800 text-white py-3 rounded-xl shadow-sm transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 font-bold bg-white text-[#171717] border-2 border-[#171717] hover:border-[#B78B45] hover:text-[#B78B45] hover:bg-[#FAFAF8] py-3 rounded-xl shadow-xs transition-all duration-200 cursor-pointer"
           >
-            <Zap className="w-4 h-4 fill-amber-400 text-amber-400" />
+            <Zap className="w-4 h-4 fill-[#B78B45] text-[#B78B45]" />
             <span>Buy Now • {formatCurrency(product.basePrice * quantity)}</span>
           </Button>
         </div>
@@ -493,14 +493,14 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
       {/* Size Guide Modal */}
       {isSizeGuideOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4"
           onClick={() => setIsSizeGuideOpen(false)}
         >
           <div
-            className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl text-slate-900"
+            className="bg-white border border-[#E8E8E4] rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-xl text-[#171717]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E8E8E4]">
               <div className="flex items-center gap-2">
                 <Ruler className="w-4 h-4 text-blue-600" />
                 <h3 className="font-bold text-sm text-slate-950">

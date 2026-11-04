@@ -26,21 +26,21 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]";
+      "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B78B45]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]";
 
     const variantStyles = {
       primary:
-        "bg-slate-950 hover:bg-slate-800 text-white shadow-sm font-medium",
+        "bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-1.5 border-[#171717] hover:border-[#B78B45] shadow-xs font-semibold",
       secondary:
-        "bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200 shadow-sm",
+        "bg-[#FAFAF8] hover:bg-[#F5F6F4] text-[#171717] border border-[#E8E8E4] hover:border-[#D4D4CF] shadow-xs",
       outline:
-        "bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 hover:border-slate-300 shadow-sm",
+        "bg-white hover:bg-[#FAFAF8] text-[#171717] border border-[#E8E8E4] hover:border-[#171717] shadow-xs",
       ghost:
-        "bg-transparent hover:bg-slate-100 text-slate-600 hover:text-slate-900",
+        "bg-transparent hover:bg-[#F5F6F4] text-[#626262] hover:text-[#171717]",
       destructive:
-        "bg-rose-600 hover:bg-rose-700 text-white shadow-sm",
+        "bg-[#FDF2E9] hover:bg-rose-100 text-[#C2410C] border border-[#C2410C]/40 font-semibold shadow-xs",
       accent:
-        "bg-[#2457C5] hover:bg-[#1d46a6] text-white font-medium shadow-sm",
+        "bg-[#F8F2E6] hover:bg-[#F3E8D2] text-[#8A631E] border border-[#B78B45]/50 hover:border-[#B78B45] font-semibold shadow-xs",
     };
 
     const sizeStyles = {

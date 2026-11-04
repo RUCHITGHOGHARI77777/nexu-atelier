@@ -3,24 +3,29 @@
 @tailwind utilities;
 
 :root {
-  /* Official NEXU Master Design System Tokens */
+  /* Official NEXU White-First Master Design System Tokens */
   --nexu-surface: #ffffff;
-  --nexu-canvas: #f6f7f9;
-  --nexu-secondary: #f8fafc;
-  --nexu-text-primary: #17191f;
-  --nexu-text-secondary: #64748b;
-  --nexu-text-muted: #64748b; /* Calibrated from #94A3B8 to meet WCAG 2.1 AA 4.5:1 contrast against white */
-  --nexu-border-main: #e5e7eb;
-  --nexu-border-strong: #d1d5db;
-  --nexu-accent: #2457c5;
-  --nexu-accent-hover: #1d46a6;
-  --nexu-accent-subtle: #eef4ff;
-  --nexu-success: #15803d;
-  --nexu-warning: #b45309;
-  --nexu-danger: #b91c1c;
+  --nexu-canvas: #fafaf8;
+  --nexu-secondary: #fafaf8;
+  --nexu-section: #f5f6f4;
+  --nexu-text-primary: #171717;
+  --nexu-text-secondary: #626262;
+  --nexu-text-muted: #767676; /* WCAG 2.1 AA 4.54:1 contrast against white */
+  --nexu-border-main: #e8e8e4;
+  --nexu-border-strong: #d4d4cf;
+  --nexu-accent: #b78b45;
+  --nexu-accent-hover: #9a7233;
+  --nexu-accent-subtle: #f8f2e6;
+  --nexu-success: #21866f;
+  --nexu-warning: #b78b45;
+  --nexu-danger: #c2410c;
 
-  --background: #f6f7f9;
-  --foreground: #17191f;
+  --background: #fafaf8;
+  --foreground: #171717;
+
+  /* Specular Fluid Water Curves */
+  --fluid-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --fluid-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 * {
@@ -33,67 +38,73 @@ html {
 }
 
 body {
-  color: #17191f;
-  background-color: #f6f7f9;
+  color: #171717;
+  background-color: #fafaf8;
   font-feature-settings: "rlig" 1, "calt" 1;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* --- TRUE SPECULAR LIQUID WATER GLASS PRIMITIVES --- */
+/* --- SPECULAR FLUID WATER GLASS PRIMITIVES --- */
 .liquid-glass-card {
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.92);
-  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid #e8e8e4;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02), inset 0 1px 0 rgba(255, 255, 255, 1);
+  transition: all 0.26s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .liquid-glass-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 50px rgba(37, 99, 235, 0.08), inset 0 1px 2px rgba(255, 255, 255, 1);
-  border-color: rgba(255, 255, 255, 1);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px rgba(183, 139, 69, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1);
+  border-color: #d4d4cf;
 }
 
 .liquid-glass-surface {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid #e8e8e4;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.02), inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
 .liquid-glass-input {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.85);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-  transition: all 0.2s ease-out;
+  background: #ffffff;
+  border: 1px solid #e8e8e4;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .liquid-glass-input:focus {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(37, 99, 235, 0.5);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  background: #ffffff;
+  border-color: #b78b45;
+  box-shadow: 0 0 0 3px rgba(183, 139, 69, 0.12);
 }
 
 /* Glass & Water Luxury UI Primitives */
 .glass-water {
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 10px 35px 0 rgba(0, 0, 0, 0.03);
+  border: 1px solid #e8e8e4;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.03);
 }
 
 .glass-water-subtle {
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(250, 250, 248, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid #e8e8e4;
+}
+
+.fluid-hover {
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.fluid-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
 }
 
 /* --- ANIMATED AMBIENT WATER BLOBS --- */
@@ -147,7 +158,7 @@ body {
 
 /* Accessible focus ring standards */
 :focus-visible {
-  outline: 2px solid #0f172a;
+  outline: 2px solid #b78b45;
   outline-offset: 2px;
 }
 

@@ -752,8 +752,8 @@ export default function OrderDetailPage({ params }: Props) {
 
       {/* Cancellation Confirmation Modal */}
       {cancelModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white border border-zinc-200 rounded-2xl p-6 shadow-2xl space-y-4 text-zinc-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white border border-[#E8E8E4] rounded-2xl p-6 shadow-2xl space-y-4 text-[#171717]">
             <div className="flex items-center gap-2 text-rose-600 font-bold text-sm">
               <AlertTriangle className="w-5 h-5" />
               <span>Cancel Order {order.id}?</span>
@@ -807,8 +807,8 @@ export default function OrderDetailPage({ params }: Props) {
 
       {/* Return / Replacement Modal */}
       {returnModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-white border border-zinc-200 rounded-2xl p-6 shadow-2xl space-y-4 text-zinc-900 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-white border border-[#E8E8E4] rounded-2xl p-6 shadow-2xl space-y-4 text-[#171717] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-2 text-amber-700 font-bold text-base">
               <RotateCcw className="w-5 h-5" />
               <span>Initiate Return or Replacement</span>
@@ -956,13 +956,13 @@ export default function OrderDetailPage({ params }: Props) {
 
       {/* Printable Tax Invoice Modal */}
       {invoiceModalOpen && order && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-3xl bg-white text-zinc-950 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 my-8 print:p-0 print:m-0 print:shadow-none print:w-full print:max-w-none">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-3xl bg-white text-[#171717] border border-[#E8E8E4] rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 my-8 print:p-0 print:m-0 print:shadow-none print:w-full print:max-w-none">
             {/* Modal Controls (Hidden in Print) */}
-            <div className="flex items-center justify-between border-b border-zinc-200 pb-4 print:hidden">
+            <div className="flex items-center justify-between border-b border-[#E8E8E4] pb-4 print:hidden">
               <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-zinc-700" />
-                <span className="font-bold text-sm text-zinc-900 uppercase tracking-wider">
+                <FileText className="w-5 h-5 text-[#171717]" />
+                <span className="font-bold text-sm text-[#171717] uppercase tracking-wider">
                   Official Commercial Tax Invoice
                 </span>
               </div>
@@ -970,7 +970,7 @@ export default function OrderDetailPage({ params }: Props) {
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>Print / Save PDF</span>
@@ -978,7 +978,7 @@ export default function OrderDetailPage({ params }: Props) {
                 <button
                   type="button"
                   onClick={() => setInvoiceModalOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 cursor-pointer"
+                  className="p-1.5 rounded-lg hover:bg-[#FAFAF8] text-[#767676] hover:text-[#171717] cursor-pointer"
                   aria-label="Close invoice"
                 >
                   <X className="w-5 h-5" />
@@ -987,15 +987,15 @@ export default function OrderDetailPage({ params }: Props) {
             </div>
 
             {/* Printable Document Sheet */}
-            <div className="space-y-6 text-xs text-zinc-700">
+            <div className="space-y-6 text-xs text-[#626262]">
               {/* Invoice Header */}
-              <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-zinc-200 pb-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-[#E8E8E4] pb-6">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <div className="w-6 h-6 rounded bg-zinc-950 text-white font-bold flex items-center justify-center text-xs">
+                    <div className="w-6 h-6 rounded bg-[#FAFAF8] border border-[#E8E8E4] text-[#171717] font-bold flex items-center justify-center text-xs">
                       NX
                     </div>
-                    <span className="font-extrabold text-base tracking-tight text-zinc-950">
+                    <span className="font-extrabold text-base tracking-tight text-[#171717]">
                       NEXU ATELIER
                     </span>
                   </div>

@@ -25,7 +25,7 @@ export const Footer: React.FC = () => {
           {/* Col 1: Brand & Mission */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-zinc-950 text-white flex items-center justify-center font-bold text-xs tracking-wider">
+              <div className="w-8 h-8 rounded-lg bg-white border border-[#E8E8E4] text-[#171717] flex items-center justify-center font-bold text-xs tracking-wider shadow-2xs">
                 NX
               </div>
               <span className="font-extrabold text-base tracking-wider text-zinc-950">

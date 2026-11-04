@@ -235,15 +235,15 @@ export function PaymentMethodSelector({
         <button
           type="button"
           onClick={() => setMethod("UPI")}
-          className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1.5 ${
+          className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1.5 cursor-pointer ${
             method === "UPI"
-              ? "border-zinc-950 bg-zinc-950 text-white shadow-xs"
-              : "border-zinc-200 bg-white hover:border-zinc-300 text-zinc-900"
+              ? "border-2 border-[#171717] bg-[#FAFAF8] text-[#171717] shadow-xs ring-2 ring-[#B78B45]/20 font-bold"
+              : "border border-[#E8E8E4] bg-white hover:border-[#171717]/40 text-[#626262]"
           }`}
         >
-          <QrCode className="w-4 h-4" />
+          <QrCode className="w-4 h-4 text-[#171717]" />
           <span className="text-xs font-bold leading-tight">Instant UPI</span>
-          <span className={`text-[10px] ${method === "UPI" ? "text-zinc-300" : "text-zinc-500"}`}>
+          <span className={`text-[10px] ${method === "UPI" ? "text-[#171717]" : "text-[#767676]"}`}>
             GPay / PhonePe
           </span>
         </button>
@@ -251,15 +251,15 @@ export function PaymentMethodSelector({
         <button
           type="button"
           onClick={() => setMethod("CARD")}
-          className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1.5 ${
+          className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1.5 cursor-pointer ${
             method === "CARD"
-              ? "border-zinc-950 bg-zinc-950 text-white shadow-xs"
-              : "border-zinc-200 bg-white hover:border-zinc-300 text-zinc-900"
+              ? "border-2 border-[#171717] bg-[#FAFAF8] text-[#171717] shadow-xs ring-2 ring-[#B78B45]/20 font-bold"
+              : "border border-[#E8E8E4] bg-white hover:border-[#171717]/40 text-[#626262]"
           }`}
         >
-          <CreditCard className="w-4 h-4" />
+          <CreditCard className="w-4 h-4 text-[#171717]" />
           <span className="text-xs font-bold leading-tight">Cards</span>
-          <span className={`text-[10px] ${method === "CARD" ? "text-zinc-300" : "text-zinc-500"}`}>
+          <span className={`text-[10px] ${method === "CARD" ? "text-[#171717]" : "text-[#767676]"}`}>
             Credit / Debit
           </span>
         </button>
@@ -267,15 +267,15 @@ export function PaymentMethodSelector({
         <button
           type="button"
           onClick={() => setMethod("NET_BANKING")}
-          className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1.5 ${
+          className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1.5 cursor-pointer ${
             method === "NET_BANKING"
-              ? "border-zinc-950 bg-zinc-950 text-white shadow-xs"
-              : "border-zinc-200 bg-white hover:border-zinc-300 text-zinc-900"
+              ? "border-2 border-[#171717] bg-[#FAFAF8] text-[#171717] shadow-xs ring-2 ring-[#B78B45]/20 font-bold"
+              : "border border-[#E8E8E4] bg-white hover:border-[#171717]/40 text-[#626262]"
           }`}
         >
-          <Building className="w-4 h-4" />
+          <Building className="w-4 h-4 text-[#171717]" />
           <span className="text-xs font-bold leading-tight">Net Banking</span>
-          <span className={`text-[10px] ${method === "NET_BANKING" ? "text-zinc-300" : "text-zinc-500"}`}>
+          <span className={`text-[10px] ${method === "NET_BANKING" ? "text-[#171717]" : "text-[#767676]"}`}>
             50+ Indian Banks
           </span>
         </button>
@@ -283,15 +283,15 @@ export function PaymentMethodSelector({
         <button
           type="button"
           onClick={() => setMethod("WALLET")}
-          className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1.5 ${
+          className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1.5 cursor-pointer ${
             method === "WALLET"
-              ? "border-zinc-950 bg-zinc-950 text-white shadow-xs"
-              : "border-zinc-200 bg-white hover:border-zinc-300 text-zinc-900"
+              ? "border-2 border-[#171717] bg-[#FAFAF8] text-[#171717] shadow-xs ring-2 ring-[#B78B45]/20 font-bold"
+              : "border border-[#E8E8E4] bg-white hover:border-[#171717]/40 text-[#626262]"
           }`}
         >
-          <Wallet className="w-4 h-4" />
+          <Wallet className="w-4 h-4 text-[#171717]" />
           <span className="text-xs font-bold leading-tight">Wallets</span>
-          <span className={`text-[10px] ${method === "WALLET" ? "text-zinc-300" : "text-zinc-500"}`}>
+          <span className={`text-[10px] ${method === "WALLET" ? "text-[#171717]" : "text-[#767676]"}`}>
             Paytm & More
           </span>
         </button>
@@ -299,15 +299,15 @@ export function PaymentMethodSelector({
         <button
           type="button"
           onClick={() => setMethod("COD")}
-          className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1.5 ${
+          className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1.5 cursor-pointer ${
             method === "COD"
-              ? "border-zinc-950 bg-zinc-950 text-white shadow-xs"
-              : "border-zinc-200 bg-white hover:border-zinc-300 text-zinc-900"
+              ? "border-2 border-[#171717] bg-[#FAFAF8] text-[#171717] shadow-xs ring-2 ring-[#B78B45]/20 font-bold"
+              : "border border-[#E8E8E4] bg-white hover:border-[#171717]/40 text-[#626262]"
           }`}
         >
-          <Truck className="w-4 h-4" />
+          <Truck className="w-4 h-4 text-[#171717]" />
           <span className="text-xs font-bold leading-tight">Pay on Delivery</span>
-          <span className={`text-[10px] ${method === "COD" ? "text-zinc-300" : "text-zinc-500"}`}>
+          <span className={`text-[10px] ${method === "COD" ? "text-[#171717]" : "text-[#767676]"}`}>
             {codEligibility?.isEligible ? "Available" : "Restricted"}
           </span>
         </button>
@@ -536,7 +536,7 @@ export function PaymentMethodSelector({
                           type="button"
                           onClick={handleVerifyOtp}
                           disabled={codOtpInput.trim().length !== 6}
-                          className="px-4 py-2 text-xs font-bold rounded-xl bg-zinc-950 text-white disabled:opacity-40 hover:bg-zinc-800 transition-colors"
+                          className="px-4 py-2 text-xs font-bold rounded-xl bg-white text-[#171717] border border-[#171717] hover:border-[#B78B45] hover:text-[#B78B45] disabled:opacity-40 transition-colors shadow-xs cursor-pointer"
                         >
                           Verify OTP
                         </button>
@@ -559,8 +559,8 @@ export function PaymentMethodSelector({
           disabled={!isReadyToPay}
           className={`w-full py-4 px-6 rounded-2xl font-bold text-sm tracking-wide transition-all flex items-center justify-center gap-3 ${
             isReadyToPay
-              ? "bg-zinc-950 text-white hover:bg-zinc-800 shadow-md cursor-pointer"
-              : "bg-zinc-200 text-zinc-400 cursor-not-allowed border border-zinc-200"
+              ? "bg-white text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] hover:bg-[#FAFAF8] shadow-xs cursor-pointer"
+              : "bg-[#FAFAF8] text-[#767676] cursor-not-allowed border border-[#E8E8E4]"
           }`}
         >
           <Lock className="w-4 h-4" />

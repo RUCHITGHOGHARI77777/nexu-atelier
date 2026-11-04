@@ -40,28 +40,28 @@ export const AnnouncementBar: React.FC = () => {
   if (isDismissed || !bannerEnabled) return null;
 
   return (
-    <div className="w-full bg-zinc-950 border-b border-zinc-800/80 text-zinc-300 text-xs py-2 px-4 select-none">
+    <div className="w-full bg-[#FAFAF8] border-b border-[#E8E8E4] text-[#171717] text-xs py-2 px-4 select-none transition-colors duration-200">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 font-mono text-[11px] text-zinc-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
-          <span className="tracking-wide">NEXU ATELIER</span>
+        <div className="flex items-center gap-2 font-mono text-[11px] text-[#626262]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#B78B45] inline-block animate-pulse" />
+          <span className="tracking-widest font-semibold text-[#171717]">NEXU ATELIER</span>
         </div>
 
-        <div className="text-center font-medium truncate text-xs">
+        <div className="text-center font-medium truncate text-xs text-[#171717]">
           {bannerText}
         </div>
 
         <div className="flex items-center gap-3">
           <Link
             href="/promotions"
-            className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-ochre hover:text-ochre-light transition-colors"
+            className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-[#B78B45] hover:text-[#8A631E] transition-colors"
           >
             <span>Offers</span>
             <ArrowRight className="w-3 h-3" />
           </Link>
           <button
             onClick={handleDismiss}
-            className="text-zinc-500 hover:text-zinc-300 p-0.5 rounded transition-colors"
+            className="text-[#929292] hover:text-[#171717] p-0.5 rounded transition-colors"
             aria-label="Dismiss announcement"
             title="Dismiss announcement"
           >

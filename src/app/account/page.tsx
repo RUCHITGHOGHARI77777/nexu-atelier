@@ -447,7 +447,7 @@ export default function AccountOverviewPage() {
 
       {/* Erasure Modal */}
       {showErasureModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fade-in">
           <div className="bg-white border border-rose-200 rounded-2xl p-6 max-w-lg w-full shadow-2xl relative space-y-4 text-zinc-900">
             <button
               onClick={() => setShowErasureModal(false)}

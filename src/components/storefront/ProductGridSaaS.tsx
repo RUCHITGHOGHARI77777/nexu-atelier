@@ -28,7 +28,7 @@ export function ProductGridSaaS() {
             setPriceRange([1000, 150000]);
             setMinRating(0);
           }}
-          className="px-4 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center gap-2 shadow-sm transition-colors"
+          className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] text-xs font-bold inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
         >
           <RotateCcw className="w-3.5 h-3.5" />
           <span>Reset All Filters</span>

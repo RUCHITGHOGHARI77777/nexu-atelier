@@ -116,7 +116,7 @@ export default function FAQPage() {
               onClick={() => setSelectedCategory(cat)}
               className={`text-xs px-3.5 py-1.5 rounded-lg border transition-all cursor-pointer font-medium ${
                 selectedCategory === cat
-                  ? "bg-zinc-900 border-zinc-900 text-white shadow-xs"
+                  ? "bg-white border-2 border-[#171717] text-[#171717] shadow-xs font-bold"
                   : "bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
               }`}
             >
@@ -154,7 +154,7 @@ export default function FAQPage() {
                     </div>
                     <div
                       className={`w-7 h-7 rounded-full bg-zinc-100 flex items-center justify-center shrink-0 text-zinc-500 transition-transform duration-200 ${
-                        isOpen ? "rotate-180 bg-zinc-900 text-white" : ""
+                        isOpen ? "rotate-180 bg-[#FAFAF8] text-[#171717] border border-[#E8E8E4]" : ""
                       }`}
                     >
                       <ChevronDown className="w-4 h-4" />
@@ -184,7 +184,7 @@ export default function FAQPage() {
           </div>
           <Link
             href="/contact"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-900 text-white text-xs font-semibold hover:bg-zinc-800 transition-colors shrink-0 shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] text-xs font-semibold transition-colors shrink-0 shadow-xs"
           >
             <MessageSquare className="w-3.5 h-3.5" />
             <span>Contact Concierge Desk</span>

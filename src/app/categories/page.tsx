@@ -156,7 +156,7 @@ export default async function CategoriesHubPage() {
                 <div className="p-6 pt-0">
                   <Link
                     href={`/category/${category.slug}`}
-                    className="w-full py-2.5 px-4 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-xs"
+                    className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-xs"
                   >
                     <span>Explore {category.name}</span>
                     <ArrowRight className="w-3.5 h-3.5" />

@@ -387,10 +387,13 @@ export class PrismaAuthService implements IAuthService {
     const standard10 = cleanPhone.slice(-10);
 
     try {
-      // Look for existing user with this phone in profile
+      const generatedEmail = `patron.${standard10}@nexu-auth.internal`;
+
+      // Look for existing user with this phone in profile or generated email
       let user = await prisma.user.findFirst({
         where: {
           OR: [
+            { email: generatedEmail },
             { profile: { phone: cleanPhone } },
             { profile: { phone: normalized } },
             { profile: { phone: `+${normalized}` } },
@@ -402,7 +405,6 @@ export class PrismaAuthService implements IAuthService {
 
       // If user does not exist, provision a verified customer account
       if (!user) {
-        const generatedEmail = `patron.${standard10}@nexu-auth.internal`;
         const tempHash = hashPassword(crypto.randomBytes(16).toString("hex"));
 
         user = await prisma.user.create({

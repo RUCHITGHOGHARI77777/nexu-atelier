@@ -115,24 +115,24 @@ export function EditorialHeroSection() {
             </div>
 
             {/* Feature 2: Escrow Protection & Trust Card */}
-            <div className="rounded-3xl bg-zinc-900 text-white p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden">
+            <div className="rounded-3xl bg-[#FAFAF8] text-[#171717] border border-[#E8E8E4] p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden shadow-xs">
               <div className="space-y-3 relative z-10">
-                <div className="w-9 h-9 rounded-xl bg-white/10 text-white flex items-center justify-center font-bold text-xs">
-                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                <div className="w-9 h-9 rounded-xl bg-[#EAF6F0] text-[#21866F] border border-[#21866F]/20 flex items-center justify-center font-bold text-xs">
+                  <ShieldCheck className="w-5 h-5 text-[#21866F]" />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-sm sm:text-base font-bold text-white">
+                  <h4 className="text-sm sm:text-base font-bold text-[#171717]">
                     Direct Artisan Escrow
                   </h4>
-                  <p className="text-xs text-zinc-300 leading-relaxed">
+                  <p className="text-xs text-[#626262] leading-relaxed">
                     100% of patron payments are secured in escrow and only released to the master craftspeople after verified delivery and inspection.
                   </p>
                 </div>
               </div>
 
-              <div className="pt-4 mt-2 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-zinc-400 relative z-10">
+              <div className="pt-4 mt-2 border-t border-[#E8E8E4] flex items-center justify-between text-[11px] font-mono text-[#767676] relative z-10">
                 <span>Zero Middlemen Markup</span>
-                <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                <span className="text-[#21866F] font-semibold flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" />
                   <span>100% Protected</span>
                 </span>

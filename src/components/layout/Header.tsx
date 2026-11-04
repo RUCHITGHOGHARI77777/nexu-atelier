@@ -292,14 +292,14 @@ export const Header: React.FC = () => {
 
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-2 group shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-bold tracking-tighter text-sm">
+            <div className="w-8 h-8 rounded-lg bg-white border border-[#E8E8E4] text-[#171717] flex items-center justify-center font-bold tracking-tighter text-sm shadow-xs group-hover:border-[#B78B45] group-hover:text-[#B78B45] transition-colors">
               NX
             </div>
             <div className="flex flex-col">
-              <span className="font-extrabold text-base tracking-tight text-zinc-950 group-hover:text-amber-700 transition-colors">
+              <span className="font-extrabold text-base tracking-tight text-[#171717] group-hover:text-[#B78B45] transition-colors">
                 NEXU ATELIER
               </span>
-              <span className="text-[9px] font-mono tracking-widest uppercase text-zinc-500">
+              <span className="text-[9px] font-mono tracking-widest uppercase text-[#767676]">
                 ARTISAN COLLECTIVE
               </span>
             </div>
@@ -565,13 +565,13 @@ export const Header: React.FC = () => {
             {/* Bag / Cart Trigger */}
             <button
               onClick={openCartDrawer}
-              className="relative flex items-center gap-2 p-2 sm:px-3 sm:py-2 text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer shadow-sm"
+              className="relative flex items-center gap-2 p-2 sm:px-3 sm:py-2 text-[#171717] bg-white hover:bg-[#FAFAF8] border border-[#E8E8E4] hover:border-[#B78B45] hover:text-[#B78B45] rounded-xl transition-all duration-200 cursor-pointer shadow-xs active:scale-[0.98]"
               aria-label={`Shopping bag with ${totals.itemCount} items`}
             >
-              <ShoppingBag className="w-4 h-4 text-zinc-200" />
+              <ShoppingBag className="w-4 h-4" />
               <span className="hidden sm:inline text-xs font-semibold">Bag</span>
               {totals.itemCount > 0 && (
-                <span className="w-5 h-5 bg-amber-500 text-zinc-950 text-[10px] font-mono font-bold rounded-full flex items-center justify-center">
+                <span className="w-5 h-5 bg-[#F8F2E6] text-[#8A631E] border border-[#B78B45]/40 text-[10px] font-mono font-bold rounded-full flex items-center justify-center">
                   {totals.itemCount}
                 </span>
               )}
@@ -585,7 +585,7 @@ export const Header: React.FC = () => {
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
             onClick={() => setIsMobileMenuOpen(false)}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
           />
           <div className="absolute top-0 bottom-0 left-0 w-3/4 max-w-xs bg-white border-r border-zinc-200 p-6 flex flex-col justify-between overflow-y-auto shadow-2xl">
             <div className="space-y-6">
@@ -614,7 +614,7 @@ export const Header: React.FC = () => {
                       onClick={() => setMarket(m.code)}
                       className={`px-2 py-1.5 rounded-lg text-left text-xs font-medium flex items-center justify-between transition-colors ${
                         activeMarket.code === m.code
-                          ? "bg-zinc-900 text-white font-bold"
+                          ? "bg-white border-2 border-[#171717] text-[#171717] font-bold shadow-xs"
                           : "bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-100"
                       }`}
                     >
@@ -664,7 +664,7 @@ export const Header: React.FC = () => {
                     <Link
                       href="/login"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="px-3 py-1 rounded bg-zinc-900 text-white font-bold"
+                      className="px-3 py-1 rounded-lg bg-white border border-[#171717] text-[#171717] hover:border-[#B78B45] hover:text-[#B78B45] font-bold shadow-xs transition-colors"
                     >
                       Sign In
                     </Link>

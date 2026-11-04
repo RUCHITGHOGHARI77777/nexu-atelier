@@ -189,7 +189,7 @@ export default function PromotionsPage() {
           </div>
           <Link
             href="/shop"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold shrink-0 shadow-md transition-all active:scale-95"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-2 border-[#171717] hover:border-[#B78B45] text-xs font-semibold shrink-0 shadow-xs transition-all active:scale-95"
           >
             <span>Explore Curated Archive</span>
             <ArrowRight className="w-3.5 h-3.5" />

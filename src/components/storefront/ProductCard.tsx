@@ -85,9 +85,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const inCompare = isInCompare(product.id);
 
   return (
-    <div className="group relative flex flex-col justify-between rounded-2xl bg-white border border-zinc-200 hover:border-zinc-300 hover:shadow-lg transition-all duration-300 overflow-hidden text-zinc-900">
+    <div className="group relative flex flex-col justify-between rounded-2xl bg-white border border-[#E8E8E4] hover:border-[#D4D4CF] hover:shadow-md transition-all duration-300 overflow-hidden text-[#171717]">
       {/* Visual Image Showcase */}
-      <div className="relative block w-full aspect-[4/5] bg-zinc-50 overflow-hidden">
+      <div className="relative block w-full aspect-[4/5] bg-[#FAFAF8] overflow-hidden">
         <Link
           href={`/product/${product.slug}`}
           className="absolute inset-0 z-0"
@@ -129,7 +129,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               className={`p-2 rounded-full transition-all cursor-pointer ${
                 wishlisted
                   ? "bg-rose-50 text-rose-600 border border-rose-200 shadow-sm"
-                  : "bg-white/90 text-zinc-700 hover:text-zinc-950 hover:bg-white border border-zinc-200/80 shadow-sm"
+                  : "bg-white/95 text-[#171717] hover:text-[#B78B45] hover:bg-white border border-[#E8E8E4] shadow-xs"
               }`}
               aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
               title={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
@@ -141,7 +141,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
             <button
               onClick={handleQuickView}
-              className="p-2 rounded-full transition-all cursor-pointer bg-white/90 text-zinc-700 hover:text-zinc-950 hover:bg-white border border-zinc-200/80 shadow-sm"
+              className="p-2 rounded-full transition-all cursor-pointer bg-white/95 text-[#171717] hover:text-[#B78B45] hover:bg-white border border-[#E8E8E4] shadow-xs"
               aria-label="Quick view"
               title="Quick view"
             >
@@ -160,8 +160,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               }}
               className={`p-2 rounded-full transition-all cursor-pointer ${
                 inCompare
-                  ? "bg-amber-500 text-zinc-950 shadow-sm font-bold"
-                  : "bg-white/90 text-zinc-700 hover:text-zinc-950 hover:bg-white border border-zinc-200/80 shadow-sm"
+                  ? "bg-[#F8F2E6] text-[#8A631E] border border-[#B78B45] shadow-xs font-bold"
+                  : "bg-white/95 text-[#171717] hover:text-[#B78B45] hover:bg-white border border-[#E8E8E4] shadow-xs"
               }`}
               aria-label={inCompare ? "Remove from comparison" : "Add to comparison"}
               title={inCompare ? "Remove from comparison" : "Add to comparison"}
@@ -176,12 +176,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <button
             onClick={handleQuickAdd}
             disabled={product.stock === 0 || isAdded}
-            className="w-full py-2.5 px-4 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border-1.5 border-[#171717] hover:border-[#B78B45] font-semibold text-xs flex items-center justify-center gap-2 shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] cursor-pointer"
           >
             {isAdded ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Added to Bag</span>
+                <Check className="w-3.5 h-3.5 text-[#21866F]" />
+                <span className="text-[#21866F]">Added to Bag</span>
               </>
             ) : product.stock === 0 ? (
               <span>Out of Stock</span>
@@ -199,30 +199,30 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="p-4 flex-1 flex flex-col justify-between space-y-3 bg-white">
         <div className="space-y-1">
           {/* Vendor and Rating */}
-          <div className="flex items-center justify-between text-[11px] text-zinc-500">
-            <span className="truncate max-w-[170px] text-zinc-500 font-medium">
+          <div className="flex items-center justify-between text-[11px] text-[#626262]">
+            <span className="truncate max-w-[170px] text-[#626262] font-medium">
               {product.vendor.name}
             </span>
             {product.reviewCount > 0 ? (
-              <div className="flex items-center gap-1 font-mono text-zinc-800">
-                <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+              <div className="flex items-center gap-1 font-mono text-[#171717]">
+                <Star className="w-3 h-3 fill-[#B78B45] text-[#B78B45]" />
                 <span className="font-semibold">{product.rating.toFixed(1)}</span>
-                <span className="text-zinc-400 text-[10px]">
+                <span className="text-[#767676] text-[10px]">
                   ({product.reviewCount})
                 </span>
               </div>
             ) : (
-              <span className="text-[10px] font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/60 font-medium">
+              <span className="text-[10px] font-mono text-[#8A631E] bg-[#F8F2E6] px-1.5 py-0.5 rounded border border-[#B78B45]/40 font-medium">
                 New Atelier
               </span>
             )}
           </div>
 
           {/* Product Title */}
-          <h3 className="font-semibold text-xs sm:text-sm text-zinc-900 group-hover:text-amber-700 line-clamp-1 transition-colors">
+          <h3 className="font-semibold text-xs sm:text-sm text-[#171717] group-hover:text-[#B78B45] line-clamp-1 transition-colors">
             <Link href={`/product/${product.slug}`}>{product.title}</Link>
           </h3>
-          <p className="text-[11px] text-zinc-500 line-clamp-1">
+          <p className="text-[11px] text-[#626262] line-clamp-1">
             {product.subtitle}
           </p>
         </div>
@@ -239,8 +239,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 }}
                 className={`w-3.5 h-3.5 rounded-full border transition-all cursor-pointer ${
                   selectedColor?.name === color.name
-                    ? "border-zinc-900 scale-125 shadow-sm"
-                    : "border-zinc-300 opacity-70 hover:opacity-100"
+                    ? "border-[#171717] scale-125 shadow-xs"
+                    : "border-[#E8E8E4] opacity-70 hover:opacity-100"
                 }`}
                 style={{ backgroundColor: color.hex }}
                 title={color.name}
@@ -251,20 +251,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         )}
 
         {/* Pricing Row */}
-        <div className="pt-2 border-t border-zinc-100 flex items-baseline justify-between">
+        <div className="pt-2 border-t border-[#E8E8E4] flex items-baseline justify-between">
           <div className="flex items-baseline gap-2">
-            <span className="font-mono text-sm sm:text-base font-bold text-zinc-950">
+            <span className="font-mono text-sm sm:text-base font-bold text-[#171717]">
               {formatPrice(product.basePrice)}
             </span>
             {product.compareAtPrice && product.compareAtPrice > product.basePrice && (
-              <span className="font-mono text-xs text-zinc-400 line-through">
+              <span className="font-mono text-xs text-[#767676] line-through">
                 {formatPrice(product.compareAtPrice)}
               </span>
             )}
           </div>
 
           {discountPercentage > 0 && (
-            <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+            <span className="text-[10px] font-mono font-bold text-[#21866F] bg-[#EAF6F0] px-1.5 py-0.5 rounded border border-[#21866F]/30">
               {discountPercentage}% off
             </span>
           )}
@@ -275,7 +275,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <button
             onClick={handleQuickAdd}
             disabled={product.stock === 0 || isAdded}
-            className="w-full py-2 px-3 rounded-lg bg-zinc-900 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-2 px-3 rounded-xl bg-white hover:bg-[#FAFAF8] text-[#171717] hover:text-[#B78B45] border border-[#171717] hover:border-[#B78B45] font-semibold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isAdded ? "Added to Bag" : "Add to Bag"}
           </button>
