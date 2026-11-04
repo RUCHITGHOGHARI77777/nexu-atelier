@@ -71,3 +71,4 @@ When a customer checks out a shopping bag containing items from multiple distinc
 - **ACID Transactions:** Inventory decrements, order creations, and outbox event logging execute atomically within `prisma.$transaction`.
 - **Zero Client Trust:** All prices, discounts, tax rates, and commission percentages are computed server-side using authoritative database models. Client tampering is discarded.
 - **Tenant Scoped Queries:** Logical tenant isolation is enforced by middleware filtering queries by `vendorId === session.seller.id`. Cross-tenant mutations return HTTP 403 Forbidden.
+

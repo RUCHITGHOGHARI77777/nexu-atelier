@@ -35,3 +35,4 @@ This register serves as the authoritative single source of truth for all functio
 | **FEAT-ADM-04** | Multi-Vendor Suborder Splitting | Shared | `orderService.createOrder` | Parent order creation with atomic suborder attribution | `multivendor-order-flow.test.ts` | **Verified Complete** |
 | **FEAT-ADM-05** | Content Management & Settings | Admin | `/admin/settings` | Commission policies, statutory tax rates, banners | `whitelabel-theme-preset.test.ts` | **Verified Complete** |
 | **FEAT-ADM-06** | Platform Security & Anti-IDOR | Shared | `zero-client-trust.ts` | Tenant boundary enforcement, cryptographic signatures | `tenant-security-anti-idor.test.ts` | **Verified Complete** |
+

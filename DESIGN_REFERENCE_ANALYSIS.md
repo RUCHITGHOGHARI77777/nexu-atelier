@@ -31,3 +31,4 @@ An empirical comparison between historical visual artifacts (in `screenshots/` a
 - **Customer:** High visual elegance, large editorial photography, prominent reviews, frictionless checkout.
 - **Supplier:** High density, dual-column input/summary ledger, real-time GST scenario previews, interactive margin calculators.
 - **Admin:** Enterprise governance tables, audit logs, toggle controls, moderation SLA tracking.
+

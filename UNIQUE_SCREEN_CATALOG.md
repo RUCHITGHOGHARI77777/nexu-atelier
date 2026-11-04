@@ -50,3 +50,4 @@ This catalog maps every unique screen template across the customer, supplier, an
 | **A3** | Product Curation & Moderation | `/admin/products` | Moderation queue, SLA tracking, rejection reasons, category attribute manager | **HTTP 200 OK** |
 | **A4** | Central Orders & Suborder Routing | `/admin/orders` | Parent orders, multi-vendor suborders, payment reconciliation, cancellation & refund triggers | **HTTP 200 OK** |
 | **A5** | Platform Financial Ledger & CMS | `/admin/settings` | Commission policies, statutory tax rates, homepage banners, promotional campaign controls | **HTTP 200 OK** |
+

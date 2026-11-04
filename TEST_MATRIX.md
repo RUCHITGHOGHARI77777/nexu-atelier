@@ -45,3 +45,4 @@
 | 30 | `src/lib/server/__tests__/product-repository.test.ts` | 7 | DB product querying, filtering, search | **7 / 7 PASS** |
 | 31 | `src/lib/__tests__/catalog-filters.test.ts` | 9 | Multi-attribute catalog filters | **9 / 9 PASS** |
 | 32 | `src/lib/server/__tests__/newsletter.test.ts` | 2 | Newsletter subscription with honeypot security | **2 / 2 PASS** |
+

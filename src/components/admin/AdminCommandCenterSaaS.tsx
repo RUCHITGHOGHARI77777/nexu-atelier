@@ -1932,7 +1932,7 @@ export function AdminCommandCenterSaaS() {
                   </div>
                 </div>
                 <p className="text-xs text-slate-600 italic">
-                  &quot;We didn&apos;t have a credit card to pay Shopify's monthly USD subscription. Here we set up our store in 60 seconds with our own UPI ID.&quot;
+                  &quot;We didn&apos;t have a credit card to pay Shopify&apos;s monthly USD subscription. Here we set up our store in 60 seconds with our own UPI ID.&quot;
                 </p>
               </div>
             </div>

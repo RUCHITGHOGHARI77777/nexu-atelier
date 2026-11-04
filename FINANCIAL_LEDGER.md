@@ -10,3 +10,4 @@
    - COD orders transition to `ESCROW_HOLD` with `codCollectionStatus: PENDING`.
    - Seller settlement balance remains in `PENDING_SETTLEMENT` during the 7-day replacement window, transitioning to `SETTLED` once fulfilled and uncontested.
 4. **Sandbox Separation:** Test transactions (`TXN-SANDBOX-*`) are recorded with `reconciliationStatus: DEMO_EXCLUDED` and filtered from statutory bank payout batches.
+

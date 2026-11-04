@@ -16,3 +16,4 @@ This register records all visual, architectural, and branding discrepancies iden
 | **G4** | Single-page cumbersome product form in Supplier Hub | `src/app/seller/products/new/page.tsx` | Replaced with the 6-step `SupplierProductCreationWizard.tsx` featuring live costing, HSN lookup, and P&L ledger. | **RESOLVED & VERIFIED** |
 | **G5** | Dark modal backdrop blur in payment simulation and product quick view | `InteractivePaymentModal.tsx`, `ProductQuickViewModal.tsx` | Replaced `bg-black/90` with luminous `bg-black/30 backdrop-blur-sm` and gallery-grade white lightbox containers. | **RESOLVED & VERIFIED** |
 | **G6** | Missing Statutory GST HSN mapping for handicrafts | Listing form | Implemented `src/lib/tax-hsn-directory.ts` integrating **Notification 13/2025-Central Tax (Rate), dated 17 September 2025**. | **RESOLVED & VERIFIED** |
+

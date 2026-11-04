@@ -339,13 +339,13 @@ export function FloatingPhoneSimulator() {
                   <div className="flex items-center justify-between text-[10px] text-slate-400">
                     <span className="font-semibold text-slate-200 flex items-center gap-1">
                       <Bell className="w-3 h-3 text-emerald-400" />
-                      <span>HDFC Bank SMS Alert</span>
+                      <span>HDFC Bank Transaction Alert</span>
                     </span>
                     <span>Just Now</span>
                   </div>
                   <p className="text-[11px] text-slate-300 font-mono leading-relaxed">
-                    "Acct XX4921 debited for <strong className="text-white">Rs.{amount.toLocaleString("en-IN")}</strong> on{" "}
-                    {new Date().toLocaleDateString("en-IN")} via UPI Ref No <strong className="text-emerald-400">{generatedUtr}</strong>. Order Confirmed at {brandName}."
+                    &quot;Acct XX4921 debited for <strong className="text-white">Rs.{amount.toLocaleString("en-IN")}</strong> on{" "}
+                    {new Date().toLocaleDateString("en-IN")} via UPI Ref No <strong className="text-emerald-400">{generatedUtr}</strong>. Order Confirmed at {brandName}.&quot;
                   </p>
                 </div>
               </div>

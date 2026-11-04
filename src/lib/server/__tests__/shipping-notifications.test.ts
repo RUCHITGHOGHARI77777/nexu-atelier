@@ -123,11 +123,12 @@ describe("3PL Shipping Integration & Delivery Lifecycle", () => {
   });
 
   it("handles courier delivery failure and records Return-To-Origin (RTO) with audit explanation", async () => {
-    const rtoTrackingNumber = `BD-RTO-TEST-${Date.now().toString().slice(-4)}`;
+    const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const rtoTrackingNumber = `BD-RTO-TEST-${uniqueSuffix}`;
 
     await prisma.shipment.create({
       data: {
-        id: `SHP-RTO-${Date.now().toString().slice(-4)}`,
+        id: `SHP-RTO-${uniqueSuffix}`,
         orderId,
         sellerId,
         carrierName: "Bluedart Air Express",

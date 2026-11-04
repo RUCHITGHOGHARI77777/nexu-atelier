@@ -18,3 +18,4 @@ NEXU ATELIER implements automated event handlers backed by the transactional `No
 | **ORDER_CANCELLED** | Atomic stock restitution, refund ledger update | `orderService.cancelOrder` | Email + Outbox | Logged in `AuditEvent` |
 | **WHATSAPP_OTP_REQUESTED** | Generation of 6-digit cryptographic OTP (3-attempt lock) | `whatsappService.sendOtp` | WhatsApp Cloud API | Logged in `VerificationOtp` |
 | **RETURN_REQUESTED** | Return eligibility check, evidence attachment | `returnService.createReturn` | Email + Studio In-App | Logged in `AuditEvent` |
+

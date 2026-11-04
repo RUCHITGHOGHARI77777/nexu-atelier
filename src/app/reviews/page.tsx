@@ -83,7 +83,7 @@ export default function TrustWallPage() {
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              Read uncensored stories from verified sellers who escaped Amazon, Flipkart, and Meesho's abusive commission traps, alongside authentic reviews from patrons who received museum-grade handcrafted goods directly at studio pricing.
+              Read uncensored stories from verified sellers who escaped Amazon, Flipkart, and Meesho&apos;s abusive commission traps, alongside authentic reviews from patrons who received museum-grade handcrafted goods directly at studio pricing.
             </p>
           </div>
 
@@ -241,7 +241,7 @@ export default function TrustWallPage() {
                 </div>
 
                 <h3 className="text-base font-extrabold text-slate-950 leading-snug pt-1">
-                  "{rev.headline}"
+                  &ldquo;{rev.headline}&rdquo;
                 </h3>
               </div>
 

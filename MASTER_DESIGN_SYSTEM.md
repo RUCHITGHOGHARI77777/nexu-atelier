@@ -46,3 +46,4 @@ NEXU ATELIER embodies warm minimalist luxury inspired by fine museum editorial d
 - Radius: `rounded-2xl` (`16px`)
 - Padding: `p-6` (desktop), `p-4` (mobile)
 - Zero large black cards across customer, seller, or admin portals.
+

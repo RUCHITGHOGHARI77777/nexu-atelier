@@ -18,3 +18,4 @@
    - Intra-State: 50% CGST + 50% SGST
    - Inter-State: 100% IGST
 5. **Integer Paise Compliance:** All values extracted with zero floating point variance.
+

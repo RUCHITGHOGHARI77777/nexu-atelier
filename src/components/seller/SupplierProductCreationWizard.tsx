@@ -570,7 +570,7 @@ export function SupplierProductCreationWizard() {
                 Step 1: Product Information & Specifications
               </h2>
               <p className="text-xs text-[#626262] mt-0.5">
-                Define the piece's identity, heritage narrative, artisan studio, and statutory HSN classification.
+                Define the piece&apos;s identity, heritage narrative, artisan studio, and statutory HSN classification.
               </p>
             </div>
 

@@ -139,3 +139,4 @@ This document indexes all 130+ reference screenshots across `screenshots/` and `
 - `screenshots/v2_11_homepage_tablet_768px.png`
 - `screenshots/v2_12_homepage_mobile_375px.png`
 - `screenshots/v2_13_product_mobile_375px.png`
+

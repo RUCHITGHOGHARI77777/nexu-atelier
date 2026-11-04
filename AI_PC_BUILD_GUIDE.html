@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI PC Build Guide (₹50k & ₹1 Lakh) - NEXU AI Studio</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f8fafc;
+    color: #0f172a;
+    line-height: 1.6;
+    padding: 30px;
+  }
+  .container {
+    max-width: 950px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01);
+    border: 1px solid #e2e8f0;
+  }
+  .header {
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 25px;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .badge {
+    background: #0ea5e9;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+  h1 { font-size: 26px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+  .subtitle { font-size: 14px; color: #64748b; margin-top: 4px; }
+  .print-btn {
+    background: #0f172a;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .print-btn:hover { background: #1e293b; }
+  
+  .card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 30px;
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .card-title { font-size: 18px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+  .price-tag { font-size: 20px; font-weight: 800; color: #0284c7; }
+  .target-badge { font-size: 13px; font-weight: 500; color: #475569; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 13.5px;
+  }
+  th {
+    background: #f8fafc;
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 1px solid #cbd5e1;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  .comp-name { font-weight: 600; color: #0f172a; }
+  .spec-detail { color: #334155; }
+  .price-cell { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #0f172a; white-space: nowrap; }
+  .reason { font-size: 12.5px; color: #64748b; line-height: 1.4; }
+  .highlight-vram { background: #ecfdf5; color: #047857; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; }
+  
+  .total-row {
+    background: #f8fafc;
+    font-weight: 700;
+    border-top: 2px solid #cbd5e1;
+  }
+  .total-row td { padding: 14px; font-size: 15px; }
+
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 14px;
+  }
+  .comp-box {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px;
+    background: #fafafa;
+  }
+  .comp-box h4 { font-size: 14px; margin-bottom: 8px; color: #0f172a; }
+  .comp-box ul { list-style: none; padding-left: 0; font-size: 13px; color: #475569; }
+  .comp-box ul li { margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .speed-tag { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #0284c7; }
+
+  .callout {
+    background: #eff6ff;
+    border-left: 4px solid #3b82f6;
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    color: #1e40af;
+    margin-bottom: 25px;
+  }
+
+  @media print {
+    body { padding: 0; background: white; }
+    .container { border: none; box-shadow: none; padding: 0; }
+    .print-btn { display: none; }
+    .card { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div>
+      <span class="badge">NEXU AI WORKSTATION</span>
+      <h1>Zero-Bottleneck AI PC Build Guide</h1>
+      <div class="subtitle">Complete Parts List for Running Large AI Models (14B, 32B, 70B) — ₹50,000 & ₹1,00,000 Budgets</div>
+    </div>
+    <button class="print-btn" onclick="window.print()">
+      🖨️ Print / Save as PDF
+    </button>
+  </div>
+
+  <div class="callout">
+    <strong>Monitor Notice:</strong> Aapke paas monitor already maujood hai, isliye yeh poora budget sirf aur sirf <strong>Full CPU Tower (Cabinet + All Internal Components)</strong> ke liye calculate kiya gaya hai. Zero Bottleneck guarantee ke saath!
+  </div>
+
+  <!-- BUILD 1: 50K -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">🖥️ BUILD 1: ₹50,000 AI WORKHORSE</div>
+        <div class="target-badge">Master Target: 14B Models (Qwen 2.5 14B, DeepSeek-R1-14B) 100% GPU Par Chalaana</div>
+      </div>
+      <div class="price-tag">₹49,600 – ₹51,000</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Model & Specs</th>
+          <th>Est. Price</th>
+          <th>Kyu Chuna? (Zero Bottleneck)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="comp-name">Graphics Card (GPU)</td>
+          <td class="spec-detail"><strong>NVIDIA GeForce RTX 3060 12GB</strong> GDDR6 (Zotac / MSI)</td>
+          <td class="price-cell">₹23,500 <br><small style="color:#64748b">(₹17k Used)</small></td>
+          <td class="reason"><span class="highlight-vram">12 GB VRAM!</span> ₹50k budget me akela card jisme 14B model poora GPU me load ho sakta hai. Zero stutter.</td>
+        </tr>
+        <tr>
+          <td class="comp-name">Processor (CPU)</td>
+          <td class="spec-detail"><strong>AMD Ryzen 5 5600</strong> (6C/12T, 32MB L3 Cache, PCIe 4.0)</td>
+          <td class="price-cell">₹9,500</td>
+          <td class="reason">32MB L3 Cache + PCIe 4.0. RTX 3060 ke saath 0% bottleneck deliver karta hai.</td>
+        </tr>
+        <tr>
+          <td class="comp-name">Motherboard</td>
+          <td class="spec-detail"><strong>MSI B550M PRO-VDH WiFi</strong></td>
+          <td class="price-cell">₹8,500</td>
+          <td class="reason">4 RAM Slots (future me 64GB upgrade), PCIe 4.0 x16, Dual M.2 NVMe, in-built WiFi + Bluetooth.</td>
+        </tr>
+        <tr>
+          <td class="comp-name">RAM</td>
+          <td class="spec-detail"><strong>32 GB (16GB × 2) DDR4 3200MHz CL16</strong> Dual Channel</td>
+          <td class="price-cell">₹5,500</td>
+          <td class="reason">Dual channel mode se CPU-GPU memory bandwidth double hoti hai. 32B model ke liye buffer.</td>
+        </tr>
+        <tr>
+          <td class="comp-name">Storage (SSD)</td>
+          <td class="spec-detail"><strong>1 TB WD Blue SN580 Gen4 NVMe M.2</strong> (4150 MB/s)</td>
+          <td class="price-cell">₹5,200</td>
+          <td class="reason">10GB model weight file 2-3 second me RAM/VRAM me load hogi.</td>
+        </tr>
+        <tr>
+          <td class="comp-name">Power Supply (PSU)</td>
+          <td class="spec-detail"><strong>Deepcool PK650D / Cooler Master 650W</strong> (80+ Bronze)</td>
+          <td class="price-cell">₹4,200</td>
+          <td class="reason">Continuous AI workload par stable 650W power supply (System uses max 350W).</td>
+        </tr>
+        <tr>
+          <td class="comp-name">Cabinet</td>
+          <td class="spec-detail"><strong>Ant Esports ICE-112 Mesh</strong> (4x 120mm Fans pre-installed)</td>
+          <td class="price-cell">₹3,200</td>
+          <td class="reason">Front mesh panel continuous cool air khinchta hai taaki GPU 65°C se upar na jaye.</td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="2">TOTAL CPU TOWER COST</td>
+          <td colspan="2" class="price-cell" style="color: #0284c7; font-size: 16px;">₹49,600 – ₹51,000</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- BUILD 2: 1 LAKH -->
+  <div class="card" style="border: 2px solid #0284c7;">
+    <div class="card-header">
+      <div>
+        <div class="card-title">🚀 BUILD 2: ₹1,00,000 AI POWERHOUSE BEAST</div>
+        <div class="target-badge">Master Target: 14B Lightning Speed, 32B Smooth, 70B (Q4) Working Machine</div>
+      </div>
+      <div class="price-tag">₹99,500 – ₹1,03,000</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Model & Specs</th>
+          <th>Est. Price</th>
+          <th>Kyu Chuna? (Zero Bottleneck)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="comp-name">Graphics Card (GPU)</td>
+          <td class="spec-detail"><strong>NVIDIA GeForce RTX 4060 Ti 16GB</strong> GDDR6 (Zotac / Inno3D)</td>
+          <td class="price-cell">₹42,500</td>
+          <td class="reason"><span class="highlight-vram" style="background:#e0f2fe; color:#0369a1;">16 GB VRAM!</span> 4th Gen Tensor Cores. 14B model + 16k context window pure GPU me fit.</td>
+        </tr>
+        <tr>
+          <td class="comp-name">Processor (CPU)</td>
+          <td class="spec-detail"><strong>AMD Ryzen 5 7600</strong> (6C/12T, 5.1GHz, AM5 Platform)</td>
+          <td class="price-cell">₹17,500</td>
+          <td class="reason">AM5 platform (Next 5 saal tak processor upgrade kar sakenge bina board badle).</td>
+        </tr>
+        <tr>
+          <td class="comp-name">CPU Cooler</td>
+          <td class="spec-detail"><strong>Deepcool AG400 / AK400 Digital</strong></td>
+          <td class="price-cell">₹2,200</td>
+          <td class="reason">Continuous generation par CPU ko 62°C par thanda rakhega.</td>
+        </tr>
+        <tr>
+          <td class="comp-name">Motherboard</td>
+          <td class="spec-detail"><strong>MSI PRO B650M-A WiFi / ASRock B650M PG Lightning</strong></td>
+          <td class="price-cell">₹12,500</td>
+          <td class="reason">DDR5 memory support, PCIe 5.0 M.2 slot, heavy VRM cooling for sustained heavy load.</td>
+        </tr>
+        <tr>
+          <td class="comp-name">RAM</td>
+          <td class="spec-detail"><strong>64 GB (32GB × 2) DDR5 6000MHz CL30/CL36</strong> Dual Channel</td>
+          <td class="price-cell">₹14,500</td>
+          <td class="reason"><span class="highlight-vram">64 GB DDR5!</span> 70B models run karne ke liye 64GB RAM zaroori hai. 6000MHz ultra bandwidth.</td>
+        </tr>
+        <tr>
+          <td class="comp-name">Storage (SSD)</td>
+          <td class="spec-detail"><strong>2 TB Western Digital Black SN770 Gen4 NVMe</strong> (5150 MB/s)</td>
+          <td class="price-cell">₹10,500</td>
+          <td class="reason">2TB storage taaki 50GB ke massive models aur datasets store ho sakein.</td>
+        </tr>
+        <tr>
+          <td class="comp-name">Power Supply (PSU)</td>
+          <td class="spec-detail"><strong>MSI MAG A750GL / DeepCool 750W</strong> (80+ Gold / Bronze)</td>
+          <td class="price-cell">₹5,800</td>
+          <td class="reason">750W high efficiency. Heavy model inferencing par 0% voltage fluctuations.</td>
+        </tr>
+        <tr>
+          <td class="comp-name">Cabinet</td>
+          <td class="spec-detail"><strong>Lian Li Lancool 216 / Ant Esports 511MT High-Airflow</strong></td>
+          <td class="price-cell">₹4,500</td>
+          <td class="reason">Dual 140mm intake fans + 120mm exhaust. Top-class airflow.</td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="2">TOTAL CPU TOWER COST</td>
+          <td colspan="2" class="price-cell" style="color: #0284c7; font-size: 16px;">₹99,500 – ₹1,03,000</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SPEED COMPARISON -->
+  <div class="card">
+    <div class="card-title">⚡ AI Model Speed Comparison (Tokens Per Second)</div>
+    <div class="comparison-grid">
+      <div class="comp-box">
+        <h4>₹50,000 Build (RTX 3060 12GB + 32GB RAM)</h4>
+        <ul>
+          <li><span>7B / 8B (Llama 3 / Mistral):</span> <span class="speed-tag">55 - 65 t/s (100% GPU)</span></li>
+          <li><span>14B (Qwen 2.5 14B / DeepSeek):</span> <span class="speed-tag">30 - 38 t/s (100% GPU)</span></li>
+          <li><span>32B (Qwen 2.5 32B):</span> <span class="speed-tag">12 - 16 t/s (Hybrid)</span></li>
+          <li><span>70B (Llama 3.3 70B):</span> <span class="speed-tag">RAM Limit (Slow)</span></li>
+        </ul>
+      </div>
+      <div class="comp-box" style="border-color: #0284c7; background: #f0f9ff;">
+        <h4 style="color: #0369a1;">₹1,00,000 Build (RTX 4060 Ti 16GB + 64GB DDR5)</h4>
+        <ul>
+          <li><span>7B / 8B (Llama 3 / Mistral):</span> <span class="speed-tag">85 - 100 t/s (100% GPU)</span></li>
+          <li><span>14B (Qwen 2.5 14B / DeepSeek):</span> <span class="speed-tag">50 - 65 t/s (100% GPU)</span></li>
+          <li><span>32B (Qwen 2.5 32B):</span> <span class="speed-tag">22 - 28 t/s (Hybrid Fast)</span></li>
+          <li><span>70B (Llama 3.3 70B Q4):</span> <span class="speed-tag">5 - 8 t/s (Working!)</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW TO CONNECT MONITOR -->
+  <div class="card">
+    <div class="card-title">🖥️ Monitor Kaise Connect Karein?</div>
+    <p style="font-size: 13.5px; color: #475569; margin-top: 6px;">
+      Aapke paas monitor already hai. Dono graphic card me <strong>1x HDMI 2.1</strong> aur <strong>3x DisplayPort 1.4a</strong> hote hain. Monitor ki HDMI ya DisplayPort cable ko direct <strong>Graphic Card ke peeche</strong> lagana hai (Motherboard me nahi). System start karte hi monitor par display aa jayega.
+    </p>
+  </div>
+</div>
+
+</body>
+</html>
+
