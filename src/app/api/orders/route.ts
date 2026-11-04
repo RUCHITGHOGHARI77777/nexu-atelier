@@ -3,13 +3,14 @@ import { getSessionUser } from "@/lib/server/session-helper";
 import { orderService } from "@/lib/server/order-service";
 import { checkRateLimit, getClientIp, SECURITY_RATE_LIMITS } from "@/lib/server/rate-limiter";
 import { AUTH_COOKIE_NAME, authService } from "@/lib/server/auth-service";
+import { isDemoMode } from "@/lib/server/demo-mode";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET() {
   let user = await getSessionUser();
-  if (!user) {
+  if (!user && isDemoMode()) {
     // For demo/evaluator convenience, auto-resolve demo customer if session not present
     const demoAuth = await authService.authenticateDemo("customer");
     if (demoAuth.success && demoAuth.user) {
@@ -38,8 +39,8 @@ export async function POST(request: NextRequest) {
   let user = await getSessionUser();
   let sessionTokenToSet: string | null = null;
 
-  if (!user) {
-    // Seamless guest checkout: auto-authenticate demo customer account
+  if (!user && isDemoMode()) {
+    // Seamless demo checkout: auto-authenticate demo customer account in demo mode
     const demoAuth = await authService.authenticateDemo("customer");
     if (demoAuth.success && demoAuth.user && demoAuth.token) {
       user = demoAuth.user;

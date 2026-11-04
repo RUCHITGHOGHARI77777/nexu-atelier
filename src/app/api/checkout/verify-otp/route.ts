@@ -2,17 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/server/session-helper";
 import { fraudDetectionService } from "@/lib/server/fraud-detection-service";
 import { authService } from "@/lib/server/auth-service";
+import { otpService } from "@/lib/server/otp-service";
+import { isDemoMode } from "@/lib/server/demo-mode";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   let customer = await getSessionUser();
-  if (!customer) {
+  if (!customer && isDemoMode()) {
     const demoAuth = await authService.authenticateDemo("customer");
     if (demoAuth.success && demoAuth.user) {
       customer = demoAuth.user;
     }
   }
+
   if (!customer) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
@@ -28,10 +31,37 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanCode = String(code).trim();
-    // Validate 6-digit OTP format (in sandbox / test mode, accept standard test code '123456' or any valid 6-digit number)
     if (!/^\d{6}$/.test(cleanCode)) {
       return NextResponse.json(
         { error: "Invalid verification code. Please enter a 6-digit OTP." },
+        { status: 400 }
+      );
+    }
+
+    // Verify OTP against server database record with expiration and attempt limiting
+    let verifyRes = await otpService.verifyOtp({
+      phone,
+      code: cleanCode,
+      purpose: "COD_CONFIRMATION",
+    });
+
+    if (!verifyRes.verified) {
+      // Fallback check for PHONE_VERIFICATION purpose
+      verifyRes = await otpService.verifyOtp({
+        phone,
+        code: cleanCode,
+        purpose: "PHONE_VERIFICATION",
+      });
+    }
+
+    if (!verifyRes.verified) {
+      return NextResponse.json(
+        {
+          success: false,
+          verified: false,
+          error: verifyRes.message || "Invalid or expired verification code.",
+          remainingAttempts: verifyRes.remainingAttempts,
+        },
         { status: 400 }
       );
     }

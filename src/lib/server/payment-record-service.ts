@@ -182,28 +182,36 @@ export class PaymentRecordService {
           },
         });
 
-        // Initialize Vendor Payouts if not already created
-        const existingPayouts = await tx.vendorPayout.count({
-          where: { orderItemId: { in: order.items.map((i) => i.id) } },
-        });
+        // Initialize Vendor Payouts if not already created (ONLY for verified non-sandbox transactions)
+        const isSandboxOrDemo =
+          input.transactionRef.startsWith("DEMO-") ||
+          input.transactionRef.startsWith("pay_sandbox_") ||
+          input.transactionRef.startsWith("test_") ||
+          (input.provider === PaymentProvider.ESCROW_INTERNAL && !input.isCod);
 
-        if (existingPayouts === 0) {
-          for (const item of order.items) {
-            if (item.vendorId) {
-              const commissionPaise = Math.round(item.lineTotalPaise * 0.1);
-              const netPayoutPaise = item.lineTotalPaise - commissionPaise;
+        if (!isSandboxOrDemo) {
+          const existingPayouts = await tx.vendorPayout.count({
+            where: { orderItemId: { in: order.items.map((i) => i.id) } },
+          });
 
-              await tx.vendorPayout.create({
-                data: {
-                  sellerId: item.vendorId,
-                  orderItemId: item.id,
-                  grossAmountPaise: item.lineTotalPaise,
-                  commissionPaise,
-                  netPayoutPaise,
-                  status: PayoutStatus.ESCROW_HOLD,
-                  transactionRef: `PO-${item.id.slice(-8)}`,
-                },
-              });
+          if (existingPayouts === 0) {
+            for (const item of order.items) {
+              if (item.vendorId) {
+                const commissionPaise = Math.round(item.lineTotalPaise * 0.1);
+                const netPayoutPaise = item.lineTotalPaise - commissionPaise;
+
+                await tx.vendorPayout.create({
+                  data: {
+                    sellerId: item.vendorId,
+                    orderItemId: item.id,
+                    grossAmountPaise: item.lineTotalPaise,
+                    commissionPaise,
+                    netPayoutPaise,
+                    status: PayoutStatus.ESCROW_HOLD,
+                    transactionRef: `PO-${item.id.slice(-8)}`,
+                  },
+                });
+              }
             }
           }
         }

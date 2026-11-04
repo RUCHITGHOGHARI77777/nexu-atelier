@@ -264,18 +264,52 @@ export class PrismaAuthService implements IAuthService {
     uid?: string;
     idToken?: string;
   }): Promise<{ success: boolean; user?: CustomerUser; token?: string; error?: string }> {
-    const cleanEmail = sanitizeText(payload.email || "", 120).toLowerCase();
-    const cleanName = payload.name ? sanitizeText(payload.name, 100) : "Google Patron";
+    let verifiedEmail = sanitizeText(payload.email || "", 120).toLowerCase();
+    let verifiedName = payload.name ? sanitizeText(payload.name, 100) : "Google Patron";
 
-    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    // Enforce server-side Google token verification
+    if (payload.idToken) {
+      try {
+        const tokenRes = await fetch(
+          `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(payload.idToken)}`
+        );
+        if (tokenRes.ok) {
+          const tokenData = await tokenRes.json();
+          if (tokenData.email) {
+            verifiedEmail = String(tokenData.email).toLowerCase();
+          }
+          if (tokenData.name) {
+            verifiedName = String(tokenData.name);
+          }
+        } else if (process.env.NODE_ENV === "production" && process.env.DEMO_MODE !== "true") {
+          return { success: false, error: "Google ID token verification failed." };
+        }
+      } catch {
+        if (process.env.NODE_ENV === "production" && process.env.DEMO_MODE !== "true") {
+          return { success: false, error: "Unable to verify Google ID token with identity authority." };
+        }
+      }
+    } else if (process.env.NODE_ENV === "production" && process.env.DEMO_MODE !== "true") {
+      return { success: false, error: "Google ID token is required for production authentication." };
+    }
+
+    if (!verifiedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(verifiedEmail)) {
       return { success: false, error: "Valid email address is required for Google Sign-In." };
     }
 
     try {
       let user = await prisma.user.findUnique({
-        where: { email: cleanEmail },
+        where: { email: verifiedEmail },
         include: { profile: true, seller: true },
       });
+
+      // Prevent privilege escalation: Social sign-in cannot be used to hijack ADMIN or SELLER accounts
+      if (user && user.role !== UserRole.CUSTOMER) {
+        return {
+          success: false,
+          error: "Administrative and seller accounts require direct password authentication.",
+        };
+      }
 
       if (!user) {
         // Create new account: Always default to CUSTOMER role for security
@@ -284,12 +318,12 @@ export class PrismaAuthService implements IAuthService {
 
         user = await prisma.user.create({
           data: {
-            email: cleanEmail,
+            email: verifiedEmail,
             passwordHash,
             role: UserRole.CUSTOMER,
             profile: {
               create: {
-                name: cleanName,
+                name: verifiedName,
                 isEmailVerified: true,
                 emailVerifiedAt: new Date(),
               },
@@ -302,21 +336,21 @@ export class PrismaAuthService implements IAuthService {
         notificationService
           .queueNotification({
             channel: "EMAIL",
-            recipient: cleanEmail,
+            recipient: verifiedEmail,
             template: "WELCOME_ONBOARDING",
             payload: {
-              name: cleanName,
-              email: cleanEmail,
+              name: verifiedName,
+              email: verifiedEmail,
               welcomeCoupon: "NEXUFIRST",
             },
           })
           .catch(() => {});
       } else {
         // Update profile name if missing
-        if (user.profile && !user.profile.name && cleanName) {
+        if (user.profile && !user.profile.name && verifiedName) {
           await prisma.customerProfile.update({
             where: { userId: user.id },
-            data: { name: cleanName },
+            data: { name: verifiedName },
           });
         }
       }
@@ -341,8 +375,8 @@ export class PrismaAuthService implements IAuthService {
           entityType: "USER",
           entityId: user.id,
           action: "GOOGLE_LOGIN_SUCCEEDED",
-          performedBy: cleanEmail,
-          note: `Authenticated via Google OAuth for user ${cleanEmail} (${user.role}).`,
+          performedBy: verifiedEmail,
+          note: `Authenticated via Google OAuth for user ${verifiedEmail} (${user.role}).`,
         },
       });
 
@@ -351,7 +385,7 @@ export class PrismaAuthService implements IAuthService {
         user: {
           id: user.id,
           email: user.email,
-          name: user.profile?.name || cleanName,
+          name: user.profile?.name || verifiedName,
           phone: user.profile?.phone || undefined,
           createdAt: user.createdAt.toISOString(),
           role: user.role.toLowerCase() as "customer" | "seller" | "admin",
@@ -498,6 +532,12 @@ export class PrismaAuthService implements IAuthService {
       if (!session) return null;
 
       if (new Date() > session.expiresAt) {
+        await prisma.session.delete({ where: { token } }).catch(() => {});
+        return null;
+      }
+
+      // Check if user is suspended and immediately revoke session
+      if (session.user.isSuspended) {
         await prisma.session.delete({ where: { token } }).catch(() => {});
         return null;
       }

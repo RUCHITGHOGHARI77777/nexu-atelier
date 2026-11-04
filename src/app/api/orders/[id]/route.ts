@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/server/session-helper";
 import { orderService } from "@/lib/server/order-service";
 import { authService } from "@/lib/server/auth-service";
+import { isDemoMode } from "@/lib/server/demo-mode";
 
 interface Params {
   params: {
@@ -11,7 +12,7 @@ interface Params {
 
 export async function GET(request: Request, { params }: Params) {
   let user = await getSessionUser();
-  if (!user) {
+  if (!user && isDemoMode()) {
     const demoAuth = await authService.authenticateDemo("customer");
     if (demoAuth.success && demoAuth.user) {
       user = demoAuth.user;

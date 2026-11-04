@@ -3,11 +3,20 @@ import { cookies } from "next/headers";
 import { AUTH_COOKIE_NAME, authService } from "@/lib/server/auth-service";
 import { getClientIp } from "@/lib/server/rate-limiter";
 import { prisma } from "@/lib/server/prisma";
+import { isDemoMode, isDemoAdminAllowed } from "@/lib/server/demo-mode";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const clientIp = getClientIp(request);
+
+  // 1. Strict Production Guard: Demo logins are completely disabled in live production mode
+  if (!isDemoMode()) {
+    return NextResponse.json(
+      { error: "Demo logins are disabled in production environment." },
+      { status: 403 }
+    );
+  }
 
   try {
     const body = await request.json();
@@ -17,6 +26,14 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Invalid demo role. Allowed roles are: customer, seller, admin." },
         { status: 400 }
+      );
+    }
+
+    // 2. Administrator Protection Guard
+    if (role === "admin" && !isDemoAdminAllowed()) {
+      return NextResponse.json(
+        { error: "Demo administrator login is restricted in this environment." },
+        { status: 403 }
       );
     }
 

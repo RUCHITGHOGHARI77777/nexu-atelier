@@ -3,12 +3,13 @@ import { getSessionUser } from "@/lib/server/session-helper";
 import { fraudDetectionService } from "@/lib/server/fraud-detection-service";
 import { FraudEvaluationInput } from "@/types/payment-fraud";
 import { authService } from "@/lib/server/auth-service";
+import { isDemoMode } from "@/lib/server/demo-mode";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   let customer = await getSessionUser();
-  if (!customer) {
+  if (!customer && isDemoMode()) {
     const demoAuth = await authService.authenticateDemo("customer");
     if (demoAuth.success && demoAuth.user) {
       customer = demoAuth.user;

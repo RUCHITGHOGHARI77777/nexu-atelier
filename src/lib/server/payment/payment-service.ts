@@ -19,11 +19,13 @@ export class PaymentService {
   }
 
   public getAdapter(preferredProvider?: string): IPaymentAdapter {
-    if (preferredProvider === "RAZORPAY" && this.razorpayAdapter.isConfigured()) {
-      return this.razorpayAdapter;
-    }
-    if (process.env.PAYMENT_PROVIDER === "RAZORPAY" && this.razorpayAdapter.isConfigured()) {
-      return this.razorpayAdapter;
+    if (preferredProvider === "RAZORPAY" || process.env.PAYMENT_PROVIDER === "RAZORPAY") {
+      if (this.razorpayAdapter.isConfigured()) {
+        return this.razorpayAdapter;
+      }
+      if (process.env.NODE_ENV === "production" && process.env.DEMO_MODE !== "true") {
+        throw new Error("Razorpay gateway credentials are not configured in production environment.");
+      }
     }
     // Default to deterministic sandbox adapter for test/dev safety
     return this.sandboxAdapter;
@@ -84,7 +86,19 @@ export class PaymentService {
       };
     }
 
-    const adapter = this.getAdapter(preferredProvider);
+    let adapter: IPaymentAdapter;
+    try {
+      adapter = this.getAdapter(preferredProvider);
+    } catch (err: any) {
+      return {
+        success: false,
+        provider: "RAZORPAY",
+        providerOrderId: "",
+        amountPaise: 0,
+        currency: "INR",
+        error: err.message || "Payment gateway configuration missing.",
+      };
+    }
     const amountPaise = order.totalPaise;
 
     const res = await adapter.createPaymentOrder({
@@ -145,7 +159,26 @@ export class PaymentService {
       return { success: false, error: "Unauthorized access to order." };
     }
 
-    const adapter = this.getAdapter(preferredProvider);
+    if (order.status === PrismaOrderStatus.CANCELLED) {
+      return { success: false, error: "Cannot capture payment for a cancelled order." };
+    }
+
+    // Idempotency: If this payment transaction is already captured, safely return success
+    if (order.paymentStatus === PaymentStatus.CAPTURED) {
+      const alreadyCaptured = order.payments?.some(
+        (p) => p.transactionRef === params.providerPaymentId && p.status === PaymentStatus.CAPTURED
+      );
+      if (alreadyCaptured) {
+        return { success: true };
+      }
+    }
+
+    let adapter: IPaymentAdapter;
+    try {
+      adapter = this.getAdapter(preferredProvider);
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
     const isValid = await adapter.verifyPaymentSignature(params);
 
     if (!isValid) {

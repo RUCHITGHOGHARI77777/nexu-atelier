@@ -15,12 +15,9 @@ export async function getAuthenticatedSeller(): Promise<SellerAuthContext | null
   const user = await getSessionUser();
   if (!user) return null;
 
-  const dbSeller = await prisma.seller.findFirst({
+  const dbSeller = await prisma.seller.findUnique({
     where: {
-      OR: [
-        { userId: user.id },
-        { businessEmail: user.email },
-      ],
+      userId: user.id,
     },
   });
 

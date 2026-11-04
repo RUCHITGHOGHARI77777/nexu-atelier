@@ -66,10 +66,10 @@ export function getSavedAuthUser(): AppUser | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_AUTH_USER);
-    if (!raw) return DEMO_PRESET_USERS.seller; // default initial demo profile
+    if (!raw) return null;
     return JSON.parse(raw);
   } catch {
-    return DEMO_PRESET_USERS.seller;
+    return null;
   }
 }
 
@@ -136,32 +136,52 @@ export async function signInWithGoogle(
 }
 
 /**
- * Mobile OTP Sign-In Simulation & Verification
+ * Mobile OTP Sign-In Server Verification
  */
 export async function verifyMobilePhoneOtp(
   phone: string,
   otp: string,
   role: UserRole = "seller"
 ): Promise<{ success: boolean; user?: AppUser; message?: string }> {
-  // Demo OTP acceptance (accepts any 6 digit OTP or default 482910)
-  if (!otp || otp.trim().length < 4) {
+  const cleanOtp = (otp || "").trim();
+  if (!cleanOtp || cleanOtp.length !== 6 || !/^\d{6}$/.test(cleanOtp)) {
     return { success: false, message: "Please enter a valid 6-digit verification code." };
   }
 
-  const cleanPhone = phone.trim() || "+91 98290 12345";
-  const userProfile: AppUser = {
-    uid: `usr_phone_${cleanPhone.replace(/[^0-9]/g, "").slice(-8)}`,
-    email: `${cleanPhone.replace(/[^0-9]/g, "").slice(-10)}@sms.nexu.studio`,
-    displayName: role === "seller" ? "Verified Artisan Seller" : "Verified Mobile Patron",
-    role,
-    phone: cleanPhone,
-    provider: "phone",
-    createdAt: new Date().toISOString(),
-    storeName: role === "seller" ? "Artisan Crafts Studio" : undefined,
-  };
+  const cleanPhone = phone.trim();
+  if (!cleanPhone) {
+    return { success: false, message: "Mobile phone number is required." };
+  }
 
-  saveAuthUserLocally(userProfile);
-  return { success: true, user: userProfile };
+  try {
+    const res = await fetch("/api/auth/otp/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: cleanPhone, code: cleanOtp }),
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      return { success: false, message: data.error || "OTP verification failed." };
+    }
+
+    const serverUser = data.user;
+    const userProfile: AppUser = {
+      uid: serverUser.id,
+      email: serverUser.email,
+      displayName: serverUser.name || (role === "seller" ? "Verified Artisan Seller" : "Verified Patron"),
+      role: serverUser.role || role,
+      phone: serverUser.phone || cleanPhone,
+      provider: "phone",
+      createdAt: serverUser.createdAt || new Date().toISOString(),
+      storeName: role === "seller" ? "Artisan Crafts Studio" : undefined,
+    };
+
+    saveAuthUserLocally(userProfile);
+    return { success: true, user: userProfile };
+  } catch (err: any) {
+    return { success: false, message: err.message || "Failed to contact authentication server." };
+  }
 }
 
 /**

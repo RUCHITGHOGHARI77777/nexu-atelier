@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/server/session-helper";
 import { codService } from "@/lib/server/cod-service";
 import { authService } from "@/lib/server/auth-service";
+import { isDemoMode } from "@/lib/server/demo-mode";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   let customer = await getSessionUser();
-  if (!customer) {
+  if (!customer && isDemoMode()) {
     const demoAuth = await authService.authenticateDemo("customer");
     if (demoAuth.success && demoAuth.user) {
       customer = demoAuth.user;
