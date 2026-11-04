@@ -16,8 +16,43 @@ interface LiveCategory {
   };
 }
 
+const DEFAULT_CATEGORIES: LiveCategory[] = [
+  {
+    id: "cat_apparel",
+    slug: "apparel",
+    name: "Fine Silks & Handlooms",
+    description: "Museum-grade raw mulberry silks, organic khadi robes, and heirloom festive sarees from master weavers.",
+    image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1200&q=80",
+    _count: { products: 18 },
+  },
+  {
+    id: "cat_audio",
+    slug: "electronics",
+    name: "Acoustic Engineering",
+    description: "Bespoke point-to-point hand-wired vacuum tube amplifiers and acoustic monitors.",
+    image: "https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=800&q=80",
+    _count: { products: 12 },
+  },
+  {
+    id: "cat_home",
+    slug: "home-kitchen",
+    name: "Foundry & Brassware",
+    description: "Heavy lost-wax cast temple urlis, incense vessels, and organic terracotta ceramics.",
+    image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80",
+    _count: { products: 14 },
+  },
+  {
+    id: "cat_wholesale",
+    slug: "wholesale",
+    name: "Guild Wholesale",
+    description: "Curated bulk atelier lots for international interior designers and boutique retailers.",
+    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
+    _count: { products: 8 },
+  },
+];
+
 export const FeaturedCategories: React.FC = () => {
-  const [categories, setCategories] = useState<LiveCategory[]>([]);
+  const [categories, setCategories] = useState<LiveCategory[]>(DEFAULT_CATEGORIES);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -39,11 +74,8 @@ export const FeaturedCategories: React.FC = () => {
     loadLiveCategories();
   }, []);
 
-  if (categories.length === 0 && !isLoading) {
-    return null;
-  }
-
-  const [heroCategory, ...gridCategories] = categories;
+  const displayList = categories.length > 0 ? categories : DEFAULT_CATEGORIES;
+  const [heroCategory, ...gridCategories] = displayList;
 
   return (
     <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

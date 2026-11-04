@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, HelpCircle, ArrowLeft, Search } from "lucide-react";
+import { ChevronDown, HelpCircle, ArrowLeft, Search, MessageSquare, ShieldCheck, Truck, RotateCcw, Sparkles } from "lucide-react";
 
 interface FAQItem {
   q: string;
@@ -69,120 +69,127 @@ export default function FAQPage() {
   });
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-zinc-300">
-      {/* Back button */}
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 text-xs font-mono text-zinc-500 hover:text-white mb-8 transition-colors"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        Return to Atelier
-      </Link>
-
-      {/* Header */}
-      <div className="border-b border-zinc-800 pb-8 mb-10 text-center sm:text-left">
-        <span className="text-xs uppercase tracking-widest text-amber-500 font-semibold block mb-2">
-          Knowledge Base & Resolution
-        </span>
-        <h1 className="text-3xl sm:text-4xl font-serif text-white tracking-tight">
-          Frequently Asked Questions
-        </h1>
-        <p className="text-sm text-zinc-400 mt-2">
-          Everything you need to know about our artisan patronage model, escrow payments, parcel logistics, and returns.
-        </p>
-
-        {/* Search Input */}
-        <div className="mt-6 relative max-w-md">
-          <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search questions by keyword..."
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-amber-500"
-          />
-        </div>
-      </div>
-
-      {/* Category Pills */}
-      <div className="flex flex-wrap gap-2 mb-8">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`text-xs px-3.5 py-1.5 rounded-lg border transition-all ${
-              selectedCategory === cat
-                ? "bg-amber-500/10 border-amber-500/50 text-amber-400 font-medium"
-                : "border-zinc-800 text-zinc-400 hover:border-zinc-700"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {/* Accordion */}
-      {filteredFaqs.length === 0 ? (
-        <div className="p-12 text-center bg-zinc-900/30 border border-dashed border-zinc-800 rounded-2xl">
-          <HelpCircle className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
-          <p className="text-sm text-zinc-400">No matching answers found for &quot;{searchQuery}&quot;.</p>
-          <button
-            onClick={() => {
-              setSearchQuery("");
-              setSelectedCategory("All");
-            }}
-            className="text-xs text-amber-400 underline underline-offset-4 mt-2"
-          >
-            Clear search filters
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filteredFaqs.map((faq, index) => {
-            const isOpen = openIndex === index;
-            return (
-              <div
-                key={index}
-                className="bg-zinc-900/50 border border-zinc-800 rounded-xl overflow-hidden transition-colors hover:border-zinc-700/80"
-              >
-                <button
-                  onClick={() => setOpenIndex(isOpen ? null : index)}
-                  className="w-full px-5 py-4 text-left flex items-center justify-between gap-4"
-                  aria-expanded={isOpen}
-                >
-                  <span className="text-sm font-medium text-white tracking-tight">
-                    {faq.q}
-                  </span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-zinc-400 shrink-0 transition-transform duration-200 ${
-                      isOpen ? "rotate-180 text-amber-400" : ""
-                    }`}
-                  />
-                </button>
-
-                {isOpen && (
-                  <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-zinc-400 leading-relaxed border-t border-zinc-800/60 bg-zinc-950/40">
-                    {faq.a}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Still Have Questions CTA */}
-      <div className="mt-14 p-6 bg-zinc-900/40 border border-zinc-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-        <div>
-          <h3 className="text-sm font-semibold text-white">Can&apos;t find what you&apos;re looking for?</h3>
-          <p className="text-xs text-zinc-400 mt-0.5">Our concierge team is available to assist with bespoke requests.</p>
-        </div>
+    <div className="min-h-screen bg-[#FBFBFA] py-12 sm:py-20 text-zinc-900">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        {/* Back button */}
         <Link
-          href="/contact"
-          className="text-xs bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold px-4 py-2 rounded-lg transition-colors shrink-0"
+          href="/"
+          className="inline-flex items-center gap-2 text-xs font-mono text-zinc-500 hover:text-zinc-950 transition-colors"
         >
-          Contact Concierge
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Return to Storefront</span>
         </Link>
+
+        {/* Header */}
+        <div className="border-b border-zinc-200 pb-8 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-zinc-200 text-xs font-mono text-zinc-700 shadow-xs">
+            <HelpCircle className="w-3.5 h-3.5 text-amber-600" />
+            <span className="font-semibold uppercase tracking-wider">KNOWLEDGE BASE & RESOLUTION</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-5xl font-serif text-zinc-950 font-bold tracking-tight">
+            Frequently Asked Questions
+          </h1>
+
+          <p className="text-xs sm:text-sm text-zinc-600 max-w-2xl leading-relaxed">
+            Everything you need to know about our artisan patronage model, escrow funds security, parcel logistics, and 14-day returns.
+          </p>
+
+          {/* Search Input */}
+          <div className="mt-4 relative max-w-lg">
+            <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search questions by keyword (e.g. escrow, shipping, returns)..."
+              className="w-full bg-white border border-zinc-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 shadow-xs font-medium"
+            />
+          </div>
+        </div>
+
+        {/* Category Pills */}
+        <div className="flex flex-wrap gap-2">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`text-xs px-3.5 py-1.5 rounded-lg border transition-all cursor-pointer font-medium ${
+                selectedCategory === cat
+                  ? "bg-zinc-900 border-zinc-900 text-white shadow-xs"
+                  : "bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* FAQ Accordion List */}
+        <div className="space-y-3">
+          {filteredFaqs.length === 0 ? (
+            <div className="p-8 rounded-2xl bg-white border border-zinc-200 text-center space-y-2">
+              <p className="text-sm font-semibold text-zinc-900">No questions found matching your query.</p>
+              <p className="text-xs text-zinc-500">Try broadening your search term or clearing category filters.</p>
+            </div>
+          ) : (
+            filteredFaqs.map((faq, idx) => {
+              const isOpen = openIndex === idx;
+              return (
+                <div
+                  key={idx}
+                  className="rounded-2xl border border-zinc-200 bg-white overflow-hidden transition-all shadow-xs"
+                >
+                  <button
+                    onClick={() => setOpenIndex(isOpen ? null : idx)}
+                    className="w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-zinc-50/50 transition-colors"
+                  >
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-amber-700 font-semibold block">
+                        {faq.category}
+                      </span>
+                      <h3 className="text-sm sm:text-base font-bold text-zinc-950 font-serif">
+                        {faq.q}
+                      </h3>
+                    </div>
+                    <div
+                      className={`w-7 h-7 rounded-full bg-zinc-100 flex items-center justify-center shrink-0 text-zinc-500 transition-transform duration-200 ${
+                        isOpen ? "rotate-180 bg-zinc-900 text-white" : ""
+                      }`}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-zinc-600 leading-relaxed border-t border-zinc-100 bg-[#FAF9F5]/40">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Concierge Help Card */}
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-zinc-950 font-serif">
+              Still have questions about a piece or custom order?
+            </h3>
+            <p className="text-xs text-zinc-600">
+              Our patron concierge desk is available Monday through Saturday to provide personalized guidance.
+            </p>
+          </div>
+          <Link
+            href="/contact"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-900 text-white text-xs font-semibold hover:bg-zinc-800 transition-colors shrink-0 shadow-sm"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Contact Concierge Desk</span>
+          </Link>
+        </div>
       </div>
     </div>
   );

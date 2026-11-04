@@ -1,19 +1,21 @@
 import React from "react";
 import Link from "next/link";
-import { ShieldCheck, Sparkles, Terminal, ArrowUpRight, Truck, RefreshCw, CreditCard, Lock } from "lucide-react";
+import { ShieldCheck, Sparkles, Terminal, ArrowUpRight, Truck, RefreshCw, CreditCard, Lock, HeartHandshake } from "lucide-react";
 
 export const Footer: React.FC = () => {
   return (
     <footer className="w-full bg-white border-t border-zinc-200 text-zinc-600 text-xs mt-24 shadow-xs">
       {/* Top Banner Provenance Strip */}
-      <div className="border-b border-zinc-200 bg-zinc-50/80 py-4 px-4 sm:px-6 lg:px-8">
+      <div className="border-b border-zinc-200 bg-zinc-50/90 py-4 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[11px] text-zinc-600 font-mono">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-            <span className="font-semibold text-zinc-800">VERIFIED ARTISAN COLLECTIVE • PAN-INDIA DISPATCH</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
+            <span className="font-semibold text-zinc-900 tracking-wider">
+              VERIFIED ARTISAN COLLECTIVE • DIRECT ESCROW COMMISSIONS • PAN-INDIA AIR LOGISTICS
+            </span>
           </div>
           <p className="text-zinc-500">
-            Curated directly from verified master looms, acoustic laboratories, and sand-casting ateliers.
+            Curated directly from verified master looms in Surat, Varanasi, Jaipur, and Kashmir.
           </p>
         </div>
       </div>
@@ -22,25 +24,28 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Col 1: Brand & Mission */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-md bg-zinc-950 text-white flex items-center justify-center font-bold text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-zinc-950 text-white flex items-center justify-center font-bold text-xs tracking-wider">
                 NX
               </div>
-              <span className="font-extrabold text-sm tracking-tight text-zinc-950">
-                NEXU ATELIER & MARKETPLACE
+              <span className="font-extrabold text-base tracking-wider text-zinc-950">
+                NEXU ATELIER
               </span>
             </div>
             <p className="text-xs text-zinc-600 leading-relaxed max-w-sm">
-              An open-source multi-vendor marketplace connecting verified independent
-              studios, heritage loom master weavers, and industrial hardware engineers
+              An international multi-vendor fashion and design marketplace connecting verified independent
+              studios, heritage loom master weavers, and precision hardware engineers
               directly with discerning global patrons.
             </p>
-            <div className="pt-2 flex items-center gap-4 text-[11px] font-mono text-zinc-500">
-              <span>Next.js 14 App Router</span>
+            <div className="pt-2 flex flex-wrap items-center gap-3 text-[11px] font-mono text-zinc-500">
+              <span className="flex items-center gap-1 text-emerald-700 font-semibold">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Zero Middlemen Markup</span>
+              </span>
               <span>•</span>
-              <span>TypeScript Strict</span>
+              <span>100% Escrow Protection</span>
               <span>•</span>
-              <span>Tailwind CSS</span>
+              <span>Blue Dart Air</span>
             </div>
           </div>
 
@@ -62,7 +67,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <Link href="/collections" className="hover:text-zinc-950 transition-colors">
-                  Curated Collections
+                  Curated Lookbooks
                 </Link>
               </li>
               <li>
@@ -76,27 +81,22 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/trending" className="hover:text-zinc-950 transition-colors">
-                  Trending Pieces
-                </Link>
-              </li>
-              <li>
-                <Link href="/sale" className="hover:text-amber-700 transition-colors text-amber-600 font-medium">
-                  Archive & Value Drops
+                <Link href="/store/solstice-loom-studio" className="hover:text-zinc-950 transition-colors">
+                  Featured Ateliers
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Col 3: Patron Services */}
+          {/* Col 3: Patron Concierge */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-zinc-950 uppercase tracking-wider">
-              Patron Services
+              Patron Concierge
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/track-order" className="hover:text-zinc-950 transition-colors font-medium text-amber-700 flex items-center gap-1.5">
-                  <Truck className="w-3.5 h-3.5" />
+                <Link href="/track-order" className="hover:text-zinc-950 transition-colors font-semibold text-zinc-900 flex items-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5 text-blue-600" />
                   <span>Track Consignment</span>
                 </Link>
               </li>
@@ -112,17 +112,12 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <Link href="/faq" className="hover:text-zinc-950 transition-colors">
-                  Frequently Asked
+                  Frequently Asked Questions
                 </Link>
               </li>
               <li>
-                <Link href="/help" className="hover:text-zinc-950 transition-colors">
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link href="/promotions" className="hover:text-amber-700 transition-colors">
-                  Promotions & Vouchers
+                <Link href="/account" className="hover:text-zinc-950 transition-colors">
+                  Patron Membership
                 </Link>
               </li>
             </ul>
@@ -131,12 +126,12 @@ export const Footer: React.FC = () => {
           {/* Col 4: Transparency & Policies */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-zinc-950 uppercase tracking-wider">
-              Legal & Trust
+              Trust & Policies
             </h4>
             <ul className="space-y-2">
               <li>
                 <Link href="/policies/shipping" className="hover:text-zinc-950 transition-colors">
-                  Shipping & Delivery
+                  Shipping & Air Transit
                 </Link>
               </li>
               <li>
@@ -146,17 +141,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <Link href="/policies/refunds" className="hover:text-zinc-950 transition-colors">
-                  Returns & Refunds
-                </Link>
-              </li>
-              <li>
-                <Link href="/policies/cancellation" className="hover:text-zinc-950 transition-colors">
-                  Cancellation Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/accessibility" className="hover:text-zinc-950 transition-colors font-medium text-zinc-800">
-                  Accessibility (WCAG)
+                  Escrow Refund Protocol
                 </Link>
               </li>
               <li>
@@ -166,7 +151,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <Link href="/policies/terms" className="hover:text-zinc-950 transition-colors">
-                  Terms of Service
+                  Marketplace Terms
                 </Link>
               </li>
             </ul>
@@ -177,14 +162,14 @@ export const Footer: React.FC = () => {
         <div className="mt-12 pt-6 border-t border-zinc-100 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-mono">
             <Lock className="w-3.5 h-3.5 text-zinc-400" />
-            <span>256-BIT ENCRYPTED CHECKOUT • ESCROW SECURED</span>
+            <span>256-BIT ENCRYPTED CHECKOUT • ZERO RE-ROUTED FEES • RBI COMPLIANT</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {["UPI", "RuPay", "Visa", "Mastercard", "NetBanking", "Cash on Delivery"].map((badge) => (
+            {["UPI", "RuPay", "Visa", "Mastercard", "NetBanking", "Cash on Delivery", "Escrow Secured"].map((badge) => (
               <span
                 key={badge}
-                className="px-2.5 py-1 rounded bg-zinc-100 border border-zinc-200/80 text-[10px] font-mono text-zinc-700 font-semibold"
+                className="px-2.5 py-1 rounded-md bg-zinc-100 border border-zinc-200/80 text-[10px] font-mono text-zinc-700 font-semibold"
               >
                 {badge}
               </span>
@@ -192,10 +177,10 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        {/* Bottom row */}
+        {/* Bottom Row */}
         <div className="mt-8 pt-6 border-t border-zinc-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-zinc-500">
           <div>
-            © 2026 Nexu Atelier. Authentic craft, zero middleman markups. All rights reserved.
+            &copy; {new Date().getFullYear()} NEXU ATELIER. Direct-from-artisan heritage craft marketplace. All rights reserved.
           </div>
           <div className="flex items-center gap-6">
             <Link href="/catalog" className="hover:text-zinc-950 transition-colors">
@@ -204,8 +189,11 @@ export const Footer: React.FC = () => {
             <Link href="/track-order" className="hover:text-zinc-950 transition-colors">
               Track Order
             </Link>
-            <Link href="/accessibility" className="hover:text-zinc-950 transition-colors">
-              Accessibility
+            <Link href="/policies/privacy" className="hover:text-zinc-950 transition-colors">
+              Privacy
+            </Link>
+            <Link href="/policies/terms" className="hover:text-zinc-950 transition-colors">
+              Terms
             </Link>
             <Link href="/contact" className="hover:text-zinc-950 transition-colors">
               Contact Desk

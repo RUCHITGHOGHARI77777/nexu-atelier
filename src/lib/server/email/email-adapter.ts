@@ -118,3 +118,4 @@ export function createEmailAdapter(): IEmailAdapter {
 
   return new ConsoleEmailAdapter();
 }
+

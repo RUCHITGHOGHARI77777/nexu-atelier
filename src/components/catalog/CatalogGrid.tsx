@@ -15,7 +15,7 @@ export interface CatalogGridProps {
 export const CatalogGrid: React.FC<CatalogGridProps> = ({
   products,
   onResetFilters,
-  itemsPerPage = 6,
+  itemsPerPage = 12,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
 

@@ -49,3 +49,4 @@ The platform includes production-ready driver adapters that automatically switch
    - When deploying to production, bind the WhatsApp inbound webhook to `/api/webhooks/whatsapp` to capture delivery receipts (`read`, `delivered`, `failed`).
 3. **Image Storage CDN:**
    - High-resolution product images are currently uploaded with magic-byte verification to local disk. For multi-instance horizontal scaling, bind an S3 or Cloudflare R2 bucket.
+
