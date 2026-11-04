@@ -19,3 +19,4 @@ export function isDemoAdminAllowed(): boolean {
   }
   return true;
 }
+

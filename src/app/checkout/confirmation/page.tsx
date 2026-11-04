@@ -119,10 +119,10 @@ function ConfirmationContent() {
   const [milestoneMessage, setMilestoneMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  // Find order in StoreContext first
+  // Find exact order in StoreContext
   const storeOrder = useMemo(() => {
     if (!orderId) return store.orders[0] || null;
-    return store.orders.find((o) => o.id === orderId) || store.orders[0] || null;
+    return store.orders.find((o) => o.id === orderId) || null;
   }, [orderId, store.orders]);
 
   // Fetch from database API as fallback/supplement
@@ -132,10 +132,6 @@ function ConfirmationContent() {
       return;
     }
 
-    if (storeOrder) {
-      setIsLoading(false);
-    }
-
     fetch(`/api/orders/${orderId}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -143,7 +139,7 @@ function ConfirmationContent() {
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
-  }, [orderId, storeOrder]);
+  }, [orderId]);
 
   // Launch initial celebration confetti on load
   useEffect(() => {
@@ -157,8 +153,8 @@ function ConfirmationContent() {
     } catch {}
   }, [orderId]);
 
-  // Construct unified display order (prioritize storeOrder, then dbOrder, then demo fallback)
-  const displayOrder: StoreOrder = useMemo(() => {
+  // Construct unified display order (prioritize matching storeOrder, then dbOrder, then first available)
+  const displayOrder: StoreOrder | null = useMemo(() => {
     if (storeOrder) return storeOrder;
 
     if (dbOrder) {

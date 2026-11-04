@@ -70,6 +70,7 @@ function toPrismaStatus(status: FrontendOrderStatus): PrismaOrderStatus {
 // Convert a full Prisma Order record with its relations into the typed Order interface
 function mapDbOrderToFrontend(dbOrder: any): Order {
   const items: OrderItem[] = dbOrder.items.map((i: any) => ({
+    id: i.id,
     productId: i.productId || "",
     slug: i.productSlug,
     title: i.title,

@@ -481,9 +481,16 @@ export default function CheckoutPage() {
         if (data?.order?.id) {
           newStoreOrder.id = data.order.id;
         }
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        setErrorMessage(errorData.error || "Failed to place order. Please review your details and try again.");
+        setIsSubmitting(false);
+        return;
       }
-    } catch {
-      // Non-fatal fallback for showcase demo
+    } catch (err: any) {
+      setErrorMessage(err.message || "Network error while placing order.");
+      setIsSubmitting(false);
+      return;
     }
 
     // Always update global client-side store
