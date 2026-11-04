@@ -1078,6 +1078,23 @@ export class AdminService {
     }
 
     if (userId) {
+      // First-order coupon restriction enforcement
+      if (cleanCode === "NEXUFIRST" || cleanCode.startsWith("FIRST")) {
+        const priorOrdersCount = await prisma.order.count({
+          where: {
+            customerId: userId,
+            status: { notIn: ["CANCELLED"] },
+          },
+        });
+        if (priorOrdersCount > 0) {
+          return {
+            valid: false,
+            discountPaise: 0,
+            error: `Coupon "${cleanCode}" is reserved exclusively for first-time patrons.`,
+          };
+        }
+      }
+
       const userUsageCount = await prisma.couponUsage.count({
         where: { couponId: coupon.id, userId },
       });

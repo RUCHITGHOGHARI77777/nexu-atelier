@@ -183,3 +183,4 @@ Executed via automated headless browser suite (`scripts/verify-20-step-shopping-
 2. **WCAG 2.1 AA Contrast Compliance:** Updated `--nexu-text-muted` from `#94A3B8` (2.56:1 fail) to `#64748B` (4.63:1 pass).
 3. **Escrow Terminology Reconciled:** Replaced claims of "RBI Escrow" with accurate "Patron Protection Protocol" and "Direct Studio Settlement Guarantee".
 4. **Paise Integrity:** 100% of order totals, discounts, and line calculations handled in whole integer paise.
+

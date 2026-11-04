@@ -415,6 +415,9 @@ export class PrismaOrderService implements IOrderService {
           if (couponRes.valid) {
             discountPaise = couponRes.discountPaise;
             appliedCouponCode = couponRes.coupon?.code || payload.couponCode.trim().toUpperCase();
+            if (appliedCouponCode === "FREESHIP" || appliedCouponCode === "FREESHIPPING") {
+              shippingFeePaise = 0;
+            }
           }
         }
 

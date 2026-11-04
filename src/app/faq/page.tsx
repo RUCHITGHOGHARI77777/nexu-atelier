@@ -13,8 +13,8 @@ interface FAQItem {
 const FAQS: FAQItem[] = [
   {
     category: "Ordering & Payment",
-    q: "How does the payment escrow protocol protect my funds?",
-    a: "When you place an order, your payment is held securely in a state-monitored escrow account. Funds are only scheduled for disbursement to the independent studio after the courier marks your parcel as delivered and your 14-day inspection window begins.",
+    q: "How does the patron protection protocol safeguard my purchase?",
+    a: "When you place an order, your payment is protected under NEXU's Patron Protection Protocol. Funds are only disbursed to the independent studio after verified delivery by the carrier and after your inspection window begins.",
   },
   {
     category: "Ordering & Payment",

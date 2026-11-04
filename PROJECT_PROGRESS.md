@@ -1,12 +1,12 @@
 # NEXU ATELIER — Master Project Architecture, Safety & Progress Tracker
 
-**Document Version:** 2.4.0 Production Candidate  
+**Document Version:** 2.5.0 Production Candidate  
 **Date Updated:** November 4, 2026  
 **Repository Identity:** NEXU ATELIER Reusable E-Commerce Marketplace  
 **Architecture:** Next.js 14.2.18 (App Router), TypeScript 5.0, Prisma ORM 5.x, PostgreSQL 17.10  
 **Design System:** Luxury Editorial & Heritage Gallery (`#faf9f5` warm linen canvas, `#ffffff` card surfaces, `border-stone-200/60`, `font-serif` Playfair Display, `font-sans` Plus Jakarta Sans)  
-**Test Suite Health:** 29 Vitest Files Passed (337 Tests Passed, 0 Failed, 100% Green)  
-**Automated Browser Audit:** 12 E2E Suites (26 Assertion Checkpoints Passed, 0 Failed)  
+**Test Suite Health:** 30 Vitest Files Passed (347 Tests Passed, 0 Failed, 100% Green)  
+**Automated Browser Audits:** 20-Step E2E Customer Journey (20/20 Passed) + 12 Marketplace Suites (27 Checkpoints Passed, 0 Failed)  
 **Compiler Status:** `npx tsc --noEmit` clean (0 errors)  
 
 
@@ -92,14 +92,18 @@ NEXU ATELIER is an enterprise-grade multi-vendor e-commerce marketplace platform
 ## 3. Automated Verification & Testing Evidence
 
 ### Unit & Integration Test Suite (`npm test`)
-- **Total Test Files:** 29 files (100% pass)
-- **Total Tests Executed:** 337 tests (100% pass)
-- **Execution Time:** ~33.7s
-- **Coverage Areas:** Order calculations, catalog filtering, auth sessions, password recovery, smart listings, fraud scoring, payment security, IDOR protection, admin engines, and database consistency.
+- **Total Test Files:** 30 files (100% pass)
+- **Total Tests Executed:** 347 tests (100% pass)
+- **Execution Time:** ~46.9s
+- **Coverage Areas:** Order calculations, catalog filtering, auth sessions, password recovery, smart listings, fraud scoring, payment security, IDOR protection, admin engines, multi-vendor order isolation, frequently bought together ensemble, first-order coupons, free shipping rules, and database consistency.
 
-### Headless Browser E2E Test Suite (`scripts/verify-complete-marketplace.mjs`)
+### Headless Browser 20-Step Customer Journey (`scripts/verify-20-step-shopping-journey.mjs`)
+- **Total Steps Executed:** 20 steps (100% pass, 0 failed)
+- **Verified Complete Workflow:** Homepage -> Banner -> Catalog -> Filters -> Typeahead Search -> PDP -> Gallery -> Variants -> Pincode SLA -> Add to Bag -> Cart Drawer -> Paise Recalculation -> Coupon Engine -> Multi-Step Checkout -> Address Selection -> Delivery Tiers -> Payment Modes -> Authoritative DB Order Creation -> Order Confirmation (5-stage stepper) -> Consignment Tracking.
+
+### Headless Browser Marketplace Audit (`scripts/verify-complete-marketplace.mjs`)
 - **Total Test Suites:** 12 suites
-- **Total Checkpoints Passed:** 26 checkpoints (0 failed)
+- **Total Checkpoints Passed:** 27 checkpoints (0 failed)
 - **Tested Dimensions:** Desktop (1440x900), Tablet (768x1024), Mobile (375x812)
 - **Verified Behaviors:**
   - Homepage hero link routing

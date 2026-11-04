@@ -7,6 +7,7 @@ import { productRepository } from "@/lib/server/product-repository";
 import { slugRedirectService } from "@/lib/server/slug-redirect-service";
 import { ProductShowcase } from "@/components/product/ProductShowcase";
 import { ProductSpecs } from "@/components/product/ProductSpecs";
+import { FrequentlyBoughtTogether } from "@/components/product/FrequentlyBoughtTogether";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
 import { ProductReviews } from "@/components/product/ProductReviews";
 import { ProductQA } from "@/components/product/ProductQA";
@@ -265,6 +266,12 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
       {/* Specifications & Materials */}
       <ProductSpecs product={product} />
+
+      {/* Frequently Bought Together Ensemble */}
+      <FrequentlyBoughtTogether
+        mainProduct={product}
+        companionProducts={relatedProducts}
+      />
 
       {/* Customer Reviews & Reputation */}
       <ProductReviews productId={product.id} productTitle={product.title} />

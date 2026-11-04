@@ -83,6 +83,12 @@ describe("NEXU ATELIER — Central Admin Control Engine", () => {
 
     if (sellerRecord && sellerRecord.products.length > 0) {
       testProduct = sellerRecord.products[0];
+      if (testProduct.variants && testProduct.variants.length > 0) {
+        await prisma.productVariant.updateMany({
+          where: { productId: testProduct.id },
+          data: { stock: 10 },
+        });
+      }
     }
   });
 

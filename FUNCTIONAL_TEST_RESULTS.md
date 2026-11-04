@@ -78,3 +78,4 @@ Captured across all 6 target device viewports:
 - Laptop Standard (`1366 x 768`): 0px horizontal overflow
 - Desktop Standard (`1440 x 900`): 0px horizontal overflow
 - Ultra-Wide Display (`1920 x 1080`): 0px horizontal overflow
+
