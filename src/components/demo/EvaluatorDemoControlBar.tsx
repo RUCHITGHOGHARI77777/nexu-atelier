@@ -39,6 +39,9 @@ export function EvaluatorDemoControlBar() {
   } = useStore();
 
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
+
+  if (isDismissed) return null;
 
   // STEP 1: Launch Free Seller Brand Store
   const handleStep1_LaunchSellerStore = () => {
@@ -201,25 +204,36 @@ export function EvaluatorDemoControlBar() {
     <div className="fixed bottom-6 left-6 z-[9990] flex flex-col items-start font-sans print:hidden">
       {/* Collapsed Glass Pill Trigger */}
       {!isExpanded ? (
-        <button
-          type="button"
-          onClick={() => setIsExpanded(true)}
-          className="group relative flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-white/95 backdrop-blur-2xl border border-white/95 ring-1 ring-slate-900/10 shadow-[0_15px_40px_rgba(15,23,42,0.12)] hover:shadow-[0_20px_50px_rgba(37,99,235,0.15)] hover:scale-102 transition-all duration-300 cursor-pointer text-slate-900"
-          title="Open QA & CEO Live Flow Runner"
-        >
-          {/* Glowing pulse indicator */}
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-          </span>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setIsExpanded(true)}
+            className="group relative flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-2xl border border-slate-200 ring-1 ring-slate-900/5 shadow-md hover:scale-102 transition-all duration-300 cursor-pointer text-slate-900"
+            title="Open QA & Evaluation Flow Runner"
+          >
+            {/* Status indicator */}
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
 
-          <span className="text-xs font-black tracking-tight text-slate-950 flex items-center gap-1.5">
-            <Zap className="w-3.5 h-3.5 text-blue-600 fill-blue-600" />
-            <span>QA & Evaluation Flow Runner</span>
-          </span>
+            <span className="text-xs font-bold tracking-tight text-slate-950 flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-blue-600 fill-blue-600" />
+              <span>QA Flow Runner</span>
+            </span>
 
-          <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 transition-colors ml-0.5" />
-        </button>
+            <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 transition-colors ml-0.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsDismissed(true)}
+            className="w-7 h-7 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center shadow-xs transition-colors cursor-pointer"
+            title="Dismiss QA Runner"
+            aria-label="Dismiss QA Runner"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
       ) : (
         /* Expanded Floating Glass Action Drawer */
         <div className="w-80 sm:w-96 rounded-3xl bg-white/95 backdrop-blur-2xl border border-white/95 ring-1 ring-slate-900/10 shadow-[0_25px_70px_rgba(15,23,42,0.18)] p-5 space-y-4 animate-in slide-in-from-bottom-5 duration-300 text-slate-900">

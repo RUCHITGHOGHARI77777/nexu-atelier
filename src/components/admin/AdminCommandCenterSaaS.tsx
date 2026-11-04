@@ -298,7 +298,7 @@ export function AdminCommandCenterSaaS() {
 
       {/* --- CLOUD CAPACITY WARNING BANNER (STANDARD TIER THRESHOLD ALERT) --- */}
       {clusterTier === "STANDARD_100GB" && (
-        <div className="rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-white p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-300">
+        <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-300">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-800 shrink-0">
               <AlertTriangle className="w-5 h-5 text-amber-600 animate-pulse" />
@@ -306,11 +306,11 @@ export function AdminCommandCenterSaaS() {
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
-                  CAPACITY ALERT • 82.4% EXCEEDED
+                  SIMULATED METRIC • DEMO MONITOR
                 </span>
               </div>
               <p className="text-xs font-bold text-slate-950">
-                ⚠️ Database Cluster approaching capacity limit (82.4%). Storage threshold exceeded. Upgrade node to prevent seller downtime.
+                Database Cluster approaching simulated capacity threshold (82.4%).
               </p>
               <p className="text-[11px] text-slate-600">
                 Prisma storage: 82.4 GB / 100 GB • Active Connection Pools: 42 / 50 • CDN: 412.8 GB / 500 GB
@@ -321,10 +321,10 @@ export function AdminCommandCenterSaaS() {
           <button
             type="button"
             onClick={upgradeDatabaseCluster}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-md active:scale-98 transition-all shrink-0 cursor-pointer"
+            className="px-3.5 py-2 rounded-lg bg-slate-950 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors shrink-0 cursor-pointer"
           >
             <Zap className="w-4 h-4 text-amber-300" />
-            <span>⚡ 1-Click Auto-Upgrade (1 TB Node)</span>
+            <span>Simulate Node Expansion (1 TB)</span>
           </button>
         </div>
       )}

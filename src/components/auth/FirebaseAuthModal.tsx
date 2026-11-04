@@ -20,6 +20,7 @@ import {
   Store,
   Shield,
   User,
+  ShoppingBag,
 } from "lucide-react";
 import { useStore } from "@/context/StoreContext";
 import { useAuth } from "@/context/AuthContext";
@@ -305,15 +306,17 @@ export function FirebaseAuthModal({
                 setSelectedPortal("customer");
                 setEmailInput("patron@nexu.studio");
               }}
-              className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                 selectedPortal === "customer"
-                  ? "border-slate-950 bg-slate-950 text-white shadow-sm ring-1 ring-slate-950"
+                  ? "border-slate-950 bg-slate-950 text-white shadow-sm"
                   : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-900"
               }`}
             >
-              <div className="text-base mb-1">🛍️</div>
+              <div className="mb-2">
+                <ShoppingBag className={`w-4 h-4 ${selectedPortal === "customer" ? "text-white" : "text-slate-600"}`} />
+              </div>
               <div>
-                <div className="font-extrabold text-xs">Customer</div>
+                <div className="font-bold text-xs">Customer</div>
                 <div className={`text-[10px] leading-tight mt-0.5 ${
                   selectedPortal === "customer" ? "text-slate-300" : "text-slate-500"
                 }`}>
@@ -329,19 +332,21 @@ export function FirebaseAuthModal({
                 setSelectedPortal("seller");
                 setEmailInput("solstice@nexu.studio");
               }}
-              className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                 selectedPortal === "seller"
-                  ? "border-emerald-600 bg-emerald-950 text-white shadow-sm ring-1 ring-emerald-600"
+                  ? "border-slate-950 bg-slate-950 text-white shadow-sm"
                   : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-900"
               }`}
             >
-              <div className="text-base mb-1">📦</div>
+              <div className="mb-2">
+                <Store className={`w-4 h-4 ${selectedPortal === "seller" ? "text-white" : "text-slate-600"}`} />
+              </div>
               <div>
-                <div className="font-extrabold text-xs">Seller Hub</div>
+                <div className="font-bold text-xs">Seller Hub</div>
                 <div className={`text-[10px] leading-tight mt-0.5 ${
-                  selectedPortal === "seller" ? "text-emerald-300" : "text-slate-500"
+                  selectedPortal === "seller" ? "text-slate-300" : "text-slate-500"
                 }`}>
-                  Catalog & GST
+                  Catalog & Orders
                 </div>
               </div>
             </button>
@@ -353,17 +358,19 @@ export function FirebaseAuthModal({
                 setSelectedPortal("admin");
                 setEmailInput("admin@nexu.studio");
               }}
-              className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                 selectedPortal === "admin"
-                  ? "border-indigo-600 bg-indigo-950 text-white shadow-sm ring-1 ring-indigo-600"
+                  ? "border-slate-950 bg-slate-950 text-white shadow-sm"
                   : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-900"
               }`}
             >
-              <div className="text-base mb-1">🛡️</div>
+              <div className="mb-2">
+                <ShieldCheck className={`w-4 h-4 ${selectedPortal === "admin" ? "text-white" : "text-slate-600"}`} />
+              </div>
               <div>
-                <div className="font-extrabold text-xs">Super Admin</div>
+                <div className="font-bold text-xs">Super Admin</div>
                 <div className={`text-[10px] leading-tight mt-0.5 ${
-                  selectedPortal === "admin" ? "text-indigo-300" : "text-slate-500"
+                  selectedPortal === "admin" ? "text-slate-300" : "text-slate-500"
                 }`}>
                   Governance
                 </div>
@@ -491,7 +498,7 @@ export function FirebaseAuthModal({
                   />
                 </svg>
                 <span>
-                  {isVerifying ? "Connecting to Google OAuth..." : `Continue with Google (${selectedPortal.toUpperCase()})`}
+                  {isVerifying ? "Connecting to Google..." : "Continue with Google"}
                 </span>
               </button>
             </div>
