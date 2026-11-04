@@ -120,3 +120,4 @@ Headless browser automation verified layout integrity across 6 standard viewport
 ## 6. Audit Verdict & Sign-Off
 
 The public storefront for **NEXU ATELIER** has passed all functional, visual, architectural, and security benchmarks with zero regressions. The application is production-ready for public customer interaction.
+

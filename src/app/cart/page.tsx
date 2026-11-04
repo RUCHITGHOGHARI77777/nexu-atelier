@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ShoppingBag,
@@ -15,6 +15,8 @@ import {
   CheckCircle2,
   Terminal,
   Bookmark,
+  Tag,
+  X,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
@@ -37,6 +39,128 @@ export default function CartPage() {
   } = useCart();
 
   const [simulatedReady, setSimulatedReady] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discountINR: number;
+    description?: string;
+  } | null>(null);
+  const [couponError, setCouponError] = useState("");
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("nexu_active_coupon");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed?.code) {
+          const discount = parsed.code === "DEMO20" ? Math.round(totals.subtotal * 0.2) : parsed.discount;
+          setAppliedCoupon({
+            code: parsed.code,
+            discountINR: discount,
+            description: parsed.description || "Studio Voucher Applied",
+          });
+        }
+      }
+    } catch {}
+  }, [totals.subtotal]);
+
+  const handleApplyCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = couponInput.trim().toUpperCase();
+    if (!code) return;
+
+    if (code === "DEMO20") {
+      const discount = Math.round(totals.subtotal * 0.2);
+      const couponObj = {
+        code: "DEMO20",
+        discountINR: discount,
+        description: "20% Studio Showcase Discount",
+      };
+      setAppliedCoupon(couponObj);
+      setCouponError("");
+      try {
+        localStorage.setItem("nexu_active_coupon", JSON.stringify({ code: "DEMO20", discount, description: couponObj.description }));
+      } catch {}
+      return;
+    }
+
+    if (code === "ATELIER10" || code === "FIRST10") {
+      const discount = Math.round(totals.subtotal * 0.1);
+      const couponObj = {
+        code,
+        discountINR: discount,
+        description: "10% Artisan Welcome Discount",
+      };
+      setAppliedCoupon(couponObj);
+      setCouponError("");
+      try {
+        localStorage.setItem("nexu_active_coupon", JSON.stringify({ code, discount, description: couponObj.description }));
+      } catch {}
+      return;
+    }
+
+    if (code === "FLAT500") {
+      if (totals.subtotal < 2500) {
+        setCouponError("FLAT500 requires minimum cart subtotal of ₹2,500.");
+        return;
+      }
+      const couponObj = {
+        code: "FLAT500",
+        discountINR: 500,
+        description: "₹500 Flat Studio Acquisition Voucher",
+      };
+      setAppliedCoupon(couponObj);
+      setCouponError("");
+      try {
+        localStorage.setItem("nexu_active_coupon", JSON.stringify({ code: "FLAT500", discount: 500, description: couponObj.description }));
+      } catch {}
+      return;
+    }
+
+    setIsApplyingCoupon(true);
+    setCouponError("");
+
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, subtotal: totals.subtotal }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.valid) {
+        setCouponError(data.error || "Invalid or ineligible studio voucher.");
+        setAppliedCoupon(null);
+      } else {
+        const couponObj = {
+          code,
+          discountINR: data.discountINR,
+          description: data.coupon?.description || "Verified Studio Voucher",
+        };
+        setAppliedCoupon(couponObj);
+        setCouponError("");
+        try {
+          localStorage.setItem("nexu_active_coupon", JSON.stringify({ code, discount: data.discountINR, description: couponObj.description }));
+        } catch {}
+      }
+    } catch {
+      setCouponError("Failed to validate voucher against studio ledger.");
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError("");
+    try {
+      localStorage.removeItem("nexu_active_coupon");
+    } catch {}
+  };
+
+  const couponDiscountINR = appliedCoupon ? appliedCoupon.discountINR : 0;
+  const finalCalculatedTotal = Math.max(0, totals.total - couponDiscountINR);
 
   const handleSimulatePayload = () => {
     setSimulatedReady(true);
@@ -358,12 +482,85 @@ export default function CartPage() {
                 </span>
               </div>
 
+              {appliedCoupon && (
+                <div className="flex items-center justify-between text-emerald-700 pt-2 font-medium">
+                  <span className="flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Voucher ({appliedCoupon.code}):</span>
+                  </span>
+                  <span className="font-mono font-bold">
+                    -{formatCurrency(appliedCoupon.discountINR)}
+                  </span>
+                </div>
+              )}
+
               <div className="flex items-center justify-between text-sm font-bold text-zinc-950 pt-3">
                 <span>Net Total:</span>
                 <span className="font-mono text-lg font-black text-zinc-950">
-                  {formatCurrency(totals.total)}
+                  {formatCurrency(finalCalculatedTotal)}
                 </span>
               </div>
+            </div>
+
+            {/* Studio Voucher / Coupon Code Form */}
+            <div className="pt-2 border-t border-zinc-100">
+              {appliedCoupon ? (
+                <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-[10px]">
+                      %
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-emerald-900 font-mono tracking-wider">
+                        {appliedCoupon.code}
+                      </p>
+                      <p className="text-[10px] text-emerald-700">
+                        {appliedCoupon.description || "Discount activated"}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="p-1 rounded-lg text-emerald-600 hover:text-emerald-900 hover:bg-emerald-100 transition-colors"
+                    title="Remove coupon"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleApplyCoupon} className="space-y-1.5">
+                  <label htmlFor="cart-coupon-input" className="block text-[11px] font-mono text-zinc-500 uppercase tracking-wider font-semibold">
+                    Studio Privilege Code
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      id="cart-coupon-input"
+                      type="text"
+                      placeholder="e.g. DEMO20, ATELIER10"
+                      value={couponInput}
+                      onChange={(e) => {
+                        setCouponInput(e.target.value.toUpperCase());
+                        setCouponError("");
+                      }}
+                      className="flex-1 px-3 py-2 text-xs font-mono uppercase bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-zinc-950 focus:bg-white text-zinc-900"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isApplyingCoupon || !couponInput.trim()}
+                      className="px-3 py-2 text-xs font-bold rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {isApplyingCoupon ? "..." : "Apply"}
+                    </button>
+                  </div>
+                  {couponError && (
+                    <p className="text-[11px] text-rose-600 font-medium">{couponError}</p>
+                  )}
+                  <p className="text-[10px] text-zinc-400">
+                    Try <span className="font-mono font-semibold text-zinc-600">DEMO20</span> for 20% off or <span className="font-mono font-semibold text-zinc-600">ATELIER10</span>.
+                  </p>
+                </form>
+              )}
             </div>
 
             {/* Checkout Action */}

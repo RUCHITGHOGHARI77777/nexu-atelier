@@ -175,7 +175,7 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onColorChange
       sessionStorage.setItem("nexu_buy_now_item", JSON.stringify(directItem));
     } catch {}
 
-    router.push("/checkout?direct=1");
+    window.location.href = "/checkout?direct=1";
   };
 
   const handleIncrement = () => {

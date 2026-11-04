@@ -141,3 +141,4 @@
   - Updated explanatory copy: "In traditional luxury retail, over 65% of the patron's payment is absorbed by distributors, importers, and showrooms. At NEXU ATELIER, 90% of order value settles directly to verified artisan guilds via escrow upon delivery, with an honest, transparent 10% platform fee and zero hidden markups."
 - **Test Performed:** Automated text evaluation verified exact string occurrences across homepage and mega menu.
 - **Verification Result:** **VERIFIED PASS**.
+

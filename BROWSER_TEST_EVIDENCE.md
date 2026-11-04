@@ -110,3 +110,4 @@ All visual artifacts are persisted across both the local project directory and t
 ### Test Case 8: PDP Stock Urgency from Inventory
 - **Criteria:** Product detail page must render genuine inventory stock (e.g. `Only N units left in studio` or `Ready to Ship`).
 - **Verification:** Checked page text on PDP; verified occurrence of `"units left"`, derived directly from product inventory.
+

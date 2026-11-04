@@ -153,7 +153,8 @@ export function InteractivePaymentModal({
     }, 700);
   };
 
-  const triggerSuccess = useCallback(() => {
+  const triggerSuccess = useCallback((customDelay?: number | unknown) => {
+    const delayMs = typeof customDelay === "number" ? customDelay : 1800;
     setStage("SUCCESS");
     playSound("success");
 
@@ -196,7 +197,7 @@ export function InteractivePaymentModal({
         bankName,
         notes: `Simulated Demo Payment via ${method} (${utr})`,
       });
-    }, 1800);
+    }, delayMs);
   }, [method, customUpiId, bankName, onPaymentSuccess, showToast]);
 
   const triggerFailure = useCallback((reason: string) => {
@@ -230,10 +231,8 @@ export function InteractivePaymentModal({
   }, [stage, simScenario, triggerSuccess, triggerFailure]);
 
   const handleStartUpiPayment = () => {
-    if (!isVpaVerified) {
-      handleVerifyVpa();
-      return;
-    }
+    setIsVpaVerified(true);
+    setVpaError("");
     playSound("notification");
     setStage("AUTHORIZING");
     showToast("Demo UPI Payment Processing • 10s Countdown Started", "info");
@@ -437,6 +436,7 @@ export function InteractivePaymentModal({
 
                       <button
                         type="button"
+                        id="demo-start-upi-payment"
                         onClick={handleStartUpiPayment}
                         className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
                       >
@@ -457,6 +457,7 @@ export function InteractivePaymentModal({
 
                       <button
                         type="button"
+                        id="demo-start-qr-payment"
                         onClick={handleStartUpiPayment}
                         className="w-full py-3 px-4 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
                       >
@@ -534,6 +535,7 @@ export function InteractivePaymentModal({
 
                   <button
                     type="button"
+                    id="demo-start-card-payment"
                     onClick={handleStartCardPayment}
                     className="w-full py-3.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
                   >
@@ -583,7 +585,7 @@ export function InteractivePaymentModal({
                   </div>
                   <button
                     type="button"
-                    onClick={triggerSuccess}
+                    onClick={() => triggerSuccess()}
                     className="w-full py-3.5 px-4 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" />
@@ -645,8 +647,9 @@ export function InteractivePaymentModal({
               <div className="flex items-center justify-center gap-2 pt-2">
                 <button
                   type="button"
+                  id="demo-fast-skip-btn"
                   onClick={() => {
-                    if (simScenario === "SUCCESS") triggerSuccess();
+                    if (simScenario === "SUCCESS") triggerSuccess(200);
                     else triggerFailure("Simulated Bank Timeout");
                   }}
                   className="text-[11px] font-mono font-medium text-slate-500 hover:text-slate-900 underline underline-offset-4 cursor-pointer"

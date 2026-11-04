@@ -489,8 +489,7 @@ export default function CheckoutPage() {
     try {
       localStorage.removeItem("nexu_active_coupon");
     } catch {}
-    router.refresh();
-    router.push(`/checkout/confirmation?orderId=${newStoreOrder.id}`);
+    window.location.href = `/checkout/confirmation?orderId=${newStoreOrder.id}`;
   };
 
   if (items.length === 0 && store.cart.length === 0 && !isDirectBuy) {

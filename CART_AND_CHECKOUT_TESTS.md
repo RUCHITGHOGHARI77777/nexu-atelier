@@ -66,3 +66,4 @@ This formula guarantees that zero fractions of a paisa are lost, rounding is str
    ✓ executes partial refund through payment adapter and updates order refunded total
    ✓ idempotently returns previous refund result when same idempotencyKey is submitted
 ```
+

@@ -74,18 +74,21 @@ describe("calculateCartTotals", () => {
 
 describe("groupItemsByVendor", () => {
   it("groups items strictly by vendor ID", () => {
+    const solProd = SEED_PRODUCTS.find((p) => p.vendor.id === SEED_VENDORS.solTextiles.id)!;
+    const voxelProd = SEED_PRODUCTS.find((p) => p.vendor.id === SEED_VENDORS.voxelAudio.id)!;
+
     const item1: CartItem = {
       id: "item_1",
-      productId: SEED_PRODUCTS[0].id,
-      product: SEED_PRODUCTS[0], // vendor: solTextiles
+      productId: solProd.id,
+      product: solProd, // vendor: solTextiles
       quantity: 2,
       unitPrice: 2000,
       lineTotal: 4000,
     };
     const item2: CartItem = {
       id: "item_2",
-      productId: SEED_PRODUCTS[1].id,
-      product: SEED_PRODUCTS[1], // vendor: voxelAudio
+      productId: voxelProd.id,
+      product: voxelProd, // vendor: voxelAudio
       quantity: 1,
       unitPrice: 4000,
       lineTotal: 4000,

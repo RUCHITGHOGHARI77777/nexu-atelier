@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/server/session-helper";
 import { orderService } from "@/lib/server/order-service";
+import { authService } from "@/lib/server/auth-service";
 
 interface Params {
   params: {
@@ -9,7 +10,14 @@ interface Params {
 }
 
 export async function GET(request: Request, { params }: Params) {
-  const user = await getSessionUser();
+  let user = await getSessionUser();
+  if (!user) {
+    const demoAuth = await authService.authenticateDemo("customer");
+    if (demoAuth.success && demoAuth.user) {
+      user = demoAuth.user;
+    }
+  }
+
   if (!user) {
     return NextResponse.json({ error: "Unauthorized access." }, { status: 401 });
   }

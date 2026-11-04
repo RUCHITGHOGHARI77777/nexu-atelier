@@ -283,11 +283,14 @@ export class PrismaProductRepository {
       },
     });
 
-    if (dbProduct && dbProduct.isPublished && dbProduct.approvalStatus === "APPROVED") {
-      return mapDbProductToFrontend(dbProduct);
+    if (dbProduct) {
+      if (dbProduct.isPublished && dbProduct.approvalStatus === "APPROVED") {
+        return mapDbProductToFrontend(dbProduct);
+      }
+      return null;
     }
 
-    // Authoritative fallback from verified seed catalog
+    // Authoritative fallback from verified seed catalog if product not yet recorded in DB
     const seedProduct = SEED_PRODUCTS.find((p) => p.slug === slug);
     if (seedProduct) {
       return seedProduct;

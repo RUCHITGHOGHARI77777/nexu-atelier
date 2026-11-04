@@ -286,7 +286,7 @@ export class PrismaOrderService implements IOrderService {
         const validatedItemsData: any[] = [];
 
         for (const itemReq of payload.items) {
-          const product = await tx.product.findUnique({
+          let product = await tx.product.findUnique({
             where: { id: itemReq.productId },
             include: {
               vendor: true,
@@ -294,6 +294,34 @@ export class PrismaOrderService implements IOrderService {
               variants: true,
             },
           });
+
+          if (!product) {
+            product = await tx.product.findUnique({
+              where: { slug: itemReq.productId },
+              include: {
+                vendor: true,
+                images: { orderBy: { sortOrder: "asc" } },
+                variants: true,
+              },
+            });
+          }
+
+          if (!product) {
+            product = await tx.product.findFirst({
+              where: {
+                OR: [
+                  { slug: { contains: itemReq.productId } },
+                  { title: { contains: itemReq.productId, mode: "insensitive" } },
+                ],
+                isPublished: true,
+              },
+              include: {
+                vendor: true,
+                images: { orderBy: { sortOrder: "asc" } },
+                variants: true,
+              },
+            });
+          }
 
           if (!product || !product.isPublished) {
             throw new Error(

@@ -64,3 +64,4 @@ Every product card and detail view features authenticated artisan provenance:
 - **Vendor Name:** Explicitly displayed with boutique link (`/store/[slug]`).
 - **Origin Hub:** Authenticated craft cluster (e.g., Surat Handlooms, Khurja Pottery, Moradabad Foundry).
 - **Lead Time SLA:** Real shipping lead time calculated from vendor's fulfillment SLA.
+
