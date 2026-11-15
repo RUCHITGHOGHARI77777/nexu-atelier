@@ -1,7 +1,6 @@
 <div align="center">
 
 # `⚡ RUCHIT GHOGHARI ⚡`
-### 🏛️ Lead Systems Architect • Distributed Engines • Autonomous AI Systems
 
 `───◆─── ✉ ruchitghoghari@rgai.in ───◆───`
 
