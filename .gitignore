@@ -1,0 +1,75 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing & coverage
+/coverage
+
+# next.js build outputs
+/.next/
+/out/
+
+# production
+/dist/
+/build/
+
+# misc system files
+.DS_Store
+Thumbs.db
+*.pem
+/audit_screenshots/
+
+# debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# local env and secret files (STRICTLY EXCLUDE ALL SECRETS)
+.env
+.env*.local
+.env.production
+.env.staging
+.env.test
+!.env.example
+
+# archives, database dumps & backups
+*.zip
+*.tar.gz
+*.tgz
+*.bak
+*.sql
+*.dump
+*.pdf
+/backups/
+docs/internal_archive/backups/
+docs/internal_archive/*.zip
+docs/internal_archive/*.pdf
+
+# vercel
+.vercel
+
+# typescript & caches
+*.tsbuildinfo
+next-env.d.ts
+.turbo/
+
+# prisma sqlite backups or temp sqlite files
+*.db
+*.db-journal
+
+# screenshots and internal archives
+screenshots/
+docs/internal_archive/
+scripts/gate-screenshots/
+
+# agent scratch, conversation logs & brain
+.system_generated/
+.gemini/
+brain/
+scratch/
+

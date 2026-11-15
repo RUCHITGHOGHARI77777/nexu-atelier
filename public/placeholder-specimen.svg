@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%" fill="none">
+  <rect width="800" height="800" fill="#F4F4F5"/>
+  <rect x="32" y="32" width="736" height="736" rx="16" stroke="#E4E4E7" stroke-width="1.5" stroke-dasharray="6 6"/>
+  <circle cx="400" cy="370" r="48" fill="#E4E4E7" stroke="#D4D4D8" stroke-width="1.5"/>
+  <path d="M386 370h28M400 356v28" stroke="#71717A" stroke-width="2" stroke-linecap="round"/>
+  <text x="400" y="455" text-anchor="middle" font-family="Georgia, serif" font-size="18" font-weight="600" fill="#18181B" letter-spacing="0.1em">NEXU ATELIER</text>
+  <text x="400" y="480" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" fill="#71717A" letter-spacing="0.05em">Studio Product Archive</text>
+</svg>
+

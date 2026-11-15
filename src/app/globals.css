@@ -1,0 +1,308 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Official NEXU Monochrome Master Design System Tokens */
+  --nexu-surface: #ffffff;
+  --nexu-canvas: #ffffff;
+  --nexu-secondary: #f7f7f7;
+  --nexu-section: #f7f7f7;
+  --nexu-text-primary: #111111;
+  --nexu-text-secondary: #666666;
+  --nexu-text-muted: #888888;
+  --nexu-border-main: #e7e7e7;
+  --nexu-border-strong: #d4d4d4;
+  --nexu-dark-surface: #171717;
+  --nexu-button-primary: #111111;
+  --nexu-button-text: #ffffff;
+
+  /* Limited functional status indicators */
+  --nexu-success: #166534;
+  --nexu-warning: #92400e;
+  --nexu-danger: #dc2626;
+
+  --background: #ffffff;
+  --foreground: #111111;
+
+  /* Specular Fluid Water Curves */
+  --fluid-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --fluid-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
+}
+
+body {
+  color: #111111;
+  background-color: #ffffff;
+  font-feature-settings: "rlig" 1, "calt" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- SPECULAR FLUID WATER GLASS PRIMITIVES --- */
+.liquid-glass-card {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid #e7e7e7;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  border-color: #111111;
+}
+
+.liquid-glass-surface {
+  background: #ffffff;
+  border: 1px solid #e7e7e7;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.liquid-glass-input {
+  background: #ffffff;
+  border: 1px solid #e7e7e7;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-input:focus {
+  background: #ffffff;
+  border-color: #111111;
+  box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.08);
+}
+
+/* Glass & Water Luxury UI Primitives */
+.glass-water {
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #e7e7e7;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.glass-water-subtle {
+  background: #f7f7f7;
+  border: 1px solid #e7e7e7;
+}
+
+.fluid-hover {
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.fluid-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+/* --- ANIMATED AMBIENT WATER BLOBS --- */
+@keyframes floatSlow1 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(40px, -30px) scale(1.08);
+  }
+}
+
+@keyframes floatSlow2 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(-35px, 25px) scale(1.06);
+  }
+}
+
+@keyframes floatSlow3 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(25px, 35px) scale(0.95);
+  }
+}
+
+@keyframes shrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+.animate-blob-1 {
+  animation: floatSlow1 18s ease-in-out infinite;
+}
+
+.animate-blob-2 {
+  animation: floatSlow2 22s ease-in-out infinite;
+}
+
+.animate-blob-3 {
+  animation: floatSlow3 26s ease-in-out infinite;
+}
+
+/* Accessible focus ring standards */
+:focus-visible {
+  outline: 2px solid #111111;
+  outline-offset: 2px;
+}
+
+/* Reduced-motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Refined crystal-clear water scrollbar */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+  border: 1px solid #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Dedicated Print Stylesheet for Official GST Tax Invoice */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm 10mm 12mm;
+  }
+
+  *,
+  *::before,
+  *::after {
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide all app chrome, navigation, floating controls, and simulator overlays */
+  header,
+  footer,
+  nav,
+  aside,
+  button,
+  .print\:hidden,
+  .no-print,
+  #evaluator-demo-bar,
+  #phone-simulator,
+  .floating-phone-simulator,
+  .floating-compare-bar,
+  [data-sonner-toaster],
+  .fixed,
+  body > div.fixed {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Display only main and printable invoice */
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* Printable invoice card resets for high-contrast crisp output */
+  .printable-invoice-card {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 1.5rem !important;
+    background: #ffffff !important;
+    border: 1.5px solid #0f172a !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .printable-invoice-card .text-slate-950,
+  .printable-invoice-card .text-slate-900,
+  .printable-invoice-card .text-slate-800 {
+    color: #0f172a !important;
+  }
+
+  .printable-invoice-card .text-slate-600,
+  .printable-invoice-card .text-slate-500 {
+    color: #334155 !important;
+  }
+
+  .printable-invoice-card .text-emerald-700,
+  .printable-invoice-card .text-emerald-800,
+  .printable-invoice-card .border-emerald-600 {
+    color: #047857 !important;
+    border-color: #047857 !important;
+  }
+
+  .printable-invoice-card .bg-slate-50,
+  .printable-invoice-card .bg-slate-100 {
+    background-color: #f8fafc !important;
+  }
+
+  .printable-invoice-card table,
+  .printable-invoice-card td,
+  .printable-invoice-card th {
+    border-collapse: collapse !important;
+  }
+
+  .printable-invoice-card .border-dashed {
+    border-style: dashed !important;
+    border-width: 2px !important;
+    opacity: 0.3 !important;
+  }
+}

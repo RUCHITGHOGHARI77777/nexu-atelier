@@ -1,0 +1,2653 @@
+"use client";
+
+import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import {
+  RegionCode,
+  RegionConfig,
+  REGIONS,
+  DEFAULT_REGION,
+  formatPriceRegional,
+  convertFromINR,
+} from "@/lib/currency";
+import { AppUser, getSavedAuthUser, saveAuthUserLocally } from "@/lib/firebase/firebaseAuthService";
+
+export type RoleType = "customer" | "supplier" | "admin";
+
+export interface SupplierInfo {
+  id: string;
+  name: string;
+  location: string;
+  rating: number;
+  fulfillmentRate: string;
+  verified: boolean;
+  payoutOnHold?: boolean;
+  joinedDate?: string;
+  totalProductsCount?: number;
+  totalSalesINR?: number;
+  slug?: string;
+  storeSlug?: string;
+  brandName?: string;
+  subdomain?: string;
+  customDomain?: string;
+  logoUrl?: string;
+  status?: "ACTIVE" | "PENDING_VERIFICATION" | "SUSPENDED";
+  story?: string;
+  heroImage?: string;
+  upiId?: string;
+  taxIdentifier?: string;
+  pickupAddress?: string;
+  returnWarehouse?: string;
+  theme?: {
+    accentColor: string;
+    bannerUrl?: string;
+    layoutMode: "flagship_minimal" | "nike_bold" | "apple_glass";
+    tagline?: string;
+  };
+  rbacMembers?: Array<{
+    id: string;
+    name: string;
+    email: string;
+    role: "OWNER" | "INVENTORY_MANAGER" | "FINANCE_CA" | "FULFILLMENT_STAFF";
+    status: "ACTIVE" | "INVITED";
+  }>;
+  paymentConfig?: {
+    directUpiId: string;
+    bankAccountName: string;
+    bankAccountNumber: string;
+    bankIfsc: string;
+    platformCommissionPercent: number; // 0%
+  };
+  shippingConfig?: {
+    mode: "SELF_DELIVERY_RIDER" | "SHIPROCKET_COURIER";
+    pickupHubAddress: string;
+    returnWarehouseAddress: string;
+    courierPartner: string;
+    awbAutoGenerate: boolean;
+  };
+  taxConfig?: {
+    gstin: string;
+    pan: string;
+    hsnCodeDefault: string;
+    cgstPercent: number;
+    sgstPercent: number;
+    igstPercent: number;
+  };
+}
+
+export interface ReviewItem {
+  id: string;
+  author: string;
+  rating: number;
+  date: string;
+  comment: string;
+  verified: boolean;
+}
+
+export interface StoreProduct {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  category: string;
+  price: number; // INR
+  mrpPrice: number; // INR
+  rating: number;
+  reviewCount: number;
+  stock: number;
+  badge?: string;
+  supplier: SupplierInfo;
+  images: string[];
+  colors?: { name: string; hex: string; image: string }[];
+  sizes?: string[];
+  specs: Record<string, string>;
+  reviews: ReviewItem[];
+  b2bMinMoq?: number;
+  customDiscount?: { type: "percent" | "flat"; value: number };
+  deliveryChargeMode?: "FREE" | "CUSTOM";
+  deliveryCharge?: number;
+  internalCosts?: {
+    sourcingCost: number;
+    packagingCost: number;
+    actualCourierCost: number;
+  };
+  warehouseLocation?: {
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  returnPolicy?: string;
+  storeId?: string;
+  storeSlug?: string;
+  sku?: string;
+  hsnCode?: string;
+  sizeStock?: Record<string, number>;
+  returnAddress?: string;
+}
+
+export interface ReturnLogisticsTimeline {
+  status: "NONE" | "REQUESTED" | "APPROVED" | "PICKED_UP" | "IN_TRANSIT" | "REFUNDED";
+  reason?: string;
+  returnRequestedAt?: string;
+  pickupScheduledAt?: string;
+  pickupRiderName?: string;
+  pickupRiderPhone?: string;
+  pickedUpAt?: string;
+  inTransitAt?: string;
+  receivedAtHubAt?: string;
+  refundedAt?: string;
+  refundUtr?: string;
+  refundAmount?: number;
+}
+
+export interface StoreCartItem {
+  id: string;
+  productId: string;
+  product: StoreProduct;
+  quantity: number;
+  selectedColor?: { name: string; hex: string };
+  selectedSize?: string;
+}
+
+export interface StoreOrder {
+  id: string;
+  items: StoreCartItem[];
+  total: number;
+  subtotal: number;
+  shippingFee: number;
+  taxAmount: number;
+  discount: number;
+  couponCode?: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  shippingAddress: {
+    fullName: string;
+    phone: string;
+    street: string;
+    apartment?: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  paymentMethod: string;
+  paymentDetails: {
+    method: string;
+    upiId?: string;
+    bankRef: string;
+    utrNumber: string;
+    paidAt: string;
+    status: string;
+  };
+  deliveryStage: number; // 1 to 5
+  deliveryStageName: string;
+  awbNumber: string;
+  courierPartner: string;
+  estimatedDelivery: string;
+  status: "CONFIRMED" | "PACKED" | "SHIPPED" | "OUT_FOR_DELIVERY" | "DELIVERED";
+  createdAt: string;
+  riderName?: string;
+  riderPhone?: string;
+  currentHubLocation?: string;
+  etaWindow?: string;
+  storeId?: string;
+  storeSlug?: string;
+  sellerAcceptedAt?: string;
+  sellerPickupAddress?: string;
+  sellerReturnAddress?: string;
+  outboundTimestamps?: {
+    placedAt: string;
+    packedAt?: string;
+    packingLocation?: string;
+    shippedAt?: string;
+    outForDeliveryAt?: string;
+    deliveredAt?: string;
+  };
+  returnLogistics?: ReturnLogisticsTimeline;
+}
+
+export interface ToastState {
+  show: boolean;
+  message: string;
+  type: "success" | "info" | "warning";
+}
+
+export interface ToastItem {
+  id: string;
+  message: string;
+  type: "success" | "info" | "warning";
+  timestamp: number;
+}
+
+export interface WhiteLabelConfig {
+  brandName: string;
+  brandSubtitle: string;
+  merchantUpiId: string;
+  gstinNumber: string;
+  platformCommissionRate: number; // e.g. 10 for 10%
+  accentColor: "blue" | "emerald" | "slate" | "amber";
+}
+
+export interface PlatformReview {
+  id: string;
+  type: "CUSTOMER" | "SELLER";
+  authorName: string;
+  authorCity: string;
+  ratingScore: number; // 1 to 10
+  headline: string;
+  comment: string;
+  date: string;
+  verified: boolean;
+  avatarUrl?: string;
+  productTitle?: string;
+  deliveryRating?: number;
+  qualityRating?: number;
+  savedCommissionINR?: number;
+  previousMarketplace?: string;
+  storeName?: string;
+}
+
+export const DEFAULT_WHITELABEL_CONFIG: WhiteLabelConfig = {
+  brandName: "NEXU ATELIER",
+  brandSubtitle: "Enterprise Multi-Vendor SaaS",
+  merchantUpiId: "nexu.atelier@icici",
+  gstinNumber: "27AABCN8942Q1Z9",
+  platformCommissionRate: 10,
+  accentColor: "blue",
+};
+
+export interface PhoneSimulatorData {
+  amount: number;
+  orderId?: string;
+  brandName?: string;
+  merchantUpiId?: string;
+  utrNumber?: string;
+  onApprove?: () => void;
+}
+
+export interface B2BQuoteRequest {
+  id: string;
+  productId: string;
+  productTitle: string;
+  productImage: string;
+  supplierId: string;
+  supplierName: string;
+  quantity: number;
+  targetPriceINR?: number;
+  companyName: string;
+  buyerName: string;
+  buyerEmail: string;
+  buyerPhone: string;
+  gstin?: string;
+  requirements: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  createdAt: string;
+}
+
+interface StoreContextType {
+  products: StoreProduct[];
+  cart: StoreCartItem[];
+  wishlist: string[];
+  orders: StoreOrder[];
+  b2bQuotes: B2BQuoteRequest[];
+  isB2BModalOpen: boolean;
+  b2bModalProduct: StoreProduct | null;
+  whiteLabelConfig: WhiteLabelConfig;
+  isPhoneSimulatorOpen: boolean;
+  phoneSimulatorData: PhoneSimulatorData | null;
+  activeRole: RoleType;
+  searchQuery: string;
+  selectedCategory: string;
+  sortBy: "featured" | "price-low" | "price-high" | "rating" | "discount";
+  priceRange: [number, number];
+  minRating: number;
+  quickViewProduct: StoreProduct | null;
+  toast: ToastState;
+  toasts: ToastItem[];
+  isCartDrawerOpen: boolean;
+  reviews: PlatformReview[];
+  platformOverallScore: number;
+  submitPlatformReview: (review: Omit<PlatformReview, "id" | "date" | "verified">) => void;
+  currentUser: AppUser | null;
+  setCurrentUser: (user: AppUser | null) => void;
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: (open: boolean) => void;
+  activeRegion: RegionConfig;
+  setActiveRegion: (code: RegionCode) => void;
+  formatPrice: (amountINR: number) => string;
+  convertPrice: (amountINR: number) => number;
+  updateWhiteLabelConfig: (config: Partial<WhiteLabelConfig>) => void;
+  resetWhiteLabelConfig: () => void;
+  openPhoneSimulator: (data: PhoneSimulatorData) => void;
+  closePhoneSimulator: () => void;
+  openB2BModal: (product: StoreProduct) => void;
+  closeB2BModal: () => void;
+  submitB2BQuote: (quote: Omit<B2BQuoteRequest, "id" | "status" | "createdAt">) => void;
+  updateB2BQuoteStatus: (quoteId: string, status: "APPROVED" | "REJECTED") => void;
+  setActiveRole: (role: RoleType) => void;
+  setSearchQuery: (q: string) => void;
+  setSelectedCategory: (cat: string) => void;
+  setSortBy: (sort: "featured" | "price-low" | "price-high" | "rating" | "discount") => void;
+  setPriceRange: (range: [number, number]) => void;
+  setMinRating: (r: number) => void;
+  setQuickViewProduct: (p: StoreProduct | null) => void;
+  setIsCartDrawerOpen: (open: boolean) => void;
+  addToCart: (product: StoreProduct, options?: { size?: string; color?: { name: string; hex: string }; quantity?: number }) => void;
+  removeFromCart: (itemId: string) => void;
+  updateCartQuantity: (itemId: string, quantity: number) => void;
+  clearCart: () => void;
+  toggleWishlist: (productId: string) => void;
+  isInWishlist: (productId: string) => boolean;
+  showToast: (message: string, type?: "success" | "info" | "warning") => void;
+  dismissToast: (id: string) => void;
+  addOrder: (order: StoreOrder) => void;
+  advanceOrderDeliveryStage: (orderId: string) => { currentStage: number; stageName: string };
+  getOrderById: (orderId: string) => StoreOrder | undefined;
+  suppliers: SupplierInfo[];
+  addProduct: (product: Omit<StoreProduct, "id" | "slug" | "rating" | "reviewCount"> & { rating?: number; reviewCount?: number }) => StoreProduct;
+  updateProductStock: (productId: string, newStock: number) => void;
+  updateProductPrice: (productId: string, newPrice: number) => void;
+  toggleProductStatus: (productId: string) => void;
+  toggleSupplierVerification: (supplierId: string) => void;
+  toggleSupplierPayoutHold: (supplierId: string) => void;
+  markOrderDispatched: (orderId: string) => void;
+  acceptSellerOrder: (orderId: string) => void;
+  rejectSellerOrder: (orderId: string, reason?: string) => void;
+  dispatchSellerOrder: (orderId: string, deliveryDetails: { mode: "self" | "courier"; partner: string; trackingRef: string }) => void;
+  markSellerOrderOutForDelivery: (orderId: string) => void;
+  markSellerOrderDelivered: (orderId: string) => void;
+  generateShippingManifest: (orderId: string) => { awb: string; manifestId: string; generatedAt: string };
+  initiateOrderReturn: (orderId: string, reason: string) => void;
+  advanceOrderReturnStage: (orderId: string) => void;
+  assignOrderRider: (orderId: string, riderName: string, riderPhone: string, hubLocation?: string) => void;
+  updateOrderEta: (orderId: string, etaWindow: string) => void;
+  clusterTier: "STANDARD_100GB" | "ENTERPRISE_1TB";
+  upgradeDatabaseCluster: () => void;
+  resetDatabaseCluster: () => void;
+  loadSampleOrders: () => void;
+  resetDemoData: () => void;
+  filteredProducts: StoreProduct[];
+  cartTotalCount: number;
+  cartSubtotal: number;
+}
+
+export const PRELOADED_PRODUCTS: StoreProduct[] = [
+  {
+    id: "prod_elec_01",
+    slug: "sony-wh-1000xm5-studio-wireless-headphones",
+    title: "Sony WH-1000XM5 Studio Wireless Noise-Cancelling Headphones",
+    subtitle: "Flagship 30mm Carbon Drivers with Dual QN1 Noise Processors",
+    description: "Industry-leading active noise cancellation powered by two processors and eight microphones. Features precision voice pickup, LDAC Hi-Res Wireless Audio, and ultra-comfortable soft-fit leather headband for marathon production sessions.",
+    category: "Electronics",
+    price: 26990,
+    mrpPrice: 34990,
+    rating: 4.9,
+    reviewCount: 428,
+    stock: 8,
+    badge: "Best Seller",
+    supplier: {
+      id: "sup_voxel",
+      name: "Voxel Acoustics Tokyo",
+      location: "Tokyo / Mumbai Air Cargo Hub",
+      rating: 4.98,
+      fulfillmentRate: "99.8%",
+      verified: true,
+    },
+    images: [
+      "/products/sony-wh-1000xm5-studio-wireless-headphones/1.jpg",
+      "/products/sony-wh-1000xm5-studio-wireless-headphones/2.jpg",
+      "/products/sony-wh-1000xm5-studio-wireless-headphones/3.jpg",
+    ],
+    colors: [
+      { name: "Silver Alabaster", hex: "#E2E8F0", image: "/products/sony-wh-1000xm5-studio-wireless-headphones/1.jpg" },
+      { name: "Matte Obsidian", hex: "#0F172A", image: "/products/sony-wh-1000xm5-studio-wireless-headphones/2.jpg" },
+      { name: "Midnight Navy", hex: "#1E293B", image: "/products/sony-wh-1000xm5-studio-wireless-headphones/3.jpg" },
+    ],
+    specs: {
+      "Battery Life": "30 Hours ANC Active (Quick Charge: 3min = 3hrs)",
+      "Driver Unit": "30mm Precision Engineered Carbon Fiber",
+      "Frequency Response": "4Hz - 40,000Hz (Hi-Res Audio Certified)",
+      "Bluetooth": "v5.2 with Multipoint Connect (2 Devices)",
+      "Warranty": "2 Years Official Manufacturer Warranty",
+    },
+    reviews: [
+      {
+        id: "rev_1",
+        author: "Devang M.",
+        rating: 5,
+        date: "2 days ago",
+        comment: "The noise cancellation creates an absolute bubble of silence in Mumbai traffic. Pristine soundstage.",
+        verified: true,
+      },
+      {
+        id: "rev_2",
+        author: "Kavita S.",
+        rating: 5,
+        date: "1 week ago",
+        comment: "Flawless build quality. Packaging was immaculate with double bubble-wrap.",
+        verified: true,
+      },
+    ],
+  },
+  {
+    id: "prod_elec_02",
+    slug: "apple-macbook-air-m3-15-inch-liquid-retina",
+    title: "Apple MacBook Air M3 15-Inch Liquid Retina (Midnight)",
+    subtitle: "8-Core CPU, 10-Core GPU, 16GB Unified Memory, 512GB SSD",
+    description: "Strikingly thin design with the lightning-fast M3 chip. Delivers up to 18 hours of battery life, expansive 15.3-inch Liquid Retina display with 500 nits brightness, MagSafe 3 charging, and 1080p FaceTime HD camera.",
+    category: "Electronics",
+    price: 124900,
+    mrpPrice: 134900,
+    rating: 4.95,
+    reviewCount: 310,
+    stock: 4,
+    badge: "Only 4 Left",
+    supplier: {
+      id: "sup_aerotech",
+      name: "AeroTech Systems Mumbai",
+      location: "Bandra Kurla Complex, Mumbai",
+      rating: 4.95,
+      fulfillmentRate: "100%",
+      verified: true,
+    },
+    images: [
+      "/products/apple-macbook-air-m3-15-inch-liquid-retina/1.jpg",
+      "/products/apple-macbook-air-m3-15-inch-liquid-retina/2.jpg",
+      "/products/apple-macbook-air-m3-15-inch-liquid-retina/3.jpg",
+    ],
+    colors: [
+      { name: "Midnight", hex: "#182232", image: "/products/apple-macbook-air-m3-15-inch-liquid-retina/1.jpg" },
+      { name: "Starlight", hex: "#F3EEE7", image: "/products/apple-macbook-air-m3-15-inch-liquid-retina/2.jpg" },
+      { name: "Space Grey", hex: "#64748B", image: "/products/apple-macbook-air-m3-15-inch-liquid-retina/3.jpg" },
+    ],
+    specs: {
+      "Processor": "Apple M3 Chip (8-Core CPU / 10-Core GPU)",
+      "Memory": "16GB High-Bandwidth Unified Memory",
+      "Storage": "512GB High-Speed NVMe Solid State Drive",
+      "Display": "15.3-inch Liquid Retina Display with True Tone",
+      "Weight": "1.51 kg Ultra-Portable Aluminum Unibody",
+    },
+    reviews: [
+      {
+        id: "rev_3",
+        author: "Rohan V.",
+        rating: 5,
+        date: "3 days ago",
+        comment: "Silent fanless thermals. Handles Docker, Next.js builds, and 4K Figma files without breaking a sweat.",
+        verified: true,
+      },
+    ],
+  },
+  {
+    id: "prod_elec_03",
+    slug: "keychron-q1-pro-wireless-custom-mechanical-keyboard",
+    title: "Keychron Q1 Pro Wireless QMK Custom Mechanical Keyboard",
+    subtitle: "Full CNC Anodized Aluminum Body with Hot-Swappable Gateron Jupiter Bananas",
+    description: "Engineered for keyboard purists. Features double-gasket acoustic mount design, south-facing RGB illumination, screw-in PCB stabilizers, and seamless macOS & Windows toggle with custom VIA key-remapping.",
+    category: "Electronics",
+    price: 16499,
+    mrpPrice: 19999,
+    rating: 4.85,
+    reviewCount: 194,
+    stock: 12,
+    badge: "Architect Favorite",
+    supplier: {
+      id: "sup_keeb",
+      name: "Studio Keeb Works",
+      location: "Bengaluru Tech Corridor",
+      rating: 4.9,
+      fulfillmentRate: "99.2%",
+      verified: true,
+    },
+    images: [
+      "/products/keychron-q1-pro-wireless-custom-mechanical-keyboard/1.jpg",
+      "/products/keychron-q1-pro-wireless-custom-mechanical-keyboard/2.jpg",
+      "/products/keychron-q1-pro-wireless-custom-mechanical-keyboard/3.jpg",
+    ],
+    colors: [
+      { name: "Silver Grey", hex: "#94A3B8", image: "/products/keychron-q1-pro-wireless-custom-mechanical-keyboard/1.jpg" },
+      { name: "Carbon Black", hex: "#0F172A", image: "/products/keychron-q1-pro-wireless-custom-mechanical-keyboard/2.jpg" },
+    ],
+    specs: {
+      "Case Material": "6063 Precision CNC Machined Aluminum",
+      "Switch Type": "Pre-lubed Gateron Jupiter Banana (Tactile 59gf)",
+      "Keycaps": "KSA Profile Double-Shot PBT (Oil Resistant)",
+      "Battery": "4000mAh Rechargable (Up to 300 Hours)",
+      "Connectivity": "Bluetooth 5.1 / 1000Hz Type-C Wired",
+    },
+    reviews: [
+      {
+        id: "rev_4",
+        author: "Arjun K.",
+        rating: 5,
+        date: "5 days ago",
+        comment: "The heavy aluminum weight prevents any desk sliding. The deep acoustic thock is intoxicating.",
+        verified: true,
+      },
+    ],
+  },
+
+  {
+    id: "prod_fash_01",
+    slug: "loom-spindle-100-mulberry-raw-silk-kimono-jacket",
+    title: "Loom & Spindle 100% Mulberry Raw Silk Minimalist Kimono Jacket",
+    subtitle: "Hand-Spun Natural Ahimsa Silk with Architectural Drop Shoulder",
+    description: "Crafted by master handloom weavers in Jaipur. Tailored from undyed, chemical-free mulberry silk with natural slub textures, deep interior pockets, and self-tying minimalist waistband.",
+    category: "Fashion & Apparel",
+    price: 8499,
+    mrpPrice: 12999,
+    rating: 4.92,
+    reviewCount: 187,
+    stock: 5,
+    badge: "35% OFF",
+    supplier: {
+      id: "sup_solstice",
+      name: "Solstice Loom Heritage Jaipur",
+      location: "Jaipur Handloom Cluster",
+      rating: 4.97,
+      fulfillmentRate: "100%",
+      verified: true,
+    },
+    images: [
+      "/products/loom-spindle-100-mulberry-raw-silk-kimono-jacket/1.jpg",
+    ],
+    sizes: ["S", "M", "L", "XL"],
+    colors: [
+      { name: "Raw Ecru", hex: "#FAF8F5", image: "/products/loom-spindle-100-mulberry-raw-silk-kimono-jacket/1.jpg" },
+      { name: "Mineral Sage", hex: "#CBD5E1", image: "/products/loom-spindle-100-mulberry-raw-silk-kimono-jacket/1.jpg" },
+    ],
+    specs: {
+      "Fabric Composition": "100% Organic Peace Silk (Ahimsa)",
+      "Weave Type": "Single-Thread Pit-Loom Handloom Weave",
+      "Dye": "Zero Harsh Chemicals • Certified Botanical Extracts",
+      "Fit": "Relaxed Architectural Genderless Cut",
+      "Care Instructions": "Dry Clean Recommended or Cold Silk Wash",
+    },
+    reviews: [
+      {
+        id: "rev_5",
+        author: "Meera D.",
+        rating: 5,
+        date: "Yesterday",
+        comment: "Drapes like water. The natural raw silk texture looks stunning in gallery light.",
+        verified: true,
+      },
+    ],
+  },
+  {
+    id: "prod_fash_02",
+    slug: "heritage-hand-knitted-merino-wool-turtleneck-sweater",
+    title: "Heritage Hand-Knitted Merino Wool Turtleneck Sweater (Oatmeal)",
+    subtitle: "19.5 Micron Extra-Fine Australian Wool Spun in Kashmir",
+    description: "An everyday luxury layer. Ultra-soft against bare skin with zero itchiness, thermal breathability, raglan sleeve detailing, and ribbed cuffs that retain shape through years of wear.",
+    category: "Fashion & Apparel",
+    price: 4299,
+    mrpPrice: 6499,
+    rating: 4.88,
+    reviewCount: 240,
+    stock: 9,
+    badge: "Trending Piece",
+    supplier: {
+      id: "sup_kashmir",
+      name: "Kashmir Loom Collective",
+      location: "Srinagar Craft Hub",
+      rating: 4.92,
+      fulfillmentRate: "98.9%",
+      verified: true,
+    },
+    images: [
+      "/products/heritage-hand-knitted-merino-wool-turtleneck-sweater/1.jpg",
+    ],
+    sizes: ["S", "M", "L", "XL"],
+    colors: [
+      { name: "Oatmeal Heather", hex: "#E2E8F0", image: "/products/heritage-hand-knitted-merino-wool-turtleneck-sweater/1.jpg" },
+      { name: "Charcoal Slate", hex: "#334155", image: "/products/heritage-hand-knitted-merino-wool-turtleneck-sweater/1.jpg" },
+    ],
+    specs: {
+      "Yarn Weight": "2-Ply Extra-Fine Grade Merino Wool",
+      "Gauge": "7-Gauge Fisherman Knit",
+      "Temperature Range": "Comfortable from 5°C to 20°C",
+      "Origin": "Srinagar Heritage Weavers Collective",
+    },
+    reviews: [
+      {
+        id: "rev_6",
+        author: "Aman T.",
+        rating: 5,
+        date: "3 days ago",
+        comment: "Genuinely doesn't itch. Fits true to size with an elevated studio profile.",
+        verified: true,
+      },
+    ],
+  },
+  {
+    id: "prod_fash_03",
+    slug: "artisan-full-grain-italian-leather-weekender-duffle",
+    title: "Artisan Full-Grain Italian Leather Weekender Travel Duffle",
+    subtitle: "Vegetable-Tanned Tuscan Calfskin with Solid Antiqued Brass Hardware",
+    description: "Built for a lifetime of exploration. Features Japanese YKK Excella zippers, reinforced double-riveted handles, water-resistant waxed canvas lining, and a dedicated ventilated footwear compartment.",
+    category: "Fashion & Apparel",
+    price: 14999,
+    mrpPrice: 21999,
+    rating: 4.96,
+    reviewCount: 165,
+    stock: 3,
+    badge: "Only 3 Left",
+    supplier: {
+      id: "vnd_monolith_guild",
+      name: "Monolith Leather Guild",
+      location: "Agra & Florence",
+      rating: 4.9,
+      fulfillmentRate: "100%",
+      verified: true,
+      slug: "monolith-leather-guild",
+    },
+    storeSlug: "monolith-leather-guild",
+    images: [
+      "/products/artisan-full-grain-italian-leather-weekender-duffle/1.jpg",
+    ],
+    colors: [
+      { name: "Saddle Tan", hex: "#B45309", image: "/products/artisan-full-grain-italian-leather-weekender-duffle/1.jpg" },
+      { name: "Espresso Brown", hex: "#451A03", image: "/products/artisan-full-grain-italian-leather-weekender-duffle/1.jpg" },
+    ],
+    specs: {
+      "Leather Grade": "Grade-A Full-Grain Vegetable-Tanned Cowhide",
+      "Dimensions": "52cm x 28cm x 26cm (IATA Cabin Compliant)",
+      "Capacity": "42 Liters Optimal Weekend Packing",
+      "Hardware": "100% Solid Brass in Antique Finish",
+    },
+    reviews: [
+      {
+        id: "rev_7",
+        author: "Siddharth R.",
+        rating: 5,
+        date: "4 days ago",
+        comment: "The leather smells amazing and develops an incredible patina with every trip.",
+        verified: true,
+      },
+    ],
+  },
+
+  {
+    id: "prod_home_01",
+    slug: "baratza-encore-esp-conical-burr-precision-espresso-grinder",
+    title: "Baratza Encore ESP Conical Burr Precision Espresso Grinder",
+    subtitle: "M2 40mm Hardened Steel Burrs with High-Resolution Micro-Steps",
+    description: "The gold standard for home baristas. Engineered with macro and micro adjustment steps for dialed-in espresso down to 15 microns, with low grind retention and anti-static dosing cup.",
+    category: "Home & Kitchen",
+    price: 18990,
+    mrpPrice: 23500,
+    rating: 4.9,
+    reviewCount: 312,
+    stock: 6,
+    badge: "Barista Choice",
+    supplier: {
+      id: "vnd_craft_coffee",
+      name: "Craft Coffee Gear",
+      location: "Berlin & Bengaluru Hub",
+      rating: 4.96,
+      fulfillmentRate: "99.5%",
+      verified: true,
+      slug: "craft-coffee-gear",
+    },
+    storeSlug: "craft-coffee-gear",
+    images: [
+      "/products/baratza-encore-esp-conical-burr-precision-espresso-grinder/1.jpg",
+      "/products/baratza-encore-esp-conical-burr-precision-espresso-grinder/2.jpg",
+      "/products/baratza-encore-esp-conical-burr-precision-espresso-grinder/3.jpg",
+    ],
+    colors: [
+      { name: "Matte Alabaster", hex: "#FFFFFF", image: "/products/baratza-encore-esp-conical-burr-precision-espresso-grinder/1.jpg" },
+      { name: "Pitch Black", hex: "#0F172A", image: "/products/baratza-encore-esp-conical-burr-precision-espresso-grinder/2.jpg" },
+    ],
+    specs: {
+      "Burrs": "Liechtenstein 40mm Conical M2 Steel Burrs",
+      "Grind Range": "200 to 1200 Microns (Espresso to French Press)",
+      "Motor": "High Torque DC Motor with Thermal Overload Cutoff",
+      "Hopper Capacity": "300g Whole Roasted Coffee Beans",
+    },
+    reviews: [
+      {
+        id: "rev_8",
+        author: "Pranay N.",
+        rating: 5,
+        date: "1 week ago",
+        comment: "Dialing in light roasts on my Gaggia Classic took only 2 shots. Uniform particle distribution.",
+        verified: true,
+      },
+    ],
+  },
+  {
+    id: "prod_home_02",
+    slug: "aesthetic-hand-poured-ceramic-table-lamp-with-linen-shade",
+    title: "Aesthetic Hand-Poured Ceramic Table Lamp with Linen Shade",
+    subtitle: "Wheel-Thrown Stoneware Base with Raw Mineral Glaze & Dimmable LED",
+    description: "Each lamp is individually hand-thrown by ceramicists in Khurja. Paired with a warm woven linen drum shade that diffuses an ambient, soothing 2700K golden glow across desks and living spaces.",
+    category: "Home & Kitchen",
+    price: 3799,
+    mrpPrice: 5499,
+    rating: 4.82,
+    reviewCount: 94,
+    stock: 11,
+    badge: "Handcrafted",
+    supplier: {
+      id: "vnd_nordic_form",
+      name: "Nordic Form Atelier",
+      location: "Copenhagen & Moradabad",
+      rating: 4.89,
+      fulfillmentRate: "98.7%",
+      verified: true,
+      slug: "nordic-form-atelier",
+    },
+    storeSlug: "nordic-form-atelier",
+    images: [
+      "/products/aesthetic-hand-poured-ceramic-table-lamp-with-linen-shade/1.jpg",
+      "/products/aesthetic-hand-poured-ceramic-table-lamp-with-linen-shade/2.jpg",
+    ],
+    colors: [
+      { name: "Speckled Sand", hex: "#F1F5F9", image: "/products/aesthetic-hand-poured-ceramic-table-lamp-with-linen-shade/1.jpg" },
+      { name: "Terracotta Earth", hex: "#C2410C", image: "/products/aesthetic-hand-poured-ceramic-table-lamp-with-linen-shade/2.jpg" },
+    ],
+    specs: {
+      "Base Material": "High-Fired 1280°C Ceramic Stoneware",
+      "Shade Material": "Natural Organic Belgian Linen",
+      "Switch": "In-line Solid Brass Stepless Dimmer Wheel",
+      "Bulb Type": "Warm 2700K Filament LED Included (E27 Socket)",
+    },
+    reviews: [
+      {
+        id: "rev_9",
+        author: "Ananya S.",
+        rating: 5,
+        date: "5 days ago",
+        comment: "The organic ceramic imperfections give it so much architectural warmth.",
+        verified: true,
+      },
+    ],
+  },
+  {
+    id: "prod_home_03",
+    slug: "kurogane-hand-forged-damascus-vg10-chef-santoku-knife",
+    title: "Kurogane Hand-Forged Damascus VG-10 Chef Santoku Knife",
+    subtitle: "67-Layer Hammered Tsuchime Damascus Steel with Octagonal Ebony Handle",
+    description: "Forged in the historic blade city of Seki. Features a Japanese VG-10 super-steel core hardened to 60-62 HRC for razor edge retention, paired with a moisture-resistant buffalo horn bolster.",
+    category: "Home & Kitchen",
+    price: 9499,
+    mrpPrice: 13999,
+    rating: 4.98,
+    reviewCount: 410,
+    stock: 4,
+    badge: "Only 4 Left",
+    supplier: {
+      id: "vnd_kurogane_cutlery",
+      name: "Kurogane Seki Cutlery",
+      location: "Seki & Moradabad Hub",
+      rating: 4.99,
+      fulfillmentRate: "100%",
+      verified: true,
+      slug: "kurogane-cutlery-works",
+    },
+    storeSlug: "kurogane-cutlery-works",
+    images: [
+      "/products/kurogane-hand-forged-damascus-vg10-chef-santoku-knife/1.jpg",
+      "/products/kurogane-hand-forged-damascus-vg10-chef-santoku-knife/2.jpg",
+      "/products/kurogane-hand-forged-damascus-vg10-chef-santoku-knife/3.jpg",
+    ],
+    specs: {
+      "Core Steel": "Takefu VG-10 Cobalt Alloy Stainless Steel",
+      "Cladding": "67-Layer High-Carbon Damascus Pattern",
+      "Hardness": "61 ± 1 HRC (Rockwell Scale)",
+      "Edge Angle": "15° Honbazuke Hand-Sharpened Razor Edge",
+      "Handle": "Traditional Japanese Wa-Style Octagonal Ebony Wood",
+    },
+    reviews: [
+      {
+        id: "rev_10",
+        author: "Chef Vikram",
+        rating: 5,
+        date: "2 days ago",
+        comment: "Glides through ripe tomatoes with zero pressure. Perfectly balanced at the pinch grip.",
+        verified: true,
+      },
+    ],
+  },
+
+  {
+    id: "prod_b2b_01",
+    slug: "wholesale-case-matte-amber-glass-apothecary-bottles-500ml",
+    title: "Wholesale Case (x50): Matte Amber Glass Apothecary Bottles (500ml)",
+    subtitle: "Pack of 50 Heavyweight UV-Blocking Bottles with Black Pump Dispensers",
+    description: "Designed for premium boutique cosmetics, hotel amenities, and botanical labs. Thickened lead-free soda-lime glass protects light-sensitive serums. Includes GST tax invoice for 18% input credit.",
+    category: "B2B Wholesale Packs",
+    price: 12500,
+    mrpPrice: 18000,
+    rating: 4.9,
+    reviewCount: 88,
+    stock: 40,
+    badge: "B2B Bulk Price",
+    b2bMinMoq: 1,
+    supplier: {
+      id: "vnd_apothecary_glass",
+      name: "Apothecary Glass Solutions",
+      location: "Firozabad Glass Quarter, India",
+      rating: 4.94,
+      fulfillmentRate: "99.8%",
+      verified: true,
+      slug: "apothecary-glass-packaging",
+    },
+    storeSlug: "apothecary-glass-packaging",
+    images: [
+      "/products/wholesale-case-matte-amber-glass-apothecary-bottles-500ml/1.jpg",
+      "/products/wholesale-case-matte-amber-glass-apothecary-bottles-500ml/2.jpg",
+    ],
+    specs: {
+      "Pack Quantity": "50 Glass Bottles + 50 Matte Black Lotion Pumps",
+      "Capacity per Unit": "500ml (16.9 oz) Standard Volume",
+      "Neck Finish": "28/410 Leakproof Thread Specification",
+      "UV Protection": "99% Protection against UV Degradation",
+      "B2B Pricing": "₹250 per piece (vs ₹360 retail standard)",
+    },
+    reviews: [
+      {
+        id: "rev_11",
+        author: "Aura Botanicals Ltd.",
+        rating: 5,
+        date: "1 week ago",
+        comment: "Zero breakage across 4 cases shipped to Bangalore. Excellent industrial pallet boxing.",
+        verified: true,
+      },
+    ],
+  },
+  {
+    id: "prod_b2b_02",
+    slug: "bulk-artisan-linen-tote-bags-pack-of-100",
+    title: "Bulk Artisan Linen Tote Bags (Pack of 100 Units)",
+    subtitle: "Heavyweight 380 GSM Organic Cotton-Linen with Reinforced X-Stitched Handles",
+    description: "Wholesale procurement for retail brands, architectural galleries, and corporate gifting. Features wide gusset base, interior zippered phone pocket, and unprinted canvas ready for custom branding.",
+    category: "B2B Wholesale Packs",
+    price: 19800,
+    mrpPrice: 28500,
+    rating: 4.94,
+    reviewCount: 142,
+    stock: 25,
+    badge: "GST Input Ready",
+    b2bMinMoq: 1,
+    supplier: {
+      id: "sup_ecoweave",
+      name: "EcoWeave Textiles Ahmedabad",
+      location: "Ahmedabad Textile SEZ",
+      rating: 4.93,
+      fulfillmentRate: "100%",
+      verified: true,
+    },
+    images: [
+      "/products/bulk-artisan-linen-tote-bags-pack-of-100/1.jpg",
+      "/products/bulk-artisan-linen-tote-bags-pack-of-100/2.jpg",
+    ],
+    specs: {
+      "Case Quantity": "100 Heavyweight Finished Tote Bags",
+      "Fabric Weight": "380 GSM Heavy Cotton-Linen Canvas",
+      "Dimensions": "42cm Height x 38cm Width x 12cm Base Gusset",
+      "Carrying Capacity": "Tested for up to 18kg per bag",
+      "B2B Unit Rate": "₹198 per tote bag (Wholesale Direct)",
+    },
+    reviews: [
+      {
+        id: "rev_12",
+        author: "Kala Academy",
+        rating: 5,
+        date: "3 days ago",
+        comment: "Ordered for our design summit. The stitching quality and handle thickness exceeded our expectation.",
+        verified: true,
+      },
+    ],
+  },
+  {
+    id: "prod_b2b_03",
+    slug: "master-acoustic-bass-trap-panels-bundle-of-24",
+    title: "Master Acoustic Bass Trap Panels (Industrial Bundle of 24 Units)",
+    subtitle: "High-Density Rockwool Core with Fire-Retardant Acoustic Fabric (NRC 0.95)",
+    description: "Enterprise acoustic absorption treatment for commercial sound recording studios, podcast studios, and listening rooms. Targets troublesome low-frequency modal resonance between 60Hz and 250Hz.",
+    category: "B2B Wholesale Packs",
+    price: 48000,
+    mrpPrice: 65000,
+    rating: 4.96,
+    reviewCount: 67,
+    stock: 8,
+    badge: "Only 8 Left",
+    b2bMinMoq: 1,
+    supplier: {
+      id: "vnd_voxel_audio",
+      name: "Voxel Acoustic Dynamics",
+      location: "Bangalore & Tokyo",
+      rating: 4.97,
+      fulfillmentRate: "99.0%",
+      verified: true,
+      slug: "voxel-acoustic-dynamics",
+    },
+    storeSlug: "voxel-acoustic-dynamics",
+    images: [
+      "/products/master-acoustic-bass-trap-panels-bundle-of-24/1.jpg",
+      "/products/master-acoustic-bass-trap-panels-bundle-of-24/2.jpg",
+    ],
+    specs: {
+      "Bundle Quantity": "24 Professional Wall & Corner Acoustic Panels",
+      "Acoustic Rating": "Noise Reduction Coefficient (NRC) 0.95 Tested",
+      "Dimensions per Unit": "60cm x 60cm x 10cm Depth",
+      "Fire Safety": "Class A Fire-Retardant Certified ASTM E84",
+      "Mounting Hardware": "Industrial Z-Clips & Wall Anchors Included",
+    },
+    reviews: [
+      {
+        id: "rev_13",
+        author: "Studio Resonance",
+        rating: 5,
+        date: "2 weeks ago",
+        comment: "Tamed the low-end resonance in our Dolby Atmos mix room immediately. Measurement graphs don't lie.",
+        verified: true,
+      },
+    ],
+  },
+];
+
+export const INITIAL_SUPPLIERS: SupplierInfo[] = [
+  {
+    id: "sup_jaipur_01",
+    name: "Jaipur Heritage Handlooms",
+    brandName: "Jaipur Heritage Handlooms",
+    slug: "jaipur-heritage-handlooms",
+    storeSlug: "jaipur-heritage-handlooms",
+    subdomain: "jaipur-handlooms.nexu.store",
+    location: "Jaipur Central Crafts Zone, Rajasthan",
+    rating: 4.98,
+    fulfillmentRate: "99.9%",
+    verified: true,
+    payoutOnHold: false,
+    joinedDate: "15 Oct 2024",
+    totalProductsCount: 18,
+    totalSalesINR: 1489200,
+    upiId: "jaipurhandlooms@icici",
+    taxIdentifier: "08AABCH1234J1ZV",
+    pickupAddress: "Workshop 14, Weavers Colony, Sanganer, Jaipur, RJ — 302029",
+    returnWarehouse: "Central Logistics Hub, Gate 2, Sanganer Industrial Area, Jaipur, RJ — 302029",
+    theme: {
+      accentColor: "#4F46E5",
+      bannerUrl: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1600&q=80",
+      layoutMode: "apple_glass",
+      tagline: "Authentic Museum-Grade Handloom & Natural Mulberry Silk Artisans",
+    },
+    rbacMembers: [
+      { id: "mem_01", name: "Devendra Rathore", email: "devendra@jaipurhandlooms.in", role: "OWNER", status: "ACTIVE" },
+      { id: "mem_02", name: "Bhanwar Singh", email: "inventory@jaipurhandlooms.in", role: "INVENTORY_MANAGER", status: "ACTIVE" },
+      { id: "mem_03", name: "Ramesh Sharma, FCA", email: "ca.ramesh@auditfirm.in", role: "FINANCE_CA", status: "ACTIVE" },
+      { id: "mem_04", name: "Kailash Gurjar", email: "dispatch@jaipurhandlooms.in", role: "FULFILLMENT_STAFF", status: "ACTIVE" },
+    ],
+    paymentConfig: {
+      directUpiId: "jaipurhandlooms@icici",
+      bankAccountName: "Jaipur Heritage Handlooms Enterprises",
+      bankAccountNumber: "001205008912",
+      bankIfsc: "ICIC0000012",
+      platformCommissionPercent: 0,
+    },
+    shippingConfig: {
+      mode: "SHIPROCKET_COURIER",
+      pickupHubAddress: "Workshop 14, Weavers Colony, Sanganer, Jaipur, RJ — 302029",
+      returnWarehouseAddress: "Central Logistics Hub, Gate 2, Sanganer, Jaipur, RJ — 302029",
+      courierPartner: "Blue Dart Air Priority",
+      awbAutoGenerate: true,
+    },
+    taxConfig: {
+      gstin: "08AABCH1234J1ZV",
+      pan: "AABCH1234J",
+      hsnCodeDefault: "5208",
+      cgstPercent: 2.5,
+      sgstPercent: 2.5,
+      igstPercent: 5.0,
+    },
+  },
+  {
+    id: "sup_ceramics",
+    name: "Atelier Ceramics Khurja",
+    brandName: "Atelier Ceramics Khurja",
+    slug: "atelier-ceramics-khurja",
+    storeSlug: "atelier-ceramics-khurja",
+    subdomain: "khurjaceramics.nexu.store",
+    location: "Khurja Potteries Cluster, Uttar Pradesh",
+    rating: 4.93,
+    fulfillmentRate: "98.7%",
+    verified: true,
+    payoutOnHold: false,
+    joinedDate: "05 Dec 2024",
+    totalProductsCount: 15,
+    totalSalesINR: 295000,
+    upiId: "khurjaceramics@barodampay",
+    taxIdentifier: "09AABCK5678M1ZQ",
+    pickupAddress: "Kiln 8, Potteries Road, GT Road Industrial Zone, Khurja, UP — 203131",
+    returnWarehouse: "Atelier QC Return Facility, Shed B, Khurja, UP — 203131",
+    theme: {
+      accentColor: "#059669",
+      bannerUrl: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=1600&q=80",
+      layoutMode: "flagship_minimal",
+      tagline: "Fine Glazed Stoneware & High-Fire Terracotta Vessels",
+    },
+    rbacMembers: [
+      { id: "mem_k01", name: "Rajesh Pal", email: "rajesh@khurjaceramics.in", role: "OWNER", status: "ACTIVE" },
+      { id: "mem_k02", name: "Sunil Pal", email: "dispatch@khurjaceramics.in", role: "FULFILLMENT_STAFF", status: "ACTIVE" },
+    ],
+    paymentConfig: {
+      directUpiId: "khurjaceramics@barodampay",
+      bankAccountName: "Rajesh Pal Pottery Works",
+      bankAccountNumber: "09810100045231",
+      bankIfsc: "BARB0KHURJA",
+      platformCommissionPercent: 0,
+    },
+    shippingConfig: {
+      mode: "SELF_DELIVERY_RIDER",
+      pickupHubAddress: "Kiln 8, Potteries Road, Khurja, UP — 203131",
+      returnWarehouseAddress: "Atelier QC Return Facility, Shed B, Khurja, UP — 203131",
+      courierPartner: "Delhivery Surface Safe",
+      awbAutoGenerate: true,
+    },
+    taxConfig: {
+      gstin: "09AABCK5678M1ZQ",
+      pan: "AABCK5678M",
+      hsnCodeDefault: "6912",
+      cgstPercent: 6.0,
+      sgstPercent: 6.0,
+      igstPercent: 12.0,
+    },
+  },
+  {
+    id: "sup_apex",
+    name: "Apex Electronics Hub",
+    brandName: "Apex Electronics Hub",
+    slug: "apex-electronics-hub",
+    storeSlug: "apex-electronics-hub",
+    subdomain: "apexelectronics.nexu.store",
+    location: "Bangalore Tech Corridor, KA",
+    rating: 4.96,
+    fulfillmentRate: "99.8%",
+    verified: true,
+    payoutOnHold: false,
+    joinedDate: "12 Jan 2025",
+    totalProductsCount: 14,
+    totalSalesINR: 489200,
+    upiId: "apexops@hdfcbank",
+    taxIdentifier: "29AABCA9012E1ZU",
+    pickupAddress: "Building 4, Electronic City Phase 1, Bangalore, KA — 560100",
+    returnWarehouse: "Logistics Hub East, Whitefield, Bangalore, KA — 560066",
+    theme: {
+      accentColor: "#2563EB",
+      layoutMode: "nike_bold",
+      tagline: "High-Performance Audiophile & Studio Engineering Electronics",
+    },
+    paymentConfig: {
+      directUpiId: "apexops@hdfcbank",
+      bankAccountName: "Apex Electronics Hub Pvt Ltd",
+      bankAccountNumber: "50200012938411",
+      bankIfsc: "HDFC0000240",
+      platformCommissionPercent: 0,
+    },
+    shippingConfig: {
+      mode: "SHIPROCKET_COURIER",
+      pickupHubAddress: "Building 4, Electronic City Phase 1, Bangalore, KA — 560100",
+      returnWarehouseAddress: "Logistics Hub East, Whitefield, Bangalore, KA — 560066",
+      courierPartner: "Blue Dart Air Priority",
+      awbAutoGenerate: true,
+    },
+    taxConfig: {
+      gstin: "29AABCA9012E1ZU",
+      pan: "AABCA9012E",
+      hsnCodeDefault: "8518",
+      cgstPercent: 9.0,
+      sgstPercent: 9.0,
+      igstPercent: 18.0,
+    },
+  },
+  {
+    id: "sup_sartorial",
+    name: "Sartorial Atelier Mumbai",
+    brandName: "Sartorial Atelier Mumbai",
+    slug: "sartorial-atelier-mumbai",
+    storeSlug: "sartorial-atelier-mumbai",
+    subdomain: "sartorial.nexu.store",
+    location: "Bandra Kurla Complex, Mumbai, MH",
+    rating: 4.98,
+    fulfillmentRate: "99.9%",
+    verified: true,
+    payoutOnHold: false,
+    joinedDate: "10 Nov 2024",
+    totalProductsCount: 22,
+    totalSalesINR: 1250000,
+    upiId: "sartorial@yesbank",
+    taxIdentifier: "27AABCS3456P1ZX",
+    pickupAddress: "Tower 2, Maker Maxity, BKC, Mumbai, MH — 400051",
+    returnWarehouse: "Sartorial Vault, Kalina Central, Santacruz East, Mumbai — 400098",
+    theme: {
+      accentColor: "#0F172A",
+      layoutMode: "apple_glass",
+      tagline: "Tailored Minimalist Silhouettes & Architectural Outerwear",
+    },
+    paymentConfig: {
+      directUpiId: "sartorial@yesbank",
+      bankAccountName: "Sartorial Atelier Design Studio LLP",
+      bankAccountNumber: "0023948000124",
+      bankIfsc: "YESB0000023",
+      platformCommissionPercent: 0,
+    },
+    shippingConfig: {
+      mode: "SELF_DELIVERY_RIDER",
+      pickupHubAddress: "Tower 2, Maker Maxity, BKC, Mumbai, MH — 400051",
+      returnWarehouseAddress: "Sartorial Vault, Kalina Central, Mumbai — 400098",
+      courierPartner: "Dedicated VIP Van Delivery",
+      awbAutoGenerate: true,
+    },
+    taxConfig: {
+      gstin: "27AABCS3456P1ZX",
+      pan: "AABCS3456P",
+      hsnCodeDefault: "6201",
+      cgstPercent: 6.0,
+      sgstPercent: 6.0,
+      igstPercent: 12.0,
+    },
+  },
+  {
+    id: "sup_nordic",
+    name: "Nordic Craft Studio",
+    location: "Bengaluru, KA",
+    rating: 4.95,
+    fulfillmentRate: "99.4%",
+    verified: true,
+    payoutOnHold: false,
+    joinedDate: "22 Jan 2025",
+    totalProductsCount: 7,
+    totalSalesINR: 520000,
+  },
+  {
+    id: "sup_barista",
+    name: "Barista Craft Tech",
+    location: "Coorg, KA",
+    rating: 4.89,
+    fulfillmentRate: "98.2%",
+    verified: true,
+    payoutOnHold: false,
+    joinedDate: "18 Jan 2025",
+    totalProductsCount: 5,
+    totalSalesINR: 185000,
+  },
+  {
+    id: "sup_titan",
+    name: "Titan Bulk Pack Hub",
+    location: "Surat, GJ",
+    rating: 4.92,
+    fulfillmentRate: "99.5%",
+    verified: true,
+    payoutOnHold: false,
+    joinedDate: "08 Dec 2024",
+    totalProductsCount: 18,
+    totalSalesINR: 1940000,
+  },
+];
+
+export const INITIAL_B2B_QUOTES: B2BQuoteRequest[] = [
+  {
+    id: "quote_2026_8812",
+    productId: "prod_elec_01",
+    productTitle: "Sony WH-1000XM5 Studio Wireless Noise-Cancelling Headphones",
+    productImage: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
+    supplierId: "sup_apex",
+    supplierName: "Apex Electronics Hub",
+    quantity: 50,
+    targetPriceINR: 21500,
+    companyName: "Nexus Soundworks Studio Pvt Ltd",
+    buyerName: "Vikram Malhotra",
+    buyerEmail: "procurement@nexussound.in",
+    buyerPhone: "+91 98201 44521",
+    gstin: "27AAACN1245D1Z8",
+    requirements: "Need 50 units for our flagship audio engineering studio suites. Custom laser engraving if possible.",
+    status: "PENDING",
+    createdAt: "2026-11-02 18:30:00",
+  },
+  {
+    id: "quote_2026_8813",
+    productId: "prod_b2b_01",
+    productTitle: "Wholesale Case (x50): Matte Amber Glass Apothecary Bottles (500ml)",
+    productImage: "https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?auto=format&fit=crop&w=800&q=80",
+    supplierId: "sup_glass",
+    supplierName: "Industrial Glass Packaging Solutions",
+    quantity: 120,
+    targetPriceINR: 9800,
+    companyName: "Botanical Essence Labs Mumbai",
+    buyerName: "Pooja Singhania",
+    buyerEmail: "ops@botanicalessence.com",
+    buyerPhone: "+91 98711 02938",
+    gstin: "27AABCB8901R1ZE",
+    requirements: "Scheduled recurring quarterly delivery for luxury organic cold-pressed oil bottling line.",
+    status: "APPROVED",
+    createdAt: "2026-11-01 14:15:00",
+  },
+];
+
+export const INITIAL_PLATFORM_REVIEWS: PlatformReview[] = [
+  {
+    id: "rev_plat_01",
+    type: "SELLER",
+    authorName: "Devendra Rathore",
+    authorCity: "Jaipur, Rajasthan",
+    ratingScore: 10,
+    headline: "Saved ₹38,400 in our first month alone. Never returning to Meesho's penalty traps.",
+    comment: "On Meesho, customer returns were costing us ₹180 per courier return. Here, we verify addresses on WhatsApp before dispatch. Zero commission means all profits stay in our bank account via direct UPI in 0 seconds.",
+    savedCommissionINR: 38400,
+    previousMarketplace: "Amazon & Meesho",
+    storeName: "Jaipur Heritage Handlooms",
+    date: "02 Nov 2026",
+    verified: true,
+  },
+  {
+    id: "rev_plat_02",
+    type: "CUSTOMER",
+    authorName: "Meera Deshmukh",
+    authorCity: "Mumbai, Maharashtra",
+    ratingScore: 10,
+    headline: "Museum-grade handloom silk delivered in 2 days with authentic artisan note.",
+    comment: "The direct UPI payment was instant and seamless. Blue Dart tracking updated at every stage. You can feel the craftsmanship and care in every stitch.",
+    productTitle: "Loom & Spindle Mulberry Raw Silk Kimono",
+    deliveryRating: 5,
+    qualityRating: 5,
+    date: "01 Nov 2026",
+    verified: true,
+  },
+  {
+    id: "rev_plat_03",
+    type: "SELLER",
+    authorName: "Sunita Devi & Shashi",
+    authorCity: "Varanasi, UP",
+    ratingScore: 10,
+    headline: "Our weavers now get paid in 0 seconds directly to bank UPI instead of waiting 14 days.",
+    comment: "Flipkart used to hold our payouts for 2 weeks while taking 22% commission. Launching our store took literally 60 seconds. Our customers love the direct WhatsApp touch.",
+    savedCommissionINR: 52000,
+    previousMarketplace: "Flipkart & Amazon",
+    storeName: "Kashi Ahimsa Weavers",
+    date: "31 Oct 2026",
+    verified: true,
+  },
+  {
+    id: "rev_plat_04",
+    type: "CUSTOMER",
+    authorName: "Vikramaditya Rao",
+    authorCity: "Hyderabad, Telangana",
+    ratingScore: 10,
+    headline: "Flawless packaging and official GST invoice with verifiable bank UTR.",
+    comment: "Saved almost ₹3,000 compared to other sites because the seller doesn't have to pay marketplace commissions. 100% genuine product with official manufacturer warranty.",
+    productTitle: "Sony WH-1000XM5 Studio Wireless Headphones",
+    deliveryRating: 5,
+    qualityRating: 5,
+    date: "30 Oct 2026",
+    verified: true,
+  },
+  {
+    id: "rev_plat_05",
+    type: "SELLER",
+    authorName: "Harish Patel",
+    authorCity: "Surat, Gujarat",
+    ratingScore: 10,
+    headline: "Full customer ownership. We can now market directly on WhatsApp & Instagram.",
+    comment: "Amazon hides your customer phone and email. Here we own 100% of our customer relationships. Repeat orders went up by 40% with zero ad tax.",
+    savedCommissionINR: 65000,
+    previousMarketplace: "Amazon FBA",
+    storeName: "EcoWeave Textiles",
+    date: "29 Oct 2026",
+    verified: true,
+  },
+  {
+    id: "rev_plat_06",
+    type: "CUSTOMER",
+    authorName: "Ananya Iyer",
+    authorCity: "Bangalore, Karnataka",
+    ratingScore: 9.8,
+    headline: "Best ceramic pour-over dripper I've owned. Supported local pottery masters directly.",
+    comment: "Porous clay extracted rich notes with zero heat loss. Delivery boy called beforehand and package had sustainable honeycomb wrap.",
+    productTitle: "Handmade Terracotta Slow Pour-Over Dripper",
+    deliveryRating: 5,
+    qualityRating: 5,
+    date: "28 Oct 2026",
+    verified: true,
+  },
+];
+
+export const INITIAL_PRELOADED_ORDERS: StoreOrder[] = [
+  {
+    id: "ORD-2026-894201",
+    items: [
+      {
+        id: "pre_item_1",
+        productId: "prod_elec_01",
+        quantity: 1,
+        product: PRELOADED_PRODUCTS[0],
+      },
+    ],
+    total: 26990,
+    subtotal: 26990,
+    shippingFee: 0,
+    taxAmount: 4117,
+    discount: 0,
+    customerName: "Aarav Mehta",
+    customerPhone: "+91 98765 43210",
+    customerEmail: "aarav.mehta@enterprise-demo.com",
+    shippingAddress: {
+      fullName: "Aarav Mehta",
+      phone: "+91 98765 43210",
+      street: "Flat 402, Highline Horizon, Nariman Point",
+      city: "Mumbai",
+      state: "Maharashtra",
+      pincode: "400001",
+    },
+    paymentMethod: "UPI",
+    paymentDetails: {
+      method: "UPI",
+      upiId: "aarav@okaxis",
+      bankRef: "UPI/2026/894201",
+      utrNumber: "UPI/2026/894201",
+      paidAt: "01 Nov 2026, 11:42:10 IST",
+      status: "PAID & ESCROW VERIFIED",
+    },
+    deliveryStage: 5,
+    deliveryStageName: "Delivered",
+    awbNumber: "BD-98214051IN",
+    courierPartner: "Blue Dart Express • Delivered by Kishore Reddy",
+    estimatedDelivery: "Delivered on 02 Nov 2026",
+    status: "DELIVERED",
+    createdAt: "2026-11-01T06:12:10.000Z",
+  },
+  {
+    id: "ORD-2026-441290",
+    items: [
+      {
+        id: "pre_item_2",
+        productId: "prod_fash_02",
+        quantity: 1,
+        product: PRELOADED_PRODUCTS[4],
+      },
+    ],
+    total: 18500,
+    subtotal: 18500,
+    shippingFee: 0,
+    taxAmount: 2822,
+    discount: 0,
+    customerName: "Priya Sharma",
+    customerPhone: "+91 98192 83746",
+    customerEmail: "priya.sharma@designcraft.in",
+    shippingAddress: {
+      fullName: "Priya Sharma",
+      phone: "+91 98192 83746",
+      street: "Studio 12, Indiranagar 100ft Road",
+      city: "Bangalore",
+      state: "Karnataka",
+      pincode: "560038",
+    },
+    paymentMethod: "UPI",
+    paymentDetails: {
+      method: "UPI",
+      upiId: "priya@ybl",
+      bankRef: "UPI/2026/441290",
+      utrNumber: "UPI/2026/441290",
+      paidAt: "02 Nov 2026, 09:15:30 IST",
+      status: "PAID & ESCROW VERIFIED",
+    },
+    deliveryStage: 4,
+    deliveryStageName: "Out for Delivery",
+    awbNumber: "BD-77192034IN",
+    courierPartner: "Ramesh Sharma (+91 98200 12345) • Blue Dart Express",
+    estimatedDelivery: "Today • by 4:30 PM",
+    status: "OUT_FOR_DELIVERY",
+    createdAt: "2026-11-02T03:45:30.000Z",
+  },
+  {
+    id: "ORD-2026-194820",
+    items: [
+      {
+        id: "pre_item_3",
+        productId: "prod_home_01",
+        quantity: 1,
+        product: PRELOADED_PRODUCTS[6],
+      },
+      {
+        id: "pre_item_4",
+        productId: "prod_home_02",
+        quantity: 1,
+        product: PRELOADED_PRODUCTS[7],
+      },
+    ],
+    total: 31480,
+    subtotal: 31480,
+    shippingFee: 0,
+    taxAmount: 4802,
+    discount: 0,
+    customerName: "Vikramaditya Rao",
+    customerPhone: "+91 98450 99887",
+    customerEmail: "vikram@raomedia.com",
+    shippingAddress: {
+      fullName: "Vikramaditya Rao",
+      phone: "+91 98450 99887",
+      street: "Skyline Villa 4, Banjara Hills Road 3",
+      city: "Hyderabad",
+      state: "Telangana",
+      pincode: "500034",
+    },
+    paymentMethod: "UPI",
+    paymentDetails: {
+      method: "UPI",
+      upiId: "vikram@axisbank",
+      bankRef: "UPI/2026/194820",
+      utrNumber: "UPI/2026/194820",
+      paidAt: "02 Nov 2026, 17:30:45 IST",
+      status: "PAID & ESCROW VERIFIED",
+    },
+    deliveryStage: 1,
+    deliveryStageName: "Order Confirmed & Invoice Generated",
+    awbNumber: "BD-19482065IN",
+    courierPartner: "Blue Dart Express Priority Air",
+    estimatedDelivery: "Thursday, Nov 6 • by 6:00 PM",
+    status: "CONFIRMED",
+    createdAt: "2026-11-02T12:00:45.000Z",
+  },
+];
+
+function safeStorageGet(key: string): string | null {
+  try {
+    if (typeof window === "undefined" || !window.localStorage) return null;
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(key: string, value: string): void {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.setItem(key, value);
+    }
+  } catch {}
+}
+
+const StoreContext = createContext<StoreContextType | undefined>(undefined);
+
+export function StoreProvider({ children }: { children: React.ReactNode }) {
+  const [products, setProducts] = useState<StoreProduct[]>(PRELOADED_PRODUCTS);
+  const [suppliers, setSuppliers] = useState<SupplierInfo[]>(INITIAL_SUPPLIERS);
+  const [cart, setCart] = useState<StoreCartItem[]>([]);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [orders, setOrders] = useState<StoreOrder[]>(INITIAL_PRELOADED_ORDERS);
+  const [reviews, setReviews] = useState<PlatformReview[]>(INITIAL_PLATFORM_REVIEWS);
+  const [b2bQuotes, setB2bQuotes] = useState<B2BQuoteRequest[]>(INITIAL_B2B_QUOTES);
+  const [isB2BModalOpen, setIsB2BModalOpen] = useState(false);
+  const [b2bModalProduct, setB2bModalProduct] = useState<StoreProduct | null>(null);
+  const [whiteLabelConfig, setWhiteLabelConfig] = useState<WhiteLabelConfig>(DEFAULT_WHITELABEL_CONFIG);
+  const [isPhoneSimulatorOpen, setIsPhoneSimulatorOpen] = useState(false);
+  const [phoneSimulatorData, setPhoneSimulatorData] = useState<PhoneSimulatorData | null>(null);
+  const [activeRole, setActiveRole] = useState<RoleType>("customer");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [sortBy, setSortBy] = useState<"featured" | "price-low" | "price-high" | "rating" | "discount">("featured");
+  const [priceRange, setPriceRange] = useState<[number, number]>([1000, 150000]);
+  const [minRating, setMinRating] = useState<number>(0);
+  const [quickViewProduct, setQuickViewProduct] = useState<StoreProduct | null>(null);
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+  const [currentUser, setCurrentUserState] = useState<AppUser | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [activeRegion, setActiveRegionState] = useState<RegionConfig>(DEFAULT_REGION);
+  const [toast, setToast] = useState<ToastState>({ show: false, message: "", type: "info" });
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+
+  const setCurrentUser = (user: AppUser | null) => {
+    setCurrentUserState(user);
+    saveAuthUserLocally(user);
+  };
+
+  const setActiveRegion = (code: RegionCode) => {
+    const target = REGIONS[code] || DEFAULT_REGION;
+    setActiveRegionState(target);
+    safeStorageSet("nexu_saas_region", code);
+  };
+
+  const formatPrice = (amountINR: number) => formatPriceRegional(amountINR, activeRegion);
+  const convertPrice = (amountINR: number) => convertFromINR(amountINR, activeRegion);
+
+  const dismissToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  useEffect(() => {
+    try {
+      const savedProducts = safeStorageGet("nexu_saas_products");
+      if (savedProducts && !savedProducts.includes("images.unsplash.com")) {
+        try {
+          const parsed = JSON.parse(savedProducts);
+          if (Array.isArray(parsed) && parsed.length > 0) setProducts(parsed);
+        } catch {}
+      } else if (savedProducts && savedProducts.includes("images.unsplash.com")) {
+        safeStorageSet("nexu_saas_products", "");
+      }
+
+      try {
+        sessionStorage.removeItem("nexu_session_products");
+        sessionStorage.removeItem("nexu_session_products_ts");
+        sessionStorage.removeItem("nexu_session_products_v2");
+        sessionStorage.removeItem("nexu_session_products_v2_ts");
+        sessionStorage.removeItem("nexu_session_products_v3");
+        sessionStorage.removeItem("nexu_session_products_v3_ts");
+        sessionStorage.removeItem("nexu_session_products_v4");
+        sessionStorage.removeItem("nexu_session_products_v4_ts");
+        sessionStorage.removeItem("nexu_session_products_v5");
+        sessionStorage.removeItem("nexu_session_products_v5_ts");
+        sessionStorage.removeItem("nexu_session_products_v6");
+        sessionStorage.removeItem("nexu_session_products_v6_ts");
+        sessionStorage.removeItem("nexu_session_products_v7");
+        sessionStorage.removeItem("nexu_session_products_v7_ts");
+      } catch {}
+
+      const cachedProds = safeStorageGet("nexu_session_products_v8");
+      const cachedTime = safeStorageGet("nexu_session_products_v8_ts");
+      const isFresh = cachedTime && Date.now() - parseInt(cachedTime, 10) < 5 * 60 * 1000;
+
+      if (cachedProds && isFresh) {
+        try {
+          const parsed = JSON.parse(cachedProds);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setProducts(parsed);
+          }
+        } catch {}
+      } else {
+        fetch("/api/products?limit=300")
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (data && Array.isArray(data.products) && data.products.length > 0) {
+              const mapped: StoreProduct[] = data.products.map((p: any) => ({
+                id: p.id,
+                slug: p.slug,
+                title: p.title,
+                subtitle: p.subtitle || p.title,
+                description: p.description || "",
+                category: p.category || "Modern Essentials",
+                price: p.basePrice,
+                mrpPrice: p.compareAtPrice || Math.round(p.basePrice * 1.25),
+                rating: typeof p.rating === "number" ? p.rating : 0,
+                reviewCount: typeof p.reviewCount === "number" ? p.reviewCount : 0,
+                stock: p.stock ?? 10,
+                badge: p.isFeatured ? "Featured" : p.isTrending ? "Bestseller" : undefined,
+                supplier: {
+                  id: p.vendor?.id || "sup_brand",
+                  name: p.vendor?.name || "Official Brand Store",
+                  location: p.vendor?.location || "India",
+                  rating: typeof p.vendor?.rating === "number" ? p.vendor.rating : 0,
+                  fulfillmentRate: p.vendor?.fulfillmentRate || "Standard",
+                  verified: Boolean(p.vendor?.verified),
+                },
+                images: Array.isArray(p.images) && p.images.length > 0 ? p.images : [`/products/${p.slug}/1.jpg`],
+                colors: p.variants?.map((v: any) => ({
+                  name: v.color || "Standard",
+                  hex: "#18181b",
+                  image: v.imageUrl || p.images?.[0] || `/products/${p.slug}/1.jpg`,
+                })) || [],
+                sizes: p.variants?.map((v: any) => v.size).filter(Boolean) || ["Standard"],
+                specs: Array.isArray(p.specifications)
+                  ? p.specifications.reduce((acc: any, s: any) => ({ ...acc, [s.label]: s.value }), {})
+                  : { Material: p.materials || "Natural composition", Origin: p.origin || "India" },
+                reviews: [],
+              }));
+              setProducts(mapped);
+              try {
+                sessionStorage.setItem("nexu_session_products_v8", JSON.stringify(mapped));
+                sessionStorage.setItem("nexu_session_products_v8_ts", Date.now().toString());
+              } catch {}
+            }
+          })
+          .catch(() => {});
+      }
+
+      const savedSuppliers = safeStorageGet("nexu_saas_suppliers");
+      if (savedSuppliers) {
+        try {
+          const parsed = JSON.parse(savedSuppliers);
+          if (Array.isArray(parsed) && parsed.length > 0) setSuppliers(parsed);
+        } catch {}
+      }
+
+      const savedCart = safeStorageGet("nexu_saas_cart");
+      if (savedCart) {
+        try {
+          const parsed = JSON.parse(savedCart);
+          if (Array.isArray(parsed)) setCart(parsed);
+        } catch {}
+      }
+
+      const savedWishlist = safeStorageGet("nexu_saas_wishlist");
+      if (savedWishlist) {
+        try {
+          const parsed = JSON.parse(savedWishlist);
+          if (Array.isArray(parsed)) setWishlist(parsed);
+        } catch {}
+      }
+
+      const savedOrders = safeStorageGet("nexu_saas_orders");
+      if (savedOrders) {
+        try {
+          const parsed = JSON.parse(savedOrders);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setOrders(parsed);
+          } else {
+            setOrders(INITIAL_PRELOADED_ORDERS);
+            safeStorageSet("nexu_saas_orders", JSON.stringify(INITIAL_PRELOADED_ORDERS));
+          }
+        } catch {
+          setOrders(INITIAL_PRELOADED_ORDERS);
+        }
+      } else {
+        safeStorageSet("nexu_saas_orders", JSON.stringify(INITIAL_PRELOADED_ORDERS));
+      }
+
+      const savedWhiteLabel = safeStorageGet("nexu_whitelabel_config");
+      if (savedWhiteLabel) {
+        try {
+          const parsed = JSON.parse(savedWhiteLabel);
+          if (parsed && typeof parsed === "object") {
+            setWhiteLabelConfig((prev) => ({ ...prev, ...parsed }));
+          }
+        } catch {}
+      }
+
+      const savedReviews = safeStorageGet("nexu_platform_reviews");
+      if (savedReviews) {
+        try {
+          const parsed = JSON.parse(savedReviews);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setReviews(parsed);
+          }
+        } catch {}
+      }
+
+      const savedRole = safeStorageGet("nexu_saas_role");
+      if (savedRole && ["customer", "supplier", "admin"].includes(savedRole)) {
+        setActiveRole(savedRole as RoleType);
+      }
+
+      const savedRegion = safeStorageGet("nexu_saas_region") as RegionCode | null;
+      if (savedRegion && REGIONS[savedRegion]) {
+        setActiveRegionState(REGIONS[savedRegion]);
+      }
+
+      const savedAuth = getSavedAuthUser();
+      if (savedAuth) {
+        setCurrentUserState(savedAuth);
+      }
+    } catch {
+    }
+  }, []);
+
+  useEffect(() => {
+    safeStorageSet("nexu_saas_products", JSON.stringify(products));
+  }, [products]);
+
+  useEffect(() => {
+    safeStorageSet("nexu_saas_suppliers", JSON.stringify(suppliers));
+  }, [suppliers]);
+
+  useEffect(() => {
+    safeStorageSet("nexu_saas_cart", JSON.stringify(cart));
+  }, [cart]);
+
+  useEffect(() => {
+    safeStorageSet("nexu_saas_wishlist", JSON.stringify(wishlist));
+  }, [wishlist]);
+
+  useEffect(() => {
+    safeStorageSet("nexu_saas_role", activeRole);
+  }, [activeRole]);
+
+  useEffect(() => {
+    safeStorageSet("nexu_saas_orders", JSON.stringify(orders));
+  }, [orders]);
+
+  useEffect(() => {
+    safeStorageSet("nexu_whitelabel_config", JSON.stringify(whiteLabelConfig));
+  }, [whiteLabelConfig]);
+
+  useEffect(() => {
+    safeStorageSet("nexu_platform_reviews", JSON.stringify(reviews));
+  }, [reviews]);
+
+  const platformOverallScore = useMemo(() => {
+    if (reviews.length === 0) return 9.9;
+    const total = reviews.reduce((acc, r) => acc + r.ratingScore, 0);
+    return Number((total / reviews.length).toFixed(1));
+  }, [reviews]);
+
+  const submitPlatformReview = (reviewData: Omit<PlatformReview, "id" | "date" | "verified">) => {
+    const newReview: PlatformReview = {
+      ...reviewData,
+      id: `rev_plat_${Date.now()}`,
+      date: "Just now",
+      verified: true,
+    };
+    setReviews((prev) => [newReview, ...prev]);
+    showToast(`🌟 Thank you ${reviewData.authorName}! Your ${reviewData.ratingScore}/10 review is live!`, "success");
+  };
+
+  const updateWhiteLabelConfig = (config: Partial<WhiteLabelConfig>) => {
+    setWhiteLabelConfig((prev) => {
+      const updated = { ...prev, ...config };
+      return updated;
+    });
+    showToast(`⚙️ White-Label Branding Updated to "${config.brandName || whiteLabelConfig.brandName}"`, "success");
+  };
+
+  const resetWhiteLabelConfig = () => {
+    setWhiteLabelConfig(DEFAULT_WHITELABEL_CONFIG);
+    try {
+      localStorage.removeItem("nexu_whitelabel_config");
+    } catch {}
+    showToast("White-Label Branding reset to NEXU ATELIER defaults", "info");
+  };
+
+  const openPhoneSimulator = (data: PhoneSimulatorData) => {
+    setPhoneSimulatorData(data);
+    setIsPhoneSimulatorOpen(true);
+  };
+
+  const closePhoneSimulator = () => {
+    setIsPhoneSimulatorOpen(false);
+  };
+
+  const showToast = (message: string, type: "success" | "info" | "warning" = "info") => {
+    setToast({ show: true, message, type });
+    const id = `toast_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const newToast: ToastItem = { id, message, type, timestamp: Date.now() };
+    setToasts((prev) => [...prev.slice(-3), newToast]);
+
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4500);
+
+    setTimeout(() => {
+      setToast((prev) => ({ ...prev, show: false }));
+    }, 3500);
+  };
+
+  const openB2BModal = (product: StoreProduct) => {
+    setB2bModalProduct(product);
+    setIsB2BModalOpen(true);
+  };
+
+  const closeB2BModal = () => {
+    setIsB2BModalOpen(false);
+    setB2bModalProduct(null);
+  };
+
+  const submitB2BQuote = (quote: Omit<B2BQuoteRequest, "id" | "status" | "createdAt">) => {
+    const newQuote: B2BQuoteRequest = {
+      ...quote,
+      id: `quote_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`,
+      status: "PENDING",
+      createdAt: new Date().toISOString().replace("T", " ").substring(0, 19),
+    };
+    setB2bQuotes((prev) => [newQuote, ...prev]);
+    showToast(`B2B Bulk Quote Request Dispatched to ${quote.supplierName} 📋`, "success");
+    closeB2BModal();
+  };
+
+  const updateB2BQuoteStatus = (quoteId: string, status: "APPROVED" | "REJECTED") => {
+    setB2bQuotes((prev) =>
+      prev.map((q) => (q.id === quoteId ? { ...q, status } : q))
+    );
+    showToast(
+      status === "APPROVED"
+        ? `Wholesale Allocation APPROVED for Quote #${quoteId} 🎉`
+        : `Wholesale Quote #${quoteId} Declined`,
+      status === "APPROVED" ? "success" : "info"
+    );
+  };
+
+  const addToCart = (
+    product: StoreProduct,
+    options?: { size?: string; color?: { name: string; hex: string }; quantity?: number }
+  ) => {
+    const qty = options?.quantity || 1;
+    const selectedSize = options?.size || product.sizes?.[0];
+    const selectedColor = options?.color || (product.colors?.[0] ? { name: product.colors[0].name, hex: product.colors[0].hex } : undefined);
+
+    setCart((prev) => {
+      const existingIdx = prev.findIndex(
+        (item) =>
+          item.productId === product.id &&
+          item.selectedSize === selectedSize &&
+          item.selectedColor?.name === selectedColor?.name
+      );
+
+      if (existingIdx > -1) {
+        const updated = [...prev];
+        updated[existingIdx].quantity += qty;
+        return updated;
+      }
+
+      const newItem: StoreCartItem = {
+        id: `cart_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+        productId: product.id,
+        product,
+        quantity: qty,
+        selectedSize,
+        selectedColor,
+      };
+      return [...prev, newItem];
+    });
+
+    showToast(`Added to Cart 🛍️: "${product.title}"`, "success");
+    setIsCartDrawerOpen(true);
+  };
+
+  const removeFromCart = (itemId: string) => {
+    setCart((prev) => prev.filter((i) => i.id !== itemId));
+    showToast("Piece removed from shopping bag", "info");
+  };
+
+  const updateCartQuantity = (itemId: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeFromCart(itemId);
+      return;
+    }
+    setCart((prev) =>
+      prev.map((i) => (i.id === itemId ? { ...i, quantity } : i))
+    );
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    try {
+      localStorage.removeItem("nexu_saas_cart");
+    } catch {}
+  };
+
+  const toggleWishlist = (productId: string) => {
+    setWishlist((prev) => {
+      const exists = prev.includes(productId);
+      if (exists) {
+        showToast("Removed from Wishlist 💔", "info");
+        return prev.filter((id) => id !== productId);
+      } else {
+        showToast("Saved to Wishlist ❤️", "success");
+        return [...prev, productId];
+      }
+    });
+  };
+
+  const isInWishlist = (productId: string) => wishlist.includes(productId);
+
+  const addOrder = (newOrder: StoreOrder) => {
+    setOrders((prev) => [newOrder, ...prev]);
+    showToast(`Order #${newOrder.id} logged & secured via Escrow`, "success");
+  };
+
+  const [clusterTier, setClusterTier] = useState<"STANDARD_100GB" | "ENTERPRISE_1TB">("STANDARD_100GB");
+
+  useEffect(() => {
+    try {
+      const savedTier = localStorage.getItem("nexu_cluster_tier");
+      if (savedTier === "ENTERPRISE_1TB" || savedTier === "STANDARD_100GB") {
+        setClusterTier(savedTier);
+      }
+    } catch {}
+  }, []);
+
+  const upgradeDatabaseCluster = () => {
+    setClusterTier("ENTERPRISE_1TB");
+    try {
+      localStorage.setItem("nexu_cluster_tier", "ENTERPRISE_1TB");
+    } catch {}
+    showToast("⚡ Database Cluster Auto-Scaled: 100 GB -> 1 TB Enterprise Node (0ms Downtime)!", "success");
+  };
+
+  const resetDatabaseCluster = () => {
+    setClusterTier("STANDARD_100GB");
+    try {
+      localStorage.setItem("nexu_cluster_tier", "STANDARD_100GB");
+    } catch {}
+    showToast("Cluster telemetry reset to Standard 100 GB tier", "info");
+  };
+
+  const advanceOrderDeliveryStage = (orderId: string) => {
+    let nextStage = 1;
+    let nextStageName = "Order Confirmed & Invoice Generated";
+    let nextStatus: StoreOrder["status"] = "CONFIRMED";
+    const nowTime = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+
+    setOrders((prev) =>
+      prev.map((order) => {
+        if (order.id !== orderId) return order;
+        nextStage = Math.min(5, (order.deliveryStage || 1) + 1);
+        const outbound = { ...(order.outboundTimestamps || { placedAt: order.createdAt || "Today 10:30 AM" }) };
+
+        if (nextStage === 2) {
+          nextStageName = "Packed at Supplier Warehouse";
+          nextStatus = "PACKED";
+          outbound.packedAt = nowTime;
+          outbound.packingLocation = "Jaipur Artisan Studio Hub";
+        } else if (nextStage === 3) {
+          nextStageName = "Shipped via Express Logistics";
+          nextStatus = "SHIPPED";
+          outbound.shippedAt = nowTime;
+        } else if (nextStage === 4) {
+          nextStageName = "Out for Delivery";
+          nextStatus = "OUT_FOR_DELIVERY";
+          outbound.outForDeliveryAt = nowTime;
+        } else if (nextStage === 5) {
+          nextStageName = "Delivered";
+          nextStatus = "DELIVERED";
+          outbound.deliveredAt = nowTime;
+        }
+        return {
+          ...order,
+          deliveryStage: nextStage,
+          deliveryStageName: nextStageName,
+          status: nextStatus,
+          outboundTimestamps: outbound,
+          riderName: order.riderName || "Ramesh Sharma",
+          riderPhone: order.riderPhone || "+91 98200 12345",
+          currentHubLocation: order.currentHubLocation || (nextStage >= 3 ? "Blue Dart Air Transit Hub - Sector 18" : undefined),
+          etaWindow: order.etaWindow || (nextStage === 4 ? "Arriving Today by 4:30 PM" : order.estimatedDelivery),
+        };
+      })
+    );
+    showToast(`Fulfillment: ${nextStageName} (Stage ${nextStage}/5)`, "success");
+    return { currentStage: nextStage, stageName: nextStageName };
+  };
+
+  const initiateOrderReturn = (orderId: string, reason: string) => {
+    const now = new Date().toLocaleDateString("en-IN", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          returnLogistics: {
+            status: "REQUESTED",
+            reason: reason || "Size or craftsmanship inspection exchange",
+            returnRequestedAt: now,
+            pickupScheduledAt: "Tomorrow between 10:00 AM - 1:00 PM",
+            pickupRiderName: "Vikram Negi",
+            pickupRiderPhone: "+91 98110 54321",
+            refundAmount: o.total,
+          },
+        };
+      })
+    );
+    showToast(`Return requested for Order #${orderId}. Pickup scheduled!`, "info");
+  };
+
+  const advanceOrderReturnStage = (orderId: string) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        const current = o.returnLogistics?.status || "NONE";
+        let nextStatus: ReturnLogisticsTimeline["status"] = "APPROVED";
+        const now = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+        const updated: ReturnLogisticsTimeline = {
+          status: "APPROVED",
+          reason: o.returnLogistics?.reason || "Customer exchange",
+          returnRequestedAt: o.returnLogistics?.returnRequestedAt || "Earlier today",
+          refundAmount: o.total,
+          ...(o.returnLogistics || {}),
+        };
+
+        if (current === "NONE" || current === "REQUESTED") {
+          nextStatus = "APPROVED";
+          updated.pickupScheduledAt = "Scheduled: Today by 3:30 PM";
+          updated.pickupRiderName = "Vikram Negi";
+          updated.pickupRiderPhone = "+91 98110 54321";
+        } else if (current === "APPROVED") {
+          nextStatus = "PICKED_UP";
+          updated.pickedUpAt = now;
+        } else if (current === "PICKED_UP") {
+          nextStatus = "IN_TRANSIT";
+          updated.inTransitAt = now;
+        } else if (current === "IN_TRANSIT" || current === "REFUNDED") {
+          nextStatus = "REFUNDED";
+          updated.receivedAtHubAt = now;
+          updated.refundedAt = now;
+          updated.refundUtr = `REF/UPI/${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+        }
+
+        updated.status = nextStatus;
+        return {
+          ...o,
+          returnLogistics: updated,
+        };
+      })
+    );
+    showToast(`Return status updated for Order #${orderId}`, "success");
+  };
+
+  const assignOrderRider = (orderId: string, riderName: string, riderPhone: string, hubLocation?: string) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          riderName: riderName.trim(),
+          riderPhone: riderPhone.trim(),
+          currentHubLocation: hubLocation || o.currentHubLocation || "Central Logistics Hub",
+        };
+      })
+    );
+    showToast(`Assigned courier rider ${riderName} to Order #${orderId}`, "success");
+  };
+
+  const updateOrderEta = (orderId: string, etaWindow: string) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          etaWindow: etaWindow.trim(),
+        };
+      })
+    );
+    showToast(`Delivery ETA updated for Order #${orderId}: "${etaWindow}"`, "info");
+  };
+
+  const getOrderById = (orderId: string) => {
+    return orders.find((o) => o.id === orderId);
+  };
+
+  const addProduct = (
+    productData: Omit<StoreProduct, "id" | "slug" | "rating" | "reviewCount"> & {
+      rating?: number;
+      reviewCount?: number;
+    }
+  ): StoreProduct => {
+    const id = `prod_custom_${Date.now()}`;
+    const slug = productData.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+    const newProduct: StoreProduct = {
+      ...productData,
+      id,
+      slug,
+      rating: productData.rating || 0,
+      reviewCount: productData.reviewCount || 0,
+      reviews: productData.reviews || [],
+    };
+
+    setProducts((prev) => [newProduct, ...prev]);
+    showToast(`✨ Product "${newProduct.title}" is now LIVE on Storefront!`, "success");
+    return newProduct;
+  };
+
+  const updateProductStock = (productId: string, newStock: number) => {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === productId ? { ...p, stock: Math.max(0, newStock) } : p))
+    );
+    showToast(`Stock updated to ${Math.max(0, newStock)} units`, "info");
+  };
+
+  const updateProductPrice = (productId: string, newPrice: number) => {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === productId ? { ...p, price: Math.max(1, newPrice) } : p))
+    );
+    showToast(`Price adjusted to ₹${newPrice.toLocaleString("en-IN")}`, "success");
+  };
+
+  const toggleProductStatus = (productId: string) => {
+    setProducts((prev) =>
+      prev.map((p) => {
+        if (p.id !== productId) return p;
+        const newStock = p.stock > 0 ? 0 : 10;
+        showToast(
+          newStock > 0 ? `Product "${p.title}" set to In-Stock` : `Product "${p.title}" marked Out-of-Stock`,
+          "info"
+        );
+        return { ...p, stock: newStock };
+      })
+    );
+  };
+
+  const toggleSupplierVerification = (supplierId: string) => {
+    setSuppliers((prev) =>
+      prev.map((s) => {
+        if (s.id !== supplierId) return s;
+        const updated = !s.verified;
+        showToast(
+          updated ? `🛡️ Verified Badge granted to ${s.name}` : `Verification removed for ${s.name}`,
+          "info"
+        );
+        return { ...s, verified: updated };
+      })
+    );
+  };
+
+  const toggleSupplierPayoutHold = (supplierId: string) => {
+    setSuppliers((prev) =>
+      prev.map((s) => {
+        if (s.id !== supplierId) return s;
+        const onHold = !s.payoutOnHold;
+        showToast(
+          onHold
+            ? `⚠️ Financial Payout HOLD placed on ${s.name}`
+            : `✅ Escrow Payouts RELEASED for ${s.name}`,
+          onHold ? "warning" : "success"
+        );
+        return { ...s, payoutOnHold: onHold };
+      })
+    );
+  };
+
+  const markOrderDispatched = (orderId: string) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          deliveryStage: 3,
+          deliveryStageName: "Shipped via Express Logistics",
+          status: "SHIPPED",
+          awbNumber: o.awbNumber || `BD-${Math.floor(10000000 + Math.random() * 90000000)}IN`,
+        };
+      })
+    );
+    showToast(`Order Status Updated by Supplier 📦 (Dispatched #${orderId} via Blue Dart Air)`, "success");
+  };
+
+  const acceptSellerOrder = (orderId: string) => {
+    const timeNow = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          deliveryStage: 2,
+          deliveryStageName: "Packed & Ready to Ship",
+          status: "PACKED",
+          sellerAcceptedAt: timeNow,
+          sellerPickupAddress: o.sellerPickupAddress || "Workshop 14, Weavers Colony, Sanganer, Jaipur, RJ — 302029",
+          sellerReturnAddress: o.sellerReturnAddress || "Central Logistics Hub, Gate 2, Sanganer, Jaipur, RJ — 302029",
+          outboundTimestamps: {
+            placedAt: o.outboundTimestamps?.placedAt || "09:30 AM",
+            packedAt: timeNow,
+            packingLocation: "Seller Workshop Hub • Verified Artisan Barcode Applied",
+            ...o.outboundTimestamps,
+          },
+        };
+      })
+    );
+    showToast(`✅ Order #${orderId} Accepted by Seller! Ready for Packaging & Label Printing`, "success");
+  };
+
+  const rejectSellerOrder = (orderId: string, reason?: string) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          deliveryStage: 0,
+          deliveryStageName: "Cancelled by Seller",
+          status: "CONFIRMED", // or keep status safe
+        };
+      })
+    );
+    showToast(`❌ Order #${orderId} Declined by Seller. Escrow payment released back to buyer.`, "warning");
+  };
+
+  const dispatchSellerOrder = (
+    orderId: string,
+    deliveryDetails: { mode: "self" | "courier"; partner: string; trackingRef: string }
+  ) => {
+    const timeNow = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          deliveryStage: 3,
+          deliveryStageName: deliveryDetails.mode === "self" ? "Out for Local Delivery" : "Shipped via Courier Partner",
+          status: "SHIPPED",
+          courierPartner: deliveryDetails.partner,
+          awbNumber: deliveryDetails.trackingRef,
+          outboundTimestamps: {
+            placedAt: o.outboundTimestamps?.placedAt || "09:30 AM",
+            packedAt: o.outboundTimestamps?.packedAt || "10:15 AM",
+            packingLocation: o.outboundTimestamps?.packingLocation || "Seller Workshop Hub",
+            shippedAt: timeNow,
+            ...o.outboundTimestamps,
+          },
+        };
+      })
+    );
+    showToast(`🚚 Order #${orderId} Dispatched via ${deliveryDetails.partner} (Ref: ${deliveryDetails.trackingRef})`, "success");
+  };
+
+  const markSellerOrderOutForDelivery = (orderId: string) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          deliveryStage: 4,
+          deliveryStageName: "Out for Delivery",
+          status: "OUT_FOR_DELIVERY",
+        };
+      })
+    );
+    showToast(`🚚 Order #${orderId} is Out for Delivery! Live courier timeline updated.`, "info");
+  };
+
+  const markSellerOrderDelivered = (orderId: string) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          deliveryStage: 5,
+          deliveryStageName: "Delivered",
+          status: "DELIVERED",
+        };
+      })
+    );
+    showToast(`🎉 Order #${orderId} Marked Delivered! 5★ WhatsApp Review request sent to patron ⭐️`, "success");
+  };
+
+  const generateShippingManifest = (orderId: string) => {
+    const target = orders.find((o) => o.id === orderId);
+    const awb = target?.awbNumber || `BD-${Math.floor(10000000 + Math.random() * 90000000)}IN`;
+    const manifestId = `MNF-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+    showToast(`📄 Air Cargo Manifest generated for Order #${orderId}`, "success");
+    return { awb, manifestId, generatedAt: new Date().toLocaleString("en-IN") };
+  };
+
+  const loadSampleOrders = () => {
+    const sampleOrders: StoreOrder[] = [
+      {
+        id: "ORD-2026-928410",
+        items: [
+          {
+            id: "sample_item_1",
+            productId: "prod_elec_01",
+            quantity: 1,
+            product: PRELOADED_PRODUCTS[0],
+          },
+        ],
+        total: 26990,
+        subtotal: 26990,
+        shippingFee: 0,
+        taxAmount: 4117,
+        discount: 0,
+        customerName: "Aarav Mehta",
+        customerPhone: "+91 98765 43210",
+        customerEmail: "aarav.mehta@enterprise-demo.com",
+        shippingAddress: {
+          fullName: "Aarav Mehta",
+          phone: "+91 98765 43210",
+          street: "Flat 402, Highline Horizon, Nariman Point",
+          city: "Mumbai",
+          state: "Maharashtra",
+          pincode: "400001",
+        },
+        paymentMethod: "UPI",
+        paymentDetails: {
+          method: "UPI",
+          upiId: "aarav@okaxis",
+          bankRef: "UPI/2026/894210",
+          utrNumber: "UPI/2026/894210",
+          paidAt: "02 Nov 2026, 18:30:15 IST",
+          status: "PAID & ESCROW VERIFIED",
+        },
+        deliveryStage: 1,
+        deliveryStageName: "Order Confirmed & Invoice Generated",
+        awbNumber: "BD-89472910IN",
+        courierPartner: "Ramesh Sharma (+91 98200 12345) • Blue Dart Express",
+        estimatedDelivery: "Thursday, Nov 6 • by 8:00 PM",
+        status: "CONFIRMED",
+        createdAt: new Date(Date.now() - 3600000).toISOString(),
+      },
+      {
+        id: "ORD-2026-581923",
+        items: [
+          {
+            id: "sample_item_2",
+            productId: "prod_b2b_01",
+            quantity: 2,
+            product: PRELOADED_PRODUCTS[9],
+          },
+        ],
+        total: 71980,
+        subtotal: 71980,
+        shippingFee: 0,
+        taxAmount: 10980,
+        discount: 0,
+        customerName: "Priya Sharma",
+        customerPhone: "+91 98192 83746",
+        customerEmail: "priya.sharma@designcraft.in",
+        shippingAddress: {
+          fullName: "Priya Sharma",
+          phone: "+91 98192 83746",
+          street: "Studio 12, Indiranagar 100ft Road",
+          city: "Bangalore",
+          state: "Karnataka",
+          pincode: "560038",
+        },
+        paymentMethod: "UPI",
+        paymentDetails: {
+          method: "UPI",
+          upiId: "priya@ybl",
+          bankRef: "UPI/2026/492105",
+          utrNumber: "UPI/2026/492105",
+          paidAt: "02 Nov 2026, 16:15:00 IST",
+          status: "PAID & ESCROW VERIFIED",
+        },
+        deliveryStage: 2,
+        deliveryStageName: "Packed at Supplier Warehouse",
+        awbNumber: "BD-49210518IN",
+        courierPartner: "Sunil Verma • Blue Dart Air",
+        estimatedDelivery: "Friday, Nov 7 • by 5:00 PM",
+        status: "PACKED",
+        createdAt: new Date(Date.now() - 7200000).toISOString(),
+      },
+      {
+        id: "ORD-2026-381042",
+        items: [
+          {
+            id: "sample_item_3",
+            productId: "prod_fash_01",
+            quantity: 1,
+            product: PRELOADED_PRODUCTS[3],
+          },
+        ],
+        total: 18450,
+        subtotal: 20500,
+        shippingFee: 0,
+        taxAmount: 2814,
+        discount: 2050,
+        couponCode: "ATELIER10",
+        customerName: "Rohan Gupta",
+        customerPhone: "+91 98250 31706",
+        customerEmail: "rohan.gupta@atelier.org",
+        shippingAddress: {
+          fullName: "Rohan Gupta",
+          phone: "+91 98250 31706",
+          street: "Plot 88, Vasant Vihar Sector 4",
+          city: "New Delhi",
+          state: "Delhi",
+          pincode: "110057",
+        },
+        paymentMethod: "UPI",
+        paymentDetails: {
+          method: "UPI",
+          upiId: "rohan@okhdfcbank",
+          bankRef: "UPI/2026/782910",
+          utrNumber: "UPI/2026/782910",
+          paidAt: "01 Nov 2026, 20:45:22 IST",
+          status: "PAID & ESCROW VERIFIED",
+        },
+        deliveryStage: 3,
+        deliveryStageName: "Shipped via Express Logistics",
+        awbNumber: "BD-78291034IN",
+        courierPartner: "Mahesh Kumar • Blue Dart Air Cargo",
+        estimatedDelivery: "Wednesday, Nov 5 • by 2:00 PM",
+        status: "SHIPPED",
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+      },
+      {
+        id: "ORD-2026-291845",
+        items: [
+          {
+            id: "sample_item_4",
+            productId: "prod_home_01",
+            quantity: 1,
+            product: PRELOADED_PRODUCTS[6],
+          },
+        ],
+        total: 14500,
+        subtotal: 14500,
+        shippingFee: 0,
+        taxAmount: 2212,
+        discount: 0,
+        customerName: "Ananya Iyer",
+        customerPhone: "+91 98334 11223",
+        customerEmail: "ananya.iyer@decorlabs.com",
+        shippingAddress: {
+          fullName: "Ananya Iyer",
+          phone: "+91 98334 11223",
+          street: "Flat 801, Sea Breeze Residences, Worli",
+          city: "Mumbai",
+          state: "Maharashtra",
+          pincode: "400018",
+        },
+        paymentMethod: "UPI",
+        paymentDetails: {
+          method: "UPI",
+          upiId: "ananya@icici",
+          bankRef: "UPI/2026/381920",
+          utrNumber: "UPI/2026/381920",
+          paidAt: "01 Nov 2026, 14:10:00 IST",
+          status: "PAID & ESCROW VERIFIED",
+        },
+        deliveryStage: 4,
+        deliveryStageName: "Out for Delivery",
+        awbNumber: "BD-38192091IN",
+        courierPartner: "Ramesh Sharma (+91 98200 12345) • Blue Dart Express",
+        estimatedDelivery: "Today • by 4:30 PM",
+        status: "OUT_FOR_DELIVERY",
+        createdAt: new Date(Date.now() - 172800000).toISOString(),
+      },
+      {
+        id: "ORD-2026-109482",
+        items: [
+          {
+            id: "sample_item_5",
+            productId: "prod_elec_03",
+            quantity: 1,
+            product: PRELOADED_PRODUCTS[2],
+          },
+        ],
+        total: 18999,
+        subtotal: 18999,
+        shippingFee: 0,
+        taxAmount: 2898,
+        discount: 0,
+        customerName: "Vikramaditya Rao",
+        customerPhone: "+91 98450 99887",
+        customerEmail: "vikram@raomedia.com",
+        shippingAddress: {
+          fullName: "Vikramaditya Rao",
+          phone: "+91 98450 99887",
+          street: "Skyline Villa 4, Banjara Hills Road 3",
+          city: "Hyderabad",
+          state: "Telangana",
+          pincode: "500034",
+        },
+        paymentMethod: "UPI",
+        paymentDetails: {
+          method: "UPI",
+          upiId: "vikram@axisbank",
+          bankRef: "UPI/2026/109482",
+          utrNumber: "UPI/2026/109482",
+          paidAt: "31 Oct 2026, 11:20:45 IST",
+          status: "PAID & ESCROW VERIFIED",
+        },
+        deliveryStage: 5,
+        deliveryStageName: "Delivered",
+        awbNumber: "BD-10948273IN",
+        courierPartner: "Kishore Reddy • Blue Dart Express",
+        estimatedDelivery: "Delivered on 02 Nov",
+        status: "DELIVERED",
+        createdAt: new Date(Date.now() - 259200000).toISOString(),
+      },
+    ];
+
+    setOrders(sampleOrders);
+    showToast("✨ Loaded 5 verified sample showcase orders into global state!", "success");
+  };
+
+  const resetDemoData = () => {
+    setProducts(PRELOADED_PRODUCTS);
+    setSuppliers(INITIAL_SUPPLIERS);
+    setCart([]);
+    setWishlist([]);
+    setOrders(INITIAL_PRELOADED_ORDERS);
+    try {
+      localStorage.removeItem("nexu_saas_products");
+      localStorage.removeItem("nexu_saas_suppliers");
+      localStorage.removeItem("nexu_saas_cart");
+      localStorage.removeItem("nexu_saas_wishlist");
+      localStorage.setItem("nexu_saas_orders", JSON.stringify(INITIAL_PRELOADED_ORDERS));
+      localStorage.removeItem("nexu_active_coupon");
+    } catch {}
+    showToast("🔄 Platform state reset to pristine factory defaults with pre-seeded orders", "info");
+  };
+
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter((p) => {
+        if (selectedCategory !== "All" && p.category !== selectedCategory) {
+          return false;
+        }
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase().trim();
+          const matchTitle = p.title.toLowerCase().includes(q);
+          const matchSub = p.subtitle.toLowerCase().includes(q);
+          const matchCat = p.category.toLowerCase().includes(q);
+          const matchSupplier = p.supplier.name.toLowerCase().includes(q);
+          if (!matchTitle && !matchSub && !matchCat && !matchSupplier) {
+            return false;
+          }
+        }
+        if (p.price < priceRange[0] || p.price > priceRange[1]) {
+          return false;
+        }
+        if (minRating > 0 && p.rating < minRating) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "price-low") return a.price - b.price;
+        if (sortBy === "price-high") return b.price - a.price;
+        if (sortBy === "rating") return b.rating - a.rating;
+        if (sortBy === "discount") {
+          const discountA = ((a.mrpPrice - a.price) / a.mrpPrice) * 100;
+          const discountB = ((b.mrpPrice - b.price) / b.mrpPrice) * 100;
+          return discountB - discountA;
+        }
+        return 0;
+      });
+  }, [products, selectedCategory, searchQuery, priceRange, minRating, sortBy]);
+
+  const cartTotalCount = useMemo(() => cart.reduce((acc, item) => acc + item.quantity, 0), [cart]);
+  const cartSubtotal = useMemo(() => cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0), [cart]);
+
+  return (
+    <StoreContext.Provider
+      value={{
+        products,
+        cart,
+        wishlist,
+        orders,
+        suppliers,
+        b2bQuotes,
+        isB2BModalOpen,
+        b2bModalProduct,
+        whiteLabelConfig,
+        isPhoneSimulatorOpen,
+        phoneSimulatorData,
+        updateWhiteLabelConfig,
+        resetWhiteLabelConfig,
+        openPhoneSimulator,
+        closePhoneSimulator,
+        activeRole,
+        searchQuery,
+        selectedCategory,
+        sortBy,
+        priceRange,
+        minRating,
+        quickViewProduct,
+        toast,
+        toasts,
+        dismissToast,
+        isCartDrawerOpen,
+        openB2BModal,
+        closeB2BModal,
+        submitB2BQuote,
+        updateB2BQuoteStatus,
+        setActiveRole,
+        setSearchQuery,
+        setSelectedCategory,
+        setSortBy,
+        setPriceRange,
+        setMinRating,
+        setQuickViewProduct,
+        setIsCartDrawerOpen,
+        addToCart,
+        removeFromCart,
+        updateCartQuantity,
+        clearCart,
+        toggleWishlist,
+        isInWishlist,
+        showToast,
+        addOrder,
+        advanceOrderDeliveryStage,
+        getOrderById,
+        addProduct,
+        updateProductStock,
+        updateProductPrice,
+        toggleProductStatus,
+        toggleSupplierVerification,
+        toggleSupplierPayoutHold,
+        markOrderDispatched,
+        acceptSellerOrder,
+        rejectSellerOrder,
+        dispatchSellerOrder,
+        markSellerOrderOutForDelivery,
+        markSellerOrderDelivered,
+        generateShippingManifest,
+        initiateOrderReturn,
+        advanceOrderReturnStage,
+        assignOrderRider,
+        updateOrderEta,
+        clusterTier,
+        upgradeDatabaseCluster,
+        resetDatabaseCluster,
+        loadSampleOrders,
+        resetDemoData,
+        filteredProducts,
+        cartTotalCount,
+        cartSubtotal,
+        reviews,
+        platformOverallScore,
+        submitPlatformReview,
+        currentUser,
+        setCurrentUser,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
+        activeRegion,
+        setActiveRegion,
+        formatPrice,
+        convertPrice,
+      }}
+    >
+      {children}
+    </StoreContext.Provider>
+  );
+}
+
+export function useStore() {
+  const context = useContext(StoreContext);
+  if (!context) {
+    throw new Error("useStore must be used within a StoreProvider");
+  }
+  return context;
+}
+

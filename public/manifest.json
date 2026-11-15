@@ -1,0 +1,41 @@
+{
+  "name": "Nexu Atelier — Luxury Artisan Marketplace",
+  "short_name": "Nexu Atelier",
+  "description": "Direct-from-studio architectural craft, master loom silks, and precision acoustic engineering.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#060608",
+  "theme_color": "#09090b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Explore Catalog",
+      "short_name": "Catalog",
+      "description": "Browse 12 curated studio works",
+      "url": "/catalog",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Shopping Bag",
+      "short_name": "Bag",
+      "description": "View items in your bag",
+      "url": "/cart",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Saved Pieces",
+      "short_name": "Wishlist",
+      "description": "View saved pieces",
+      "url": "/wishlist",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    }
+  ]
+}
